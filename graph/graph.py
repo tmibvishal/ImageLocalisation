@@ -114,51 +114,34 @@ class Graph:
         cv2.destroyAllWindows()
 
     def make_connections(self):
-        def click_first(event, x, y, flags, param):
+        nd = None
+        def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
-                print("Looking for node")
+                global nd
                 nd = self.nearest_node(x, y)
-                self.printnode(nd)
+            elif event == cv2.EVENT_LBUTTONUP:
                 if nd is not None:
-                    return nd
-
-        def click_second(event, x, y, flags, param):
-            if event == cv2.EVENT_LBUTTONDOWN:
-                nd = self.nearest_node(x, y)
-                if nd is not None:
-                    nd2 = param[0]
-                    self.connect(nd, nd2)
+                    ndcur = self.nearest_node(x, y)
+                    self.connect(nd, ndcur)
                     cv2.line(img, (nd.coordinates[0], nd.coordinates[1]),
-                                   (nd2.coordinates[0], nd2.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
+                             (ndcur.coordinates[0], ndcur.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
                     cv2.imshow('Make connections', img)
-                    return True
-                else:
-                    return False
 
         img = cv2.imread('nodegraph.jpg')
         if img.size == 0:
             img = np.ones([512, 512, 3], np.uint8)
         cv2.imshow('Make connections', img)
 
-        pairs_complete = True
-        last_node = None
+        cv2.setMouseCallback('Make connections', click_event)
 
-        while cv2.waitKey(0) is None:
-            if pairs_complete is True:
-                last_node = cv2.setMouseCallback('Make connections', click_first)
-                if last_node is not None:
-                    pairs_complete = False
-
-            else:
-                pairs_complete = cv2.setMouseCallback('Make connections', click_second, last_node)
-
+        cv2.waitKey(0)
         cv2.imwrite('nodegraph.jpg', img)
         cv2.destroyAllWindows()
 
 
 graph = Graph()
 graph.create_node('entrance', 256, 256, 0, [1])
-graph.create_node('lift-grd', 100, 500, 0, [0])
+graph.create_node('lift-grd', 50, 50, 0, [0])
 graph.print_graph()
 graph.mark_nodes()
 graph.make_connections()
