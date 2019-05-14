@@ -133,6 +133,42 @@ class Graph:
         cv2.imwrite('nodegraph.jpg', img)
         cv2.destroyAllWindows()
 
+    def delete_connections(self):
+        nd= None
+
+        def click_event(event, x, y, flags, param):
+            if event == cv2.EVENT_LBUTTONDOWN:
+                global nd
+                nd = self.nearest_node(x, y)
+            elif event == cv2.EVENT_LBUTTONUP:
+                if nd is not None:
+                    ndcur = self.nearest_node(x,y)
+                    self.Nodes[nd.id].links.remove(ndcur.id)
+                    self.Nodes[ndcur.id].links.remove(nd.id)
+                    img = cv2.imread('map.jpg')
+                    for Nd in self.Nodes:
+                        img = cv2.circle(img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1)
+                        for linkId in Nd.links:
+                            if linkId < self.Length:
+                                Nd2 = self.Nodes[linkId]
+                                img = cv2.line(img, (Nd.coordinates[0], Nd.coordinates[1]),
+                                               (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
+                            else:
+                                raise Exception("linkId does not exists")
+                    cv2.imshow('Delete connections', img)
+
+
+        img = cv2.imread('nodegraph.jpg')
+        if img is None:  # No nodes present
+            return
+        cv2.imshow('Delete connections', img)
+
+        cv2.setMouseCallback('Delete connections', click_event)
+
+        cv2.waitKey(0)
+        cv2.imwrite('nodegraph.jpg', img)
+        cv2.destroyAllWindows()
+
 
 # Deleting nodegraph.jpg ( for initial phase )
 if os.path.exists("nodegraph.jpg"):
@@ -140,6 +176,7 @@ if os.path.exists("nodegraph.jpg"):
 graph = Graph()
 graph.mark_nodes()
 graph.make_connections()
+graph.delete_connections()
 graph.print_graph()
 
 # To create nodes manually, use
