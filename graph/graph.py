@@ -80,7 +80,8 @@ class Graph:
 
 
     def print_graph(self):
-        img = np.ones([512, 512, 3], np.uint8)
+        #img = np.ones([512, 512, 3], np.uint8)
+        img = cv2.imread('map.jpg')
         for Nd in self.Nodes:
             img = cv2.circle(img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1)
             for linkId in Nd.links:
@@ -98,13 +99,15 @@ class Graph:
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
                 id = self.Length
-                self.create_node('Node-'+str(id), x, y, 0, [])
-                cv2.circle(img, (x, y), 8, (66, 126, 255), -1)
+                if self.nearest_node(x, y) is None:
+                    self.create_node('Node-'+str(id), x, y, 0, [])
+                    cv2.circle(img, (x, y), 8, (66, 126, 255), -1)
                 cv2.imshow('Mark Nodes', img)
 
         img = cv2.imread('nodegraph.jpg')
         if img.size == 0:
-            img = np.ones([512, 512, 3], np.uint8)
+            #img = np.ones([512, 512, 3], np.uint8)
+            img = cv2.imread('map.jpg')
         cv2.imshow('Mark Nodes', img)
 
         cv2.setMouseCallback('Mark Nodes', click_event)
@@ -140,8 +143,8 @@ class Graph:
 
 
 graph = Graph()
-graph.create_node('entrance', 256, 256, 0, [1])
-graph.create_node('lift-grd', 50, 50, 0, [0])
+#graph.create_node('entrance', 256, 256, 0, [1])
+#graph.create_node('lift-grd', 50, 50, 0, [0])
 graph.print_graph()
 graph.mark_nodes()
 graph.make_connections()
