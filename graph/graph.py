@@ -22,7 +22,7 @@ class Graph:
         self.add_node(Nd)
 
     def add_node(self, Nd):
-        if isinstance(Nd, Node) and Nd.name not in self.Nodes:
+        if isinstance(Nd, Node) and Nd not in self.Nodes:
             # Check if Nd has the format of Node or not
             if isinstance(Nd.links, set):
                 # Check if Nd.links is a set
@@ -39,10 +39,10 @@ class Graph:
             raise Exception("Nd format is not of Node, or is already present")
 
     def get_node(self, id):
-        if id < self.Length:
-            return self.Nodes[id]
-        else:
-            raise Exception("id does not exist")
+        for Nd in self.Nodes:
+            if id == Nd.id:
+                return Nd
+        return None
 
     def nearest_node(self, x, y):
         def distance(nd):
@@ -67,22 +67,6 @@ class Graph:
         else:
             raise Exception("Nd format is not of Node, or is already present")
 
-    def print_graph(self):
-        img = cv2.imread('map.jpg')
-        for Nd in self.Nodes:
-            img = cv2.circle(img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1)
-            for linkId in Nd.links:
-                if linkId < self.Length:
-                    Nd2 = self.Nodes[linkId]
-                    img = cv2.line(img, (Nd.coordinates[0], Nd.coordinates[1]),
-                                   (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
-                else:
-                    raise Exception("linkId does not exists")
-        cv2.imshow('Node graph', img)
-        cv2.waitKey(0)
-        cv2.imwrite('nodegraph.jpg', img)
-        cv2.destroyAllWindows()
-
     def mark_nodes(self):
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
@@ -97,9 +81,7 @@ class Graph:
         if img is None:
             img = cv2.imread('map.jpg')
         cv2.imshow('Mark Nodes', img)
-
         cv2.setMouseCallback('Mark Nodes', click_event)
-
         cv2.waitKey(0)
         cv2.imwrite('nodegraph.jpg', img)
         cv2.destroyAllWindows()
@@ -130,6 +112,31 @@ class Graph:
         cv2.imwrite('nodegraph.jpg', img)
         cv2.destroyAllWindows()
 
+    def delete_node(self, Nd):
+        if Nd in self.Nodes:
+            self.Nodes.remove(Nd)
+            for i in range(len(self.Nodes)):
+                if(Nd.id in self.Nodes[i].links):
+                    self.Nodes[i].links.remove(Nd.id)
+        else:
+            raise Exception("Nd does not exists in Nodes")
+
+    def print_graph(self):
+        img = cv2.imread('map.jpg')
+        for Nd in self.Nodes:
+            img = cv2.circle(img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1)
+            for linkId in Nd.links:
+                if linkId < self.Length:
+                    Nd2 = self.get_node(linkId)
+                    img = cv2.line(img, (Nd.coordinates[0], Nd.coordinates[1]),
+                                   (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
+                else:
+                    raise Exception("linkId does not exists")
+        cv2.imshow('Node graph', img)
+        cv2.waitKey(0)
+        cv2.imwrite('nodegraph.jpg', img)
+        cv2.destroyAllWindows()
+
 
 # Deleting nodegraph.jpg ( for initial phase )
 if os.path.exists("nodegraph.jpg"):
@@ -137,6 +144,11 @@ if os.path.exists("nodegraph.jpg"):
 graph = Graph()
 graph.mark_nodes()
 graph.make_connections()
+graph.print_graph()
+
+tempNd = graph.get_node(3)
+graph.delete_node(tempNd)
+
 graph.print_graph()
 
 # To create nodes manually, use
