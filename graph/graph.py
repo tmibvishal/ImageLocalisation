@@ -15,6 +15,7 @@ class Graph:
     def __init__(self):
         return
 
+
     def create_node(self, name, x, y, z, links):
         id = self.Length
         Nd = Node(id, name, x, y, z, links)
@@ -23,20 +24,17 @@ class Graph:
     def add_node(self, Nd):
         if isinstance(Nd, Node) and Nd.name not in self.Nodes:
             # Check if Nd has the format of Node or not
-            if isinstance(Nd.links, list):
-                # Check if Nd.links is a list
+            if isinstance(Nd.links, set):
+                # Check if Nd.links is a set
                 if len(Nd.links) != 0:
-                    if isinstance(Nd.links[0], int):
-                        # Check if Nd.list is a list of integers
-                        self.Nodes.append(Nd)
-                        self.Length = self.Length + 1
-                    else:
-                        raise Exception("Nd.list is not a list of ids (which are integers)")
+                    # AIM: also check that set is a set of integers or not
+                    self.Nodes.append(Nd)
+                    self.Length = self.Length + 1
                 else:
                     self.Nodes.append(Nd)
                     self.Length = self.Length + 1
             else:
-                raise Exception("Nd.list is not a list")
+                raise Exception("Nd.links is not a set")
         else:
             raise Exception("Nd format is not of Node, or is already present")
 
@@ -64,10 +62,8 @@ class Graph:
 
     def connect(self, nd1, nd2):
         if isinstance(nd1, Node) and isinstance(nd2, Node):
-            if nd2.id not in nd1.links:
-                nd1.links.append(nd2.id)
-            if nd1.id not in nd2.links:
-                nd2.links.append(nd1.id)
+            nd1.links.add(nd2.id)
+            nd2.links.add(nd1.id)
         else:
             raise Exception("Nd format is not of Node, or is already present")
 
@@ -92,8 +88,9 @@ class Graph:
             if event == cv2.EVENT_LBUTTONDOWN:
                 id = self.Length
                 if self.nearest_node(x, y) is None:
-                    self.create_node('Node-' + str(id), x, y, 0, [])
+                    self.create_node('Node-' + str(id), x, y, 0, set())
                     cv2.circle(img, (x, y), 8, (66, 126, 255), -1)
+
                 cv2.imshow('Mark Nodes', img)
 
         img = cv2.imread('nodegraph.jpg')
