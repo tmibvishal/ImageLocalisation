@@ -2,14 +2,12 @@ import numpy as np
 import cv2
 import math
 
-
 class Node:
         def __init__(self, id, name, x, y, z, links):
             self.id = id
             self.name = name
             self.coordinates = (x, y, z)
             self.links = links
-
 
 class Graph:
     Nodes = []
@@ -73,6 +71,8 @@ class Graph:
                 nd1.links.append(nd2.id)
             if nd1.id not in nd2.links:
                 nd2.links.append(nd1.id)
+        else:
+            raise Exception("Nd format is not of Node, or is already present")
 
     def printnode(self,nd):
         print(nd.coordinates[0])
