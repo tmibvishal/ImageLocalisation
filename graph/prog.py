@@ -1,4 +1,7 @@
 import graph as gp
+import os
+import pickle
+
 
 # Deleting nodegraph.jpg ( for initial phase )
 if os.path.exists("images/nodegraph1.jpg"):
@@ -15,6 +18,8 @@ for z in range(no_of_floors):
 for z in range(no_of_floors):
     graph.print_graph(z)
 
+with open('graph.pkl', 'wb') as output:
+    pickle.dump(graph, output, pickle.HIGHEST_PROTOCOL)
 
 # To add a floor,
 # 1) change the no_of_floors variable ( = 2 if ground floor and 1st floor )
