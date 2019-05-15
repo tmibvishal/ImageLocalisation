@@ -1,6 +1,7 @@
 import cv2
 import os
 
+
 class Node:
     def __init__(self, id, name, x, y, z, links):
         self.id = id
@@ -8,13 +9,13 @@ class Node:
         self.coordinates = (x, y, z)
         self.links = links
 
+
 class Graph:
     Nodes = []
     Length = 0
 
     def __init__(self):
         return
-
 
     def create_node(self, name, x, y, z, links):
         id = self.Length
@@ -67,27 +68,65 @@ class Graph:
         else:
             raise Exception("Nd format is not of Node, or is already present")
 
-    def mark_nodes(self):
+    def image_string(self, z, pure):
+        # pure = 1 : original (not scattered with nodes) image of map
+        # pure = -1 : Graph ( with nodes ) of map only
+        # In implementation, the original map image is assigned to img object named 'pure', and node one to
+        # 'impure' img object
+        if pure:
+            return 'images/map'+str(z)+'.jpg'
+        else:
+            return 'images/nodegraph'+str(z)+'.jpg'
+
+    def print_graph(self, z):
+        pure = self.image_string(z, True)
+        impure = self.image_string(z, False)
+        img = cv2.imread(pure)
+
+        for Nd in self.Nodes:
+            if Nd.coordinates[2] == z:
+                img = cv2.circle(img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1)
+                for linkId in Nd.links:
+                    if linkId < self.Length:
+                        Nd2 = self.Nodes[linkId]
+                        img = cv2.line(img, (Nd.coordinates[0], Nd.coordinates[1]),
+                                       (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
+                    else:
+                        raise Exception("linkId does not exists")
+        cv2.imshow('Node graph for floor ' + str(z), img)
+        cv2.waitKey(0)
+        cv2.imwrite(impure, img)
+        cv2.destroyAllWindows()
+
+    def mark_nodes(self, z):
+        window_text = 'Mark Nodes for floor ' + str(z)
+
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
                 id = self.Length
                 if self.nearest_node(x, y) is None:
-                    self.create_node('Node-' + str(id), x, y, 0, set())
+                    self.create_node('Node-' + str(id), x, y, z, set())
                     cv2.circle(img, (x, y), 8, (66, 126, 255), -1)
 
-                cv2.imshow('Mark Nodes', img)
+                cv2.imshow(window_text, img)
 
-        img = cv2.imread('nodegraph.jpg')
+        pure = self.image_string(z, True)
+        impure = self.image_string(z, False)
+        img = cv2.imread(impure)
         if img is None:
-            img = cv2.imread('map.jpg')
-        cv2.imshow('Mark Nodes', img)
-        cv2.setMouseCallback('Mark Nodes', click_event)
+            img = cv2.imread(pure)
+
+        cv2.imshow(window_text, img)
+
+        cv2.setMouseCallback(window_text, click_event)
+
         cv2.waitKey(0)
-        cv2.imwrite('nodegraph.jpg', img)
+        cv2.imwrite(impure, img)
         cv2.destroyAllWindows()
 
-    def make_connections(self):
+    def make_connections(self, z):
         nd = None
+        window_text = "Make connections for floor " + str(z)
 
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
@@ -99,17 +138,18 @@ class Graph:
                     self.connect(nd, ndcur)
                     cv2.line(img, (nd.coordinates[0], nd.coordinates[1]),
                              (ndcur.coordinates[0], ndcur.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
-                    cv2.imshow('Make connections', img)
+                    cv2.imshow(window_text, img)
 
-        img = cv2.imread('nodegraph.jpg')
-        if img is None:  # No nodes present
+        impure = self.image_string(z, False)
+        img = cv2.imread(impure)
+        if img is None:
             return
-        cv2.imshow('Make connections', img)
+        cv2.imshow(window_text, img)
 
-        cv2.setMouseCallback('Make connections', click_event)
+        cv2.setMouseCallback(window_text, click_event)
 
         cv2.waitKey(0)
-        cv2.imwrite('nodegraph.jpg', img)
+        cv2.imwrite(impure, img)
         cv2.destroyAllWindows()
 
     def delete_node(self, Nd):
@@ -121,30 +161,29 @@ class Graph:
         else:
             raise Exception("Nd does not exists in Nodes")
 
-    def print_graph(self):
-        img = cv2.imread('map.jpg')
-        for Nd in self.Nodes:
-            img = cv2.circle(img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1)
-            for linkId in Nd.links:
-                if linkId < self.Length:
-                    Nd2 = self.get_node(linkId)
-                    img = cv2.line(img, (Nd.coordinates[0], Nd.coordinates[1]),
-                                   (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
-                else:
-                    raise Exception("linkId does not exists")
-        cv2.imshow('Node graph', img)
-        cv2.waitKey(0)
-        cv2.imwrite('nodegraph.jpg', img)
-        cv2.destroyAllWindows()
-
 
 # Deleting nodegraph.jpg ( for initial phase )
-if os.path.exists("nodegraph.jpg"):
-    os.remove("nodegraph.jpg")
+if os.path.exists("images/nodegraph1.jpg"):
+    os.remove("images/nodegraph1.jpg")
+if os.path.exists("images/nodegraph2.jpg"):
+    os.remove("images/nodegraph2.jpg")
+
 graph = Graph()
-graph.mark_nodes()
-graph.make_connections()
-graph.print_graph()
+
+no_of_floors = 2
+for z in range(no_of_floors):
+    graph.mark_nodes(z)
+    graph.make_connections(z)
+for z in range(no_of_floors):
+    graph.print_graph(z)
+
+
+# To add a floor,
+# 1) change the no_of_floors variable ( = 2 if ground floor and 1st floor )
+# 2) add a file strictly named "mapz.jpg" where z = floorNo ( z = 0 for ground floor )
+# e.g. map0.jpg for ground floor with no_of_floors = 1
+
+
 
 tempNd = graph.get_node(3)
 graph.delete_node(tempNd)
@@ -164,4 +203,3 @@ graph.print_graph()
 # img = np.ones([512, 512, 3], np.uint8)
 # instead of
 # img = cv2.imread('map.jpg')
-
