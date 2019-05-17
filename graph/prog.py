@@ -18,6 +18,8 @@ for z in range(no_of_floors):
 for z in range(no_of_floors):
     graph.print_graph(z)
 
+print(graph.edgesMatrix)
+
 with open('graph.pkl', 'wb') as output:
     pickle.dump(graph, output, pickle.HIGHEST_PROTOCOL)
 

@@ -1,6 +1,5 @@
 import cv2
 
-
 class Node:
     def __init__(self, id, name, x, y, z, links):
         self.id = id
@@ -8,10 +7,16 @@ class Node:
         self.coordinates = (x, y, z)
         self.links = links
 
+class Edge:
+    def __init__(self, isConnected:bool=False, seqOfImagesfromVideo=None, videoLength:float=None):
+        self.isConnected = isConnected
+        self.seqOfImagesfromVideo = seqOfImagesfromVideo
+        self.videoLength = videoLength
 
 class Graph:
     Nodes = []
     Length = 0
+    edgesMatrix = []
 
     def __init__(self):
         return
@@ -30,9 +35,16 @@ class Graph:
                     # AIM: also check that set is a set of integers or not
                     self.Nodes.append(Nd)
                     self.Length = self.Length + 1
+                    for row in self.edgesMatrix:
+                        row.append(Edge())
+                    self.edgesMatrix.append([Edge()] * (len(self.edgesMatrix)+1))
                 else:
                     self.Nodes.append(Nd)
                     self.Length = self.Length + 1
+                    Ed = Edge()
+                    for row in self.edgesMatrix:
+                        row.append(Edge())
+                    self.edgesMatrix.append([Edge()] * (len(self.edgesMatrix)+1))
             else:
                 raise Exception("Nd.links is not a set")
         else:
@@ -62,24 +74,34 @@ class Graph:
 
     def connect(self, nd1, nd2):
         if isinstance(nd1, Node) and isinstance(nd2, Node):
-            nd1.links.add(nd2.id)
-            nd2.links.add(nd1.id)
+            if(nd2.id<self.Length and nd1.id<self.Length):
+                nd1.links.add(nd2.id)
+                nd2.links.add(nd1.id)
+                id1 = nd1.id
+                id2 = nd2.id
+                print(self.edgesMatrix[id1][id2])
+                (self.edgesMatrix[id1][id2]).isConnected = True
+                (self.edgesMatrix[id2][id1]).isConnected = True
+            else:
+                raise Exception("Wrong ids of Nodes")
         else:
             raise Exception("Nd format is not of Node, or is already present")
 
-    def image_string(self, z, pure):
+    def image_string(self, z, params):
         # pure = 1 : original (not scattered with nodes) image of map
         # pure = -1 : Graph ( with nodes ) of map only
         # In implementation, the original map image is assigned to img object named 'pure', and node one to
         # 'impure' img object
-        if pure:
+        if params=="pure":
             return 'images/map'+str(z)+'.jpg'
-        else:
+        elif params=="impure":
             return 'images/nodegraph'+str(z)+'.jpg'
+        else:
+            raise Exception("Wrong params passed")
 
     def print_graph(self, z):
-        pure = self.image_string(z, True)
-        impure = self.image_string(z, False)
+        pure = self.image_string(z, "pure")
+        impure = self.image_string(z, "impure")
         img = cv2.imread(pure)
 
         for Nd in self.Nodes:
@@ -109,16 +131,13 @@ class Graph:
 
                 cv2.imshow(window_text, img)
 
-        pure = self.image_string(z, True)
-        impure = self.image_string(z, False)
-        img = cv2.imread(impure)
-        if img is None:
-            img = cv2.imread(pure)
-
+        pure = self.image_string(z, "pure")
+        impure = self.image_string(z, "impure")
+        # img = cv2.imread(impure)
+        # if img is None:
+        img = cv2.imread(pure)
         cv2.imshow(window_text, img)
-
         cv2.setMouseCallback(window_text, click_event)
-
         cv2.waitKey(0)
         cv2.imwrite(impure, img)
         cv2.destroyAllWindows()
@@ -139,14 +158,12 @@ class Graph:
                              (ndcur.coordinates[0], ndcur.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
                     cv2.imshow(window_text, img)
 
-        impure = self.image_string(z, False)
+        impure = self.image_string(z, "impure")
         img = cv2.imread(impure)
         if img is None:
             return
         cv2.imshow(window_text, img)
-
         cv2.setMouseCallback(window_text, click_event)
-
         cv2.waitKey(0)
         cv2.imwrite(impure, img)
         cv2.destroyAllWindows()
@@ -159,7 +176,7 @@ class Graph:
                     self.Nodes[i].links.remove(Nd.id)
         else:
             raise Exception("Nd does not exists in Nodes")
-            
+
     def delete_connections(self):
         nd= None
 
@@ -195,28 +212,4 @@ class Graph:
         cv2.waitKey(0)
         cv2.imwrite('nodegraph.jpg', img)
         cv2.destroyAllWindows()
-
-
-# Deleting nodegraph.jpg ( for initial phase )
-if os.path.exists("nodegraph.jpg"):
-    os.remove("nodegraph.jpg")
-graph = Graph()
-graph.mark_nodes()
-graph.make_connections()
-graph.delete_connections()
-graph.print_graph()
-
-# To create nodes manually, use
-# graph.create_node('entrance', 256, 256, 0, [1])
-# graph.create_node('lift-grd', 50, 50, 0, [0])
-
-# To check available events, use
-# events = [i for i in dir(cv2) if 'EVENT' in i]
-# print(events)
-
-# To use a black image instead of map, use
-# import numpy as np
-# img = np.ones([512, 512, 3], np.uint8)
-# instead of
-# img = cv2.imread('map.jpg')
 

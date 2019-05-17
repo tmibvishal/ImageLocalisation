@@ -1,4 +1,4 @@
-"""Matcher.py
+"""matcher.py
 
 Functions in this file allows the user to match 2 images 
 and get the fraction match between 2 images
@@ -32,8 +32,8 @@ def SURF_match(img1 , img2, hessianThreshold: int = 400, ratio_thresh: float = 0
         raise Exception("ratio_thresh not between 0 to 1")
         return -1
 
-    minHessian = 400
-    detector = cv2.xfeatures2d_SURF.create(hessianThreshold=minHessian)
+
+    detector = cv2.xfeatures2d_SURF.create(hessianThreshold)
     keypoints1, descriptors1 = detector.detectAndCompute(img1, None)
     keypoints2, descriptors2 = detector.detectAndCompute(img2, None)
 
@@ -43,7 +43,6 @@ def SURF_match(img1 , img2, hessianThreshold: int = 400, ratio_thresh: float = 0
     matcher = cv2.DescriptorMatcher_create(cv2.DescriptorMatcher_FLANNBASED)
     knn_matches = matcher.knnMatch(descriptors1, descriptors2, 2)
 
-    ratio_thresh = 0.7
     good_matches = []
     for m, n in knn_matches:
         if m.distance < ratio_thresh * n.distance:
@@ -76,8 +75,7 @@ def ORB_match(img1 , img2, hessianThreshold: int = 400, ratio_thresh: float = 0.
         raise Exception("ratio_thresh not between 0 to 1")
         return -1
 
-    minHessian = 400
-    orb = cv2.ORB_create(hessianThreshold=minHessian)
+    orb = cv2.ORB_create(hessianThreshold)
     keypoints1, descriptors1 = orb.detectAndCompute(img1, None)
     keypoints2, descriptors2 = orb.detectAndCompute(img2, None)
 
@@ -87,7 +85,6 @@ def ORB_match(img1 , img2, hessianThreshold: int = 400, ratio_thresh: float = 0.
     bf = cv2.BFMatcher(cv2.NORM_HAMMING)
     matches= bf.knnMatch(descriptors1,trainDescriptors=descriptors2, k=2)
 
-    ratio_thresh = 0.7
     good_matches = []
     for m, n in matches:
         if m.distance < ratio_thresh * n.distance:
