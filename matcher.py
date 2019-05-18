@@ -33,7 +33,7 @@ def SURF_match(img1 , img2, hessianThreshold: int = 400, ratio_thresh: float = 0
         return -1
 
 
-    detector = cv2.xfeatures2d.SURF_create(hessianThreshold)
+    detector = cv2.xfeatures2d_SURF.create(hessianThreshold)
     keypoints1, descriptors1 = detector.detectAndCompute(img1, None)
     keypoints2, descriptors2 = detector.detectAndCompute(img2, None)
 
