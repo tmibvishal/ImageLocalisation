@@ -1,4 +1,4 @@
-"""videoOperations.py
+"""video_operations.py
 Contains functions that operate on video or stream of images
 """
 
@@ -7,10 +7,43 @@ import numpy as np
 import matcher as mt
 import os
 import time
+from imutils import paths
 
 # path = './Images'
 
-def save_distinct_frames(video_str, folder, frames_skipped=0):
+def variance_of_laplacian(image):
+	"""Compute the Laplacian of the image and then return the focus measure, which is simply the variance of the Laplacian
+    Parameters
+    ----------
+    image : image object (mat)
+
+    Returns
+    -------
+    int,
+        returns higher value if image is not blurry otherwise returns lower value
+
+    Referenece
+    -------
+    https://www.pyimagesearch.com/2015/09/07/blur-detection-with-opencv/
+    """
+	return cv2.Laplacian(image, cv2.CV_64F).var()
+
+def is_blurry(image):
+    """Check if the image passed is blurry or not
+
+    Parameters
+    ----------
+    image : image object (mat)
+
+    Returns
+    -------
+    bool,
+        returns True if image is blurry otherwise returns False
+    """
+    b,_,_ = cv2.split(image)
+    return (variance_of_laplacian(b) < 120)
+
+def save_distinct_frames(video_str, folder, frames_skipped:int=0, check_blurry:bool=False):
 
     """Saves non redundent and distinct frames of a video in folder
 
@@ -18,7 +51,8 @@ def save_distinct_frames(video_str, folder, frames_skipped=0):
     ----------
     video_str : is video_str = "webcam" then loadswebcam O.W. loads video at video_str location,
     folder : folder where non redundant images are to be saved,
-    frames_skipped: Number of frames to skip and just not consider
+    frames_skipped: Number of frames to skip and just not consider,
+    check_blurry: If True then only considers non blurry frames but is slow
 
     Returns
     -------
@@ -40,17 +74,28 @@ def save_distinct_frames(video_str, folder, frames_skipped=0):
     i = 0
     a = None
     b = None
+    check_next_frame = False
 
     ret, frame = cap.read()
     a = frame
     cv2.imwrite('image' + str(i) + '.jpg', a)
 
+
+
     while True:
         ret, frame = cap.read()
         if ret:
-            if(i % frames_skipped != 0):
+            if(i % frames_skipped != 0 and not check_next_frame):
                 i = i + 1
                 continue
+
+            if(check_blurry):
+                if(is_blurry(frame)):
+                    check_next_frame = True
+                    i = i + 1
+                    continue
+                check_next_frame = False
+                
             cv2.imshow('frame', frame)
             b = frame
             image_fraction_matched = mt.SURF_match(a, b, 2500, 0.7)
@@ -69,10 +114,9 @@ def save_distinct_frames(video_str, folder, frames_skipped=0):
     cv2.destroyAllWindows()
     return distinct_frames
 
-
 def compare_videos():
-    frames1 = save_distinct_frames("testData/sushant_mc/20190517_220001.mp4", "v1", 4)
-    frames2 = save_distinct_frames("testData/sushant_mc/20190517_220439.mp4", "v2", 4)
+    frames1 = save_distinct_frames("testData/sushant_mc/20190517_220001.mp4", "v1", 34, False)
+    frames2 = save_distinct_frames("testData/sushant_mc/20190517_220439.mp4", "v2", 34, False)
 
     len1, len2 = len(frames1), len(frames2)
     best_matches = []
