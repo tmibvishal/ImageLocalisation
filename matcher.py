@@ -40,6 +40,9 @@ def SURF_match(img1 , img2, hessianThreshold: int = 400, ratio_thresh: float = 0
     a1 = len(keypoints1)
     b1 = len(keypoints2)
 
+    if a1<2 or b1<2:
+        return 0
+
     matcher = cv2.DescriptorMatcher_create(cv2.DescriptorMatcher_FLANNBASED)
     knn_matches = matcher.knnMatch(descriptors1, descriptors2, 2)
 

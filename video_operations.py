@@ -9,10 +9,11 @@ import os
 import time
 from imutils import paths
 
+
 # path = './Images'
 
 def variance_of_laplacian(image):
-	"""Compute the Laplacian of the image and then return the focus measure, which is simply the variance of the Laplacian
+    """Compute the Laplacian of the image and then return the focus measure, which is simply the variance of the Laplacian
     Parameters
     ----------
     image : image object (mat)
@@ -26,7 +27,8 @@ def variance_of_laplacian(image):
     -------
     https://www.pyimagesearch.com/2015/09/07/blur-detection-with-opencv/
     """
-	return cv2.Laplacian(image, cv2.CV_64F).var()
+    return cv2.Laplacian(image, cv2.CV_64F).var()
+
 
 def is_blurry(image):
     """Check if the image passed is blurry or not
@@ -40,11 +42,11 @@ def is_blurry(image):
     bool,
         returns True if image is blurry otherwise returns False
     """
-    b,_,_ = cv2.split(image)
+    b, _, _ = cv2.split(image)
     return (variance_of_laplacian(b) < 120)
 
 
-def save_distinct_frames(video_str, folder, frames_skipped:int=0,check_blurry:bool=False):
+def save_distinct_frames(video_str, folder, frames_skipped: int = 0, check_blurry: bool = True):
     """Saves non redundent and distinct frames of a video in folder
     Parameters
     ----------
@@ -79,22 +81,20 @@ def save_distinct_frames(video_str, folder, frames_skipped:int=0,check_blurry:bo
     a = frame
     cv2.imwrite('image' + str(i) + '.jpg', a)
 
-
-
     while True:
         ret, frame = cap.read()
         if ret:
-            if(i % frames_skipped != 0 and not check_next_frame):
+            if (i % frames_skipped != 0 and not check_next_frame):
                 i = i + 1
                 continue
 
-            if(check_blurry):
-                if(is_blurry(frame)):
+            if (check_blurry):
+                if (is_blurry(frame)):
                     check_next_frame = True
                     i = i + 1
                     continue
                 check_next_frame = False
-                
+
             cv2.imshow('frame', frame)
             b = frame
             image_fraction_matched = mt.SURF_match(a, b, 2500, 0.7)
@@ -112,6 +112,7 @@ def save_distinct_frames(video_str, folder, frames_skipped:int=0,check_blurry:bo
     cap.release()
     cv2.destroyAllWindows()
     return distinct_frames
+
 
 def read_images(folder):
     """Reads images of the form "image<int>.jpg" from folder(passed as string containing
@@ -172,10 +173,10 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
     confidence = 5
     """
     No edge is declared when confidence is zero.
-    
-    Confidence is decreased by 1 whenever match is not found for (i)th frame of frame1 among 
+
+    Confidence is decreased by 1 whenever match is not found for (i)th frame of frame1 among
     the next 4 frames after j_last_matched(inclusive)
-    
+
     If match is found for (i)th frame, i_last_matched is changed to i, j_last_matched is changed to
     the corresponding match; and confidence is restored to initial value(5)
     """
@@ -193,7 +194,7 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
             if j >= len(frames2):
                 break
             image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
-            if image_fraction_matched > 0.2:
+            if image_fraction_matched > 0.1:
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
         if match is None:
@@ -230,17 +231,12 @@ def compare_videos(frames1, frames2):
     """
 
     len1, len2 = len(frames1), len(frames2)
-    best_matches = []
     lower_j = 0
     for i in range(len1):
-        # print("")
-        # print(str(frames1[i][0]) + ":")
-        # best_matches_for_i = []
-
         match, maxmatch = None, 0
         for j in range(lower_j, len2):
             image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
-            if image_fraction_matched > 0.2:
+            if image_fraction_matched > 0.1:
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
         if match is not None:
@@ -249,7 +245,19 @@ def compare_videos(frames1, frames2):
             if i >= len1 or lower_j >= len2:
                 break
 
-                # print(str(frames2[j][0]) + " : confidence is " + str(image_fraction_matched))
+
+def compare_videos_and_print(frame1, frame2):
+    len1, len2 = len(frames1), len(frames2)
+    # best_matches = []
+    lower_j = 0
+    for i in range(len1):
+        print("")
+        print(str(frames1[i][0]) + "->")
+        # best_matches_for_i = []
+        for j in range(lower_j, len2):
+            image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
+            if image_fraction_matched > 0.2:
+                print(str(frames2[j][0]) + " : confidence is " + str(image_fraction_matched))
                 # best_matches_for_i.append((frames2[j][0], image_fraction_matched))
         # best_matches.append((frames1[i][0], best_matches_for_i))
 
@@ -259,4 +267,5 @@ def compare_videos(frames1, frames2):
 frames1 = save_distinct_frames("testData/sushant_mc/20190518_155651.mp4", "v1", 4,True)
 frames2 = save_distinct_frames("testData/sushant_mc/20190518_155820.mp4", "v2", 4, True)
 
+compare_videos_and_print(frames1, frames2)
 compare_videos(frames1, frames2)
