@@ -44,7 +44,7 @@ def is_blurry(image):
     return (variance_of_laplacian(b) < 120)
 
 
-def save_distinct_frames(video_str, folder, frames_skipped=0):
+def save_distinct_frames(video_str, folder, frames_skipped:int=0,check_blurry:bool=False):
     """Saves non redundent and distinct frames of a video in folder
     Parameters
     ----------
