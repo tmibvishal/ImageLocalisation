@@ -254,9 +254,9 @@ def compare_videos(frames1, frames2):
         # best_matches.append((frames1[i][0], best_matches_for_i))
 
 
-frames1 = read_images("v1")
-frames2 = read_images("v2")
-# frames1 = save_distinct_frames("testData/sushant_mc/20190517_220001.mp4", "v1", 4)
-# frames2 = save_distinct_frames("testData/sushant_mc/20190517_220439.mp4", "v2", 4)
+# frames1 = read_images("v1")
+# frames2 = read_images("v2")
+frames1 = save_distinct_frames("ImageLocalisation/testData/sushant_mc/20190518_155651.mp4", "v1", 4,True)
+frames2 = save_distinct_frames("ImageLocalisation/testData/sushant_mc/20190518_155820.mp4", "v2", 4, True)
 
 compare_videos(frames1, frames2)
