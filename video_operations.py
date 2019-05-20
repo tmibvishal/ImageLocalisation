@@ -183,7 +183,7 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
     """
     i = index of current frame (in frames1) being checked for matches; i_last_matched<i<len(frames1)
     i_last_matched = index of last frame (in frames1 ) matched; i_init<=i_last_matched<len(frames1)
-    i_last_matched = index of last frame (in frames2 ) matched(with i_last_matched);
+    j_last_matched = index of last frame (in frames2 ) matched(with i_last_matched);
                         j_init<=j_last_matched<len(frames2)
     match = index of best matched frame (in frames2) with (i)th frame in frames1. j_last_matched<=match<=j
     maxmatch = fraction matching between (i)th and (match) frames
