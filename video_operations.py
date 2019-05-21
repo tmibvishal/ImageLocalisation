@@ -46,7 +46,7 @@ def is_blurry(image):
     return (variance_of_laplacian(b) < 120)
 
 
-def save_distinct_frames(video_str, folder, frames_skipped: int = 0, check_blurry: bool = True):
+def save_distinct_frames(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False):
     """Saves non redundent and distinct frames of a video in folder
     Parameters
     ----------
@@ -256,17 +256,17 @@ def compare_videos_and_print(frame1, frame2):
         # best_matches_for_i = []
         for j in range(lower_j, len2):
             image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
-            if image_fraction_matched > 0.2:
+            if image_fraction_matched > 0.1:
                 print(str(frames2[j][0]) + " : confidence is " + str(image_fraction_matched))
                 # best_matches_for_i.append((frames2[j][0], image_fraction_matched))
         # best_matches.append((frames1[i][0], best_matches_for_i))
 
 
 
-frames1 = read_images("v1")
-frames2 = read_images("v2")
-#frames1 = save_distinct_frames("testData/sushant_mc/20190518_155651.mp4", "v1", 4)
-#frames2 = save_distinct_frames("testData/sushant_mc/20190518_155820.mp4", "v2", 4)
+# frames1 = read_images("v1")
+# frames2 = read_images("v2")
+frames1 = save_distinct_frames("testData/sushant_mc/20190518_155651.mp4", "v1", 4)
+frames2 = save_distinct_frames("testData/sushant_mc/20190518_155820.mp4", "v2", 4)
 
 compare_videos_and_print(frames1, frames2)
-compare_videos(frames1, frames2)
+# compare_videos(frames1, frames2)
