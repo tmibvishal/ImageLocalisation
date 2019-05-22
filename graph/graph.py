@@ -8,7 +8,7 @@ class Node:
         self.links = links
 
 class Edge:
-    def __init__(self, isConnected:bool=False, seqOfImagesfromVideo=None, videoLength:float=None):
+    def __init__(self,isConnected:bool=False,seqOfImagesfromVideo=None, videoLength:float=None):
         self.isConnected = isConnected
         self.seqOfImagesfromVideo = seqOfImagesfromVideo
         self.videoLength = videoLength
