@@ -12,9 +12,6 @@ import shutil
 
 # path = './Images'
 
-
-
-
 def read_images(folder):
     """Reads images of the form "image<int>.jpg" from folder(passed as string containing
     relative path of the specific folder)
@@ -48,19 +45,16 @@ def read_images(folder):
         print("Reading image .." + str(time_stamp) + " from " + folder)  # for dev phase
     return distinct_frames
 
-def video_to_edges(video_number,path):
+def video_to_edges(video_number: str,path :str):
     if video_number=="1":
         shutil.copytree(path, "storage/1")
     else:
         frames_new= read_images(path)
-        for folder in sorted(os.listdir("storage")):
+        for folder in sorted(os.listdir("storage"))[:]:
             folder = str(folder)
-            if folder.find(video_number)!= -1:
-                continue
-            else:
-                frames_of_edges =read_images('storage/'+folder)
-                frames_being_used = frames_new
-                compare_videos(frames_being_used, frames_of_edges, folder, video_number)
+            frames_of_edges =read_images('storage/'+folder)
+            frames_being_used = frames_new
+            compare_videos(frames_being_used, frames_of_edges, folder, video_number)
 
         # print (len([folder for folder in sorted(os.listdir("storage"))]))
         # if os.listdir("storage").len():
@@ -160,15 +154,16 @@ def compare_videos(frames1, frames2, folder, video_number):
     len1, len2 = len(frames1), len(frames2)
     lower_j = 0
     k=1
-    for i in range(len1):
+    i=0
+    while(i<len1):
         # if frames1[i] !=(0,0):
-            match, maxmatch = None, 0
-            for j in range(lower_j, len2):
-                # if frames2[j] !=(0,0):
-                    image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
-                    if image_fraction_matched > 0.1:
-                        if image_fraction_matched > maxmatch:
-                            match, maxmatch = j, image_fraction_matched
+        match, maxmatch = None, 0
+        for j in range(lower_j, len2):
+            # if frames2[j] !=(0,0):
+            image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
+            if image_fraction_matched > 0.1:
+                if image_fraction_matched > maxmatch:
+                    match, maxmatch = j, image_fraction_matched
                 # else:
                 #     continue
             if match is not None:
@@ -179,6 +174,7 @@ def compare_videos(frames1, frames2, folder, video_number):
                 k=k+1
                 if i >= len1 or lower_j >= len2:
                     break
+                i += 1
         # else:
         #     continue
 
@@ -229,7 +225,7 @@ def create_folder(directory):
 #path="v1"
 #video_to_edges(video_number,path)
 
-video_to_edges("1", "v1")
+# video_to_edges("1", "v1")
 video_to_edges("2", "v2")
 
 # shutil.copytree("v1", "storage/1")
