@@ -1,5 +1,5 @@
 """video_operations.py
-Contains functions that operate on video or stream of images
+Contains functions that operate on folder of images adn create folder of edges
 """
 
 import cv2
@@ -8,110 +8,11 @@ import matcher as mt
 import os
 import time
 from imutils import paths
-
+import shutil
 
 # path = './Images'
 
-def variance_of_laplacian(image):
-    """Compute the Laplacian of the image and then return the focus measure, which is simply the variance of the Laplacian
-    Parameters
-    ----------
-    image : image object (mat)
 
-    Returns
-    -------
-    int,
-        returns higher value if image is not blurry otherwise returns lower value
-
-    Referenece
-    -------
-    https://www.pyimagesearch.com/2015/09/07/blur-detection-with-opencv/
-    """
-    return cv2.Laplacian(image, cv2.CV_64F).var()
-
-
-def is_blurry(image):
-    """Check if the image passed is blurry or not
-
-    Parameters
-    ----------
-    image : image object (mat)
-
-    Returns
-    -------
-    bool,
-        returns True if image is blurry otherwise returns False
-    """
-    b, _, _ = cv2.split(image)
-    return (variance_of_laplacian(b) < 120)
-
-
-def save_distinct_frames(video_str, folder, frames_skipped: int = 0, check_blurry: bool = True):
-    """Saves non redundent and distinct frames of a video in folder
-    Parameters
-    ----------
-    video_str : is video_str = "webcam" then loadswebcam O.W. loads video at video_str location,
-    folder : folder where non redundant images are to be saved,
-    frames_skipped: Number of frames to skip and just not consider,
-    check_blurry: If True then only considers non blurry frames but is slow
-
-    Returns
-    -------
-    array,
-        returns array contaning non redundant frames(mat format)
-    """
-
-    frames_skipped += 1
-
-    if video_str == "webcam":
-        video_str = 0
-    cap = cv2.VideoCapture(video_str)
-    # cap= cv2.VideoCapture(0)
-    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 200)
-    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 200)
-
-    distinct_frames = []
-    comparison_frame = None
-    i = 0
-    a = None
-    b = None
-    check_next_frame = False
-
-    ret, frame = cap.read()
-    a = frame
-    cv2.imwrite(folder + 'image' + str(i) + '.jpg', a)
-
-    while True:
-        ret, frame = cap.read()
-        if ret:
-            if (i % frames_skipped != 0 and not check_next_frame):
-                i = i + 1
-                continue
-
-            if (check_blurry):
-                if (is_blurry(frame)):
-                    check_next_frame = True
-                    i = i + 1
-                    continue
-                check_next_frame = False
-
-            cv2.imshow('frame', frame)
-            b = frame
-            image_fraction_matched = mt.SURF_match(a, b, 2500, 0.7)
-            if image_fraction_matched < 0.1:
-                cv2.imwrite(folder + '/image' + str(i) + '.jpg', a)
-                distinct_frames.append((i, a))
-                a = b
-
-            i = i + 1
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        else:
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-    return distinct_frames
 
 
 def read_images(folder):
@@ -147,8 +48,26 @@ def read_images(folder):
         print("Reading image .." + str(time_stamp) + " from " + folder)  # for dev phase
     return distinct_frames
 
+def video_to_edges(video_number,path):
+    if video_number=="1":
+        shutil.copytree(path, "storage/1")
+    else:
+        frames_new= read_images(path)
+        for folder in sorted(os.listdir("storage")):
+            folder = str(folder)
+            if folder.find(video_number)!= -1:
+                continue
+            else:
+                frames_of_edges =read_images('storage/'+folder)
+                frames_being_used = frames_new
+                compare_videos(frames_being_used, frames_of_edges, folder, video_number)
 
-def edge_from_specific_pt(i_init, j_init, frames1, frames2):
+        # print (len([folder for folder in sorted(os.listdir("storage"))]))
+        # if os.listdir("storage").len():
+        #     print("hi")
+
+
+def edge_from_specific_pt(i_init, j_init, frames1, frames2, k, folder, video_number):
     """
     Called when frames1[i_init][1] matches best with frames2[j_init][1]. This function checks
     subsequent frames of frames1 and frames2 to see if edge is detected.
@@ -214,12 +133,20 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
         print("Edge found from :")
         print(str(frames1[i_init][0]) + "to" + str(frames1[i_last_matched][0]) + "of video 1")
         print(str(frames2[j_init][0]) + "to" + str(frames2[j_last_matched][0]) + "of video 2")
+        for l in range(i_init, i_last_matched+1):
+            frames1[l]=(0,0)
+        for l in range(j_init, j_last_matched + 1):
+            create_folder(folder+"_"+video_number)
+            shutil.copy("storage/"+str(folder)+"/image"+str(frames2[l][0])+".jpg", "storage/"+str(folder)+"_"+video_number )
+            os.remove("storage/"+str(folder)+"/image"+str(frames2[l][0])+".jpg")
+            frames2[l] = (0, 0)
+
         return True, i_last_matched, j_last_matched
     else:
         return False, i_init, j_init
 
 
-def compare_videos(frames1, frames2):
+def compare_videos(frames1, frames2, folder, video_number):
     """
     :param frames1:
     :param frames2: are lists containing tuples of the form (time_stamp, frame) along path1 and path2
@@ -232,18 +159,28 @@ def compare_videos(frames1, frames2):
 
     len1, len2 = len(frames1), len(frames2)
     lower_j = 0
+    k=1
     for i in range(len1):
-        match, maxmatch = None, 0
-        for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
-            if image_fraction_matched > 0.1:
-                if image_fraction_matched > maxmatch:
-                    match, maxmatch = j, image_fraction_matched
-        if match is not None:
-            status, i, j = edge_from_specific_pt(i, match, frames1, frames2)
-            lower_j = j
-            if i >= len1 or lower_j >= len2:
-                break
+        # if frames1[i] !=(0,0):
+            match, maxmatch = None, 0
+            for j in range(lower_j, len2):
+                # if frames2[j] !=(0,0):
+                    image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
+                    if image_fraction_matched > 0.1:
+                        if image_fraction_matched > maxmatch:
+                            match, maxmatch = j, image_fraction_matched
+                # else:
+                #     continue
+            if match is not None:
+                print(i)
+                print(j)
+                status, i, j = edge_from_specific_pt(i, match, frames1, frames2,k, folder, video_number)
+                lower_j = j
+                k=k+1
+                if i >= len1 or lower_j >= len2:
+                    break
+        # else:
+        #     continue
 
 
 def compare_videos_and_print(frame1, frame2):
@@ -264,8 +201,35 @@ def compare_videos_and_print(frame1, frame2):
 
 # frames1 = read_images("v1")
 # frames2 = read_images("v2")
-frames1 = save_distinct_frames("testData/sushant_mc/20190518_155651.mp4", "v1", 4,True)
-frames2 = save_distinct_frames("testData/sushant_mc/20190518_155820.mp4", "v2", 4, True)
+# frames1 = save_distinct_frames("testData/sushant_mc/20190518_155651.mp4", "v1", 4,True)
+# frames2 = save_distinct_frames("testData/sushant_mc/20190518_155820.mp4", "v2", 4, True)
+#
+# compare_videos_and_print(frames1, frames2)
+# compare_videos(frames1, frames2)
 
-compare_videos_and_print(frames1, frames2)
-compare_videos(frames1, frames2)
+
+"""
+1. take first folder and convert it to single edge and name it 1_a
+2. take nest video and match it with  the existing edges , if match found create new edge i
+where i!= existing i 
+and let the unmatche go to folder 1_a and i_a repectively
+
+"""
+
+def create_folder(directory):
+    try:
+        if not os.path.exists('./storage/'+directory+'/'):
+            os.makedirs('./storage/'+directory+'/')
+    except OSError:
+        print('Error :creating directory' + directory)
+
+# path = os.getcwd()
+# new_path =os.path.join(path,"testing")
+# print (new_path)
+#path="v1"
+#video_to_edges(video_number,path)
+
+video_to_edges("1", "v1")
+video_to_edges("2", "v2")
+
+# shutil.copytree("v1", "storage/1")
