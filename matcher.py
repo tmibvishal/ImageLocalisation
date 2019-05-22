@@ -10,13 +10,13 @@ import cv2
 import numpy as np
 
 def SURF_match_2(key_des_1,key_des_2, hessianThreshold: int = 400, ratio_thresh: float = 0.7):
-    """Give fraction match between 2 images using SURF and FLANN
+    """Give fraction match between 2 images descriptors using SURF and FLANN
 
     Parameters
     ----------
-    key_des_1 : keypoints description pair of image 1,
-    key_des_2 : keypoints description pair of image 2,
-    hessianThreshold: Number of ORB points to consider in a image,
+    key_des_1 : (length of keypoints, description) pair of image 1,
+    key_des_2 : (length of keypoints, description) pair of image 2,
+    hessianThreshold: Number of SURF points to consider in a image,
     ratio_thresh: (b/w 0 to 1) lower the number more serious the matching
 
     Returns
