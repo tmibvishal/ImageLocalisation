@@ -1,7 +1,0 @@
-{
-    "python.formatting.provider": "autopep8",
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true,
-    "python.linting.pep8Enabled": false,
-    "python.linting.flake8Enabled": false
-}
