@@ -2,6 +2,7 @@
 Contains functions that operate on video or stream of images
 """
 
+import os
 import cv2
 import numpy as np
 import matcher as mt
@@ -84,7 +85,7 @@ def save_distinct_frames(video_str, folder, frames_skipped: int = 0, check_blurr
 
     ret, frame = cap.read()
     a = frame
-    cv2.imwrite('image' + str(i) + '.jpg', a)
+    cv2.imwrite(folder + '/image' + str(i) + '.jpg', a)
 
     while True:
         ret, frame = cap.read()
@@ -104,8 +105,8 @@ def save_distinct_frames(video_str, folder, frames_skipped: int = 0, check_blurr
             b = frame
             image_fraction_matched = mt.SURF_match(a, b, 2500, 0.7)
             if image_fraction_matched < 0.1:
-                cv2.imwrite(folder + '/image' + str(i) + '.jpg', a)
-                distinct_frames.append((i, a))
+                cv2.imwrite(folder + '/image' + str(i) + '.jpg', b)
+                distinct_frames.append((i, b))
                 a = b
 
             i = i + 1
@@ -278,17 +279,17 @@ def compare_videos_and_print(frames1, frames2):
         # best_matches.append((frames1[i][0], best_matches_for_i))
 
 
-FRAMES1 = read_images("v1")
-FRAMES2 = read_images("v2")
+# FRAMES1 = read_images("v1")
+# FRAMES2 = read_images("v2")
 # FRAMES1 = save_distinct_frames("testData/20190518_155651.mp4", "v1", 4)
 # FRAMES2 = save_distinct_frames("testData/20190518_155820.mp4", "v2", 4)
 
-compare_videos_and_print(FRAMES2, FRAMES1)
+# compare_videos_and_print(FRAMES2, FRAMES1)
 # compare_videos(FRAMES2, FRAMES1)
 
-'''
-FRAMES1 = cv2.imread("v1/image295.jpg", 0)
-FRAMES2 = cv2.imread("v2/image1002.jpg", 0)
+
+FRAMES1 = cv2.imread("v1 old1/image390.jpg", 0)
+FRAMES2 = cv2.imread("v2 old1/image416.jpg", 0)
 image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
 print(image_fraction_matched)
-'''
+
