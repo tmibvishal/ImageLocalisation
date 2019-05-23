@@ -2,13 +2,13 @@
 Contains functions that operate on video or stream of images
 """
 
-import cv2 
+import os
 import numpy as np
 import matcher as mt
-import os
 import time
-import pickle
+import cv2
 from imutils import paths
+
 
 class imgObj:
     def __init__(self, img, keypoints, descriptors):
@@ -18,17 +18,16 @@ class imgObj:
 
 # path = './Images'
 
+
 def variance_of_laplacian(image):
     """Compute the Laplacian of the image and then return the focus measure, which is simply the variance of the Laplacian
     Parameters
     ----------
     image : image object (mat)
-
     Returns
     -------
     int,
-        returns higher value if image is not blurry otherwise returns lower value
-
+        returns higher value if image is not blurry otherwise returns lower val 
     Referenece
     -------
     https://www.pyimagesearch.com/2015/09/07/blur-detection-with-opencv/
@@ -51,8 +50,8 @@ def is_blurry(image):
     b, _, _ = cv2.split(image)
     return (variance_of_laplacian(b) < 120)
 
-  
-def save_distinct_frames(video_str,folder,frames_skipped: int = 0, check_blurry: bool = True):
+
+def save_distinct_frames(video_str, folder, frames_skipped: int = 0, check_blurry: bool = True):
     """Saves non redundent and distinct frames of a video in folder
     Parameters
     ----------
@@ -67,7 +66,7 @@ def save_distinct_frames(video_str,folder,frames_skipped: int = 0, check_blurry:
         returns array contaning non redundant frames(mat format)
     """
 
-    frames_skipped+= 1
+    frames_skipped += 1
 
     if video_str == "webcam":
         video_str = 0
@@ -77,7 +76,6 @@ def save_distinct_frames(video_str,folder,frames_skipped: int = 0, check_blurry:
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 200)
 
     distinct_frames = []
-    comparison_frame = None
     i = 0
     a = None
     b = None
@@ -139,18 +137,20 @@ def read_images(folder):
 
     for file in sorted(sorted(os.listdir(folder)), key=len):  # sorting files on basis of
         # 1) length and 2) numerical order
-        '''
+        """
             Sorting is done 2 times because
             if files in the folder are
                 1. image100.jpg
                 2. image22.jpg
                 3. image21.jpg
-            firstly sort them to image100.jpg,image21.jpg,image22.jpg then according to length to image21.jpg,image22.jpg,image100.jpg
-        '''
+            firstly sort them to image100.jpg,image21.jpg,image22.jpg then according to length to 
+            image21.jpg,image22.jpg,image100.jpg
+        """
         frame = cv2.imread(folder + "/" + file)
         time_stamp = int(file.replace('image', '').replace('.jpg', ''), 10)
         distinct_frames.append((time_stamp, frame))
-        print("Reading image .." + str(time_stamp) + " from " + folder)  # for dev phase
+        print("Reading image .." + str(time_stamp) +
+              " from " + folder)  # for dev phase
     return distinct_frames
 
 
@@ -180,7 +180,7 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
     """
     No edge is declared when confidence is zero.
     
-    Confidence is decreased by 1 whenever match is not found for (i)th frame of frame1 among 
+    Confidence is decreased by 1 whenever match is not found for (i)th frame of frame1 among
     the next 4 frames after j_last_matched(inclusive)
     
     If match is found for (i)th frame, i_last_matched is changed to i, j_last_matched is changed to
@@ -200,7 +200,7 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
             if j >= len(frames2):
                 break
             image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
-            if image_fraction_matched > 0.1:
+            if image_fraction_matched > 0.15:
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
         if match is None:
@@ -208,6 +208,7 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
             if confidence == 0:
                 break
         else:
+            print("i:",i," j:",match)
             confidence = 5
             j_last_matched = match
             i_last_matched = i
@@ -218,8 +219,10 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
 
     if i_last_matched > i_init and j_last_matched > j_init:
         print("Edge found from :")
-        print(str(frames1[i_init][0]) + "to" + str(frames1[i_last_matched][0]) + "of video 1")
-        print(str(frames2[j_init][0]) + "to" + str(frames2[j_last_matched][0]) + "of video 2")
+        print(str(frames1[i_init][0]) + "to" +
+              str(frames1[i_last_matched][0]) + "of video 1")
+        print(str(frames2[j_init][0]) + "to" +
+              str(frames2[j_last_matched][0]) + "of video 2")
         return True, i_last_matched, j_last_matched
     else:
         return False, i_init, j_init
@@ -247,6 +250,7 @@ def compare_videos(frames1, frames2):
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
         if match is not None:
+            print("first i:",i,"first j:",match)
             status, i, j = edge_from_specific_pt(i, match, frames1, frames2)
             lower_j = j
             if i >= len1 or lower_j >= len2:
@@ -254,7 +258,7 @@ def compare_videos(frames1, frames2):
         i = i + 1
 
 
-def compare_videos_and_print(frame1, frame2):
+def compare_videos_and_print(frames1, frames2):
     len1, len2 = len(frames1), len(frames2)
     # best_matches = []
     lower_j = 0
@@ -264,24 +268,24 @@ def compare_videos_and_print(frame1, frame2):
         # best_matches_for_i = []
         for j in range(lower_j, len2):
             image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
-            if image_fraction_matched > 0.2:
-                print(str(frames2[j][0]) + " : confidence is " + str(image_fraction_matched))
+            if image_fraction_matched > 0.15:
+                print(str(frames2[j][0]) + " : confidence is " +
+                      str(image_fraction_matched))
                 # best_matches_for_i.append((frames2[j][0], image_fraction_matched))
         # best_matches.append((frames1[i][0], best_matches_for_i))
 
 
+FRAMES1 = read_images("v1")
+FRAMES2 = read_images("v2")
+# FRAMES1 = save_distinct_frames("testData/20190518_155651.mp4", "v1", 4)
+# FRAMES2 = save_distinct_frames("testData/20190518_155820.mp4", "v2", 4)
 
-frames1 = read_images("v1")
-frames2 = read_images("v2")
-# frames1 = save_distinct_frames("testData/20190518_155651.mp4", "v1", 4)
-# frames2 = save_distinct_frames("testData/20190518_155820.mp4", "v2", 4)
-
-# compare_videos_and_print(frames1, frames2)
-compare_videos(frames1, frames2)
+compare_videos_and_print(FRAMES2, FRAMES1)
+# compare_videos(FRAMES2, FRAMES1)
 
 '''
-frame1 = cv2.imread("v1/image295.jpg", 0)
-frame2 = cv2.imread("v2/image1002.jpg", 0)
-image_fraction_matched = mt.SURF_match(frame1, frame2, 2500, 0.7)
+FRAMES1 = cv2.imread("v1/image295.jpg", 0)
+FRAMES2 = cv2.imread("v2/image1002.jpg", 0)
+image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
 print(image_fraction_matched)
 '''
