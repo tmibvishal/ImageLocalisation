@@ -2,7 +2,7 @@
 Contains functions that operate on video or stream of images
 """
 
-import os
+import cv2
 import numpy as np
 import matcher as mt
 import time
@@ -20,7 +20,8 @@ class imgObj:
 
 
 def variance_of_laplacian(image):
-    """Compute the Laplacian of the image and then return the focus measure, which is simply the variance of the Laplacian
+    """Compute the Laplacian of the image and then return the focus measure, 
+    which is simply the variance of the Laplacian
     Parameters
     ----------
     image : image object (mat)
@@ -92,7 +93,7 @@ def save_distinct_frames(video_str, folder, frames_skipped: int = 0, check_blurr
                 i = i + 1
                 continue
 
-            if (check_blurry):
+            if check_blurry:
                 if (is_blurry(frame)):
                     check_next_frame = True
                     i = i + 1
@@ -192,7 +193,8 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
     i_last_matched = index of last frame (in frames1 ) matched; i_init<=i_last_matched<len(frames1)
     j_last_matched = index of last frame (in frames2 ) matched(with i_last_matched);
                         j_init<=j_last_matched<len(frames2)
-    match = index of best matched frame (in frames2) with (i)th frame in frames1. j_last_matched<=match<=j
+    match = index of best matched frame (in frames2) with (i)th frame in frames1. 
+    j_last_matched<=match<=j
     maxmatch = fraction matching between (i)th and (match) frames
     """
     while True:
@@ -245,7 +247,8 @@ def compare_videos(frames1, frames2):
     while(i < len1):
         match, maxmatch = None, 0
         for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
+            image_fraction_matched = mt.SURF_match(
+                frames1[i][1], frames2[j][1], 2500, 0.7)
             if image_fraction_matched > 0.1:
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched

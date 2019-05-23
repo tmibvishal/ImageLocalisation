@@ -21,8 +21,8 @@ class ImgObj:
 
 
 def variance_of_laplacian(image):
-    """Compute the Laplacian of the image and then return the focus measure, which is simply 
-    the variance of the Laplacian
+    """Compute the Laplacian of the image and then return the focus measure, 
+    which is simply the variance of the Laplacian
 
     Parameters
     ----------
