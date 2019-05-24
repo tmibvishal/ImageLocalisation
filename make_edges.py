@@ -324,7 +324,7 @@ def create_folder(directory):
 #path="v1"
 #video_to_edges(video_number,path)
 
-video_to_edges("1", "v1")
-video_to_edges("2", "v2")
+video_to_edges("1", "v1_n")
+# video_to_edges("2", "v2")
 
 # shutil.copytree("v1", "storage/1")

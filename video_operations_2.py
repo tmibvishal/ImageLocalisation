@@ -8,7 +8,6 @@ import matcher as mt
 import os
 import time
 import pickle
-from imutils import paths
 
 
 class ImgObj:
@@ -22,14 +21,18 @@ class ImgObj:
 
 
 def variance_of_laplacian(image):
-    """Compute the Laplacian of the image and then return the focus measure, which is simply the variance of the Laplacian
+    """Compute the Laplacian of the image and then return the focus measure,
+    which is simply the variance of the Laplacian
+
     Parameters
     ----------
     image : image object (mat)
+
     Returns
     -------
     int,
         returns higher value if image is not blurry otherwise returns lower value
+
     Referenece
     -------
     https://www.pyimagesearch.com/2015/09/07/blur-detection-with-opencv/
@@ -39,9 +42,11 @@ def variance_of_laplacian(image):
 
 def is_blurry(image):
     """Check if the image passed is blurry or not
+
     Parameters
     ----------
     image : image object (mat)
+
     Returns
     -------
     bool,
@@ -54,29 +59,30 @@ def is_blurry(image):
 def load_from_memory(file_name: str, folder: str = None):
     """
     Load a python object saved as .pkl from the memory
+
     :param file_name: name of the file
     :param folder: name of the folder, folder = None means current folder
     :return: pyobject or False if fails to load
     """
     try:
-        with open(folder + "/" + file_name, 'rb') if folder != None else open(file_name, 'rb') as input:
-            pyobject = pickle.load(input)
+        with open(folder + "/" + file_name, 'rb') if folder is not None else open(file_name, 'rb') as input_rb:
+            pyobject = pickle.load(input_rb)
             return pyobject
-    except Exception as e:
-        raise e
-        return False
+    except Exception as exception:
+        return False, exception
 
 
 def save_to_memory(pyobject, file_name: str, folder: str = None):
     """
     Save a pyobject to the memory
+
     :param pyobject: python object
     :param file_name: file_name that pyobject will be saved with
     :param folder: name of the folder where to save, folder = None means current folder
     :return: True if file is loader or False otherwise
     """
     try:
-        with open(folder + "/" + file_name, 'wb') if folder != None else open(file_name, 'wb') as output:
+        with open(folder + "/" + file_name, 'wb') if folder is not None else open(file_name, 'wb') as output:
             pickle.dump(pyobject, output, pickle.HIGHEST_PROTOCOL)
         return True
     except Exception as e:
@@ -92,6 +98,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     folder : folder where non redundant images are to be saved,
     frames_skipped: Number of frames to skip and just not consider,
     check_blurry: If True then only considers non blurry frames but is slow
+
     Returns
     -------
     array,
@@ -108,7 +115,6 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 200)
 
     distinct_frames = []
-    comparison_frame = None
     i = 0
     a = None
     b = None
@@ -160,9 +166,11 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
 def read_images(folder):
     """Reads images of the form "image<int>.pkl" from folder(passed as string containing
     relative path of the specific folder)
+
     Parameters
     ----------
     folder: name of the folder
+
     Returns
     -------
     array,
@@ -182,6 +190,8 @@ def read_images(folder):
             firstly sort them to image100.pkl,image21.pkl,image22.pkl then according to length to image21.pkl,image22.pkl,image100.pkl
         '''
         img_obj = load_from_memory(file, folder)
+        print(file)
+        print(folder)
         frame, len_keypoints, descriptors = img_obj.get_elements()
         time_stamp = int(file.replace('image', '').replace('.pkl', ''), 10)
         distinct_frames.append((time_stamp, frame, len_keypoints, descriptors))
@@ -193,19 +203,24 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
     """
     Called when frames1[i_init][1] matches best with frames2[j_init][1]. This function checks
     subsequent frames of frames1 and frames2 to see if edge is detected.
+
     Parameters
     ----------
-    i_init: index of the frame in frames1 list , which matches with the corresponding frame in frame2 list
-    j_init: index of the frame in frames2 list , which matches with the corresponding frame in frame1 list
+    i_init: index of the frame in frames1 list , which matches with the corresponding frame
+            in frame2 list
+    j_init: index of the frame in frames2 list , which matches with the corresponding frame
+            in frame1 list
     frames1:
     frames2: are lists containing tuples of the form
             (time_stamp, frame, len_keypoints, descriptors) along path1 and path2
+
     Returns
     -------
     ( status, i_last_matched, j_last_matched ),
         status: if edge is found or not (starting from i_init and j_init)
         i_last_matched: index of last matched frame of frames1
         j_last_matched: index of last matched frame of frames2
+
     """
     confidence = 5
     """
@@ -261,6 +276,7 @@ def compare_videos(frames1, frames2):
     """
     :param frames1:
     :param frames2: are lists containing tuples of the form (time_stamp, frame) along path1 and path2
+
     (i)th frame in frames1 is compared with all frames in frames2[lower_j ... (len2)-1].
     If match is found then edge_from_specific_pt is called from indexes i and match
     if edge found then i is incremented to i_last_matched (returned from edge_from_specific_pt) and
@@ -275,13 +291,10 @@ def compare_videos(frames1, frames2):
         for j in range(lower_j, len2):
             image_fraction_matched = mt.SURF_match_2((frames1[i][2], frames1[i][3]), (frames2[j][2], frames2[j][3]),
                                                      2500, 0.7)
-            print(image_fraction_matched)
-            if image_fraction_matched > 0.1:
+            if image_fraction_matched > 0.15:
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
         if match is not None:
-            print(i)
-            print(j)
             if i >= len1 or lower_j >= len2:
                 break
             status, i, j = edge_from_specific_pt(i, match, frames1, frames2)
@@ -293,28 +306,26 @@ def compare_videos_and_print(frames1, frames2):
     len1, len2 = len(frames1), len(frames2)
     lower_j = 0
     for i in range(len1):
-        print(i)
         print("")
         print(str(frames1[i][0]) + "->")
         for j in range(lower_j, len2):
-            print(j)
             image_fraction_matched = mt.SURF_match_2((frames1[i][2], frames1[i][3]), (frames2[j][2], frames2[j][3]),
                                                      2500, 0.7)
             if image_fraction_matched > 0.2:
                 print(str(frames2[j][0]) + " : confidence is " + str(image_fraction_matched))
 
-# frames1 = save_distinct_ImgObj("testData/sushant_mc/20190518_155651.mp4", "v1_n", 4)
-# frames2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155820.mp4", "v2_n", 4)
 
-frames1 = read_images("v1_n")
-frames2 = read_images("v2_n")
-compare_videos_and_print(frames1, frames2)
-# compare_videos(frames2, frames1)
+# FRAMES1 = save_distinct_ImgObj("testData/20190518_155651.mp4", "v1", 4)
+# FRAMES2 = save_distinct_ImgObj("testData/20190518_155820.mp4", "v2", 4)
+
+# FRAMES1 = read_images("v1")
+# FRAMES2 = read_images("v2")
+# compare_videos_and_print(frames1, frames2)
+# compare_videos(FRAMES2, FRAMES1)
 
 '''
-frame1 = cv2.imread("v1/image295.pkl", 0)
-frame2 = cv2.imread("v2/image1002.pkl", 0)
-image_fraction_matched = mt.SURF_match(frame1, frame2, 2500, 0.7)
+fFRAMES1 = cv2.imread("v1/image295.pkl", 0)
+FRAMES2 = cv2.imread("v2/image1002.pkl", 0)
+image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
 print(image_fraction_matched)
 '''
-

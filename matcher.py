@@ -9,7 +9,7 @@ Accepts only Mat (The Basic Image Container) format images
 import cv2
 import numpy as np
 
-def SURF_match_2(key_des_1,key_des_2, hessianThreshold: int = 400, ratio_thresh: float = 0.7):
+def SURF_match_2(key_des_1,key_des_2, hessianThreshold: int = 400, ratio_thresh: float = 0.7, symmetry_match: bool = True):
     """Give fraction match between 2 images descriptors using SURF and FLANN
 
     Parameters
@@ -17,7 +17,8 @@ def SURF_match_2(key_des_1,key_des_2, hessianThreshold: int = 400, ratio_thresh:
     key_des_1 : (length of keypoints, description) pair of image 1,
     key_des_2 : (length of keypoints, description) pair of image 2,
     hessianThreshold: Number of SURF points to consider in a image,
-    ratio_thresh: (b/w 0 to 1) lower the number more serious the matching
+    ratio_thresh: (b/w 0 to 1) lower the number more serious the matching,
+    symmetry_match: if symmetry_match then order of key_des_1 and 2 does not matter but slow
 
     Returns
     -------
@@ -49,12 +50,22 @@ def SURF_match_2(key_des_1,key_des_2, hessianThreshold: int = 400, ratio_thresh:
             good_matches.append(m)
     c1 = len(good_matches)
 
+    if(symmetry_match):
+        knn_matches = matcher.knnMatch(descriptors2, descriptors1, 2)
+        good_matches = []
+        for m, n in knn_matches:
+            if m.distance < ratio_thresh * n.distance:
+                good_matches.append(m)
+        c2 = len(good_matches)
+        fraction = (c1 + c2) / (a1 + b1)
+        return fraction
+
     fraction = (2.0 * c1) / (a1 + b1)
     if(fraction > 1): fraction = 1
     # fraction can be greater than one in blur images because we are multiplying fraction with 2
     return fraction
 
-def SURF_match(img1, img2, hessianThreshold: int = 400, ratio_thresh: float = 0.7):
+def SURF_match(img1, img2, hessianThreshold: int = 400, ratio_thresh: float = 0.7, symmetry_match: bool = True):
     """Give fraction match between 2 images using SURF and FLANN
 
     Parameters
@@ -94,6 +105,16 @@ def SURF_match(img1, img2, hessianThreshold: int = 400, ratio_thresh: float = 0.
         if m.distance < ratio_thresh * n.distance:
             good_matches.append(m)
     c1 = len(good_matches)
+
+    if(symmetry_match):
+        knn_matches = matcher.knnMatch(descriptors2, descriptors1, 2)
+        good_matches = []
+        for m, n in knn_matches:
+            if m.distance < ratio_thresh * n.distance:
+                good_matches.append(m)
+        c2 = len(good_matches)
+        fraction = (c1 + c2) / (a1 + b1)
+        return fraction
 
     fraction = (2.0 * c1) / (a1 + b1)
     if(fraction > 1): fraction = 1
