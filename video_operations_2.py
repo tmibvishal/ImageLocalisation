@@ -11,13 +11,12 @@ import pickle
 
 
 class ImgObj:
-    def __init__(self, frame, no_of_keypoints, descriptors):
-        self.frame = frame
+    def __init__(self, no_of_keypoints, descriptors):
         self.no_of_keypoints = no_of_keypoints
         self.descriptors = descriptors
 
     def get_elements(self):
-        return (self.frame, self.no_of_keypoints, self.descriptors)
+        return (self.no_of_keypoints, self.descriptors)
 
 
 def variance_of_laplacian(image):
@@ -81,13 +80,18 @@ def save_to_memory(pyobject, file_name: str, folder: str = None):
     :param folder: name of the folder where to save, folder = None means current folder
     :return: True if file is loader or False otherwise
     """
+    
+    try:
+        os.mkdir(folder)
+    except FileExistsError:
+        pass
+
     try:
         with open(folder + "/" + file_name, 'wb') if folder is not None else open(file_name, 'wb') as output:
             pickle.dump(pyobject, output, pickle.HIGHEST_PROTOCOL)
         return True
     except Exception as e:
         raise e
-        return False
 
 
 def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = True, hessianThreshold: int = 2500):
@@ -126,8 +130,9 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
 
     keypoints, descriptors = detector.detectAndCompute(frame, None)
 
-    a = (frame, len(keypoints), descriptors)
-    save_to_memory(ImgObj(a[0], a[1], a[2]), 'image' + str(i) + '.pkl', folder)
+    a = (len(keypoints), descriptors)
+    save_to_memory(ImgObj(a[0], a[1]), 'image' + str(i) + '.pkl', folder)
+    distinct_frames.append((i, a[0], a[1]))
 
     while True:
         ret, frame = cap.read()
@@ -145,11 +150,11 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
 
             cv2.imshow('frame', frame)
             keypoints, descriptors = detector.detectAndCompute(frame, None)
-            b = (frame, len(keypoints), descriptors)
-            image_fraction_matched = mt.SURF_match_2((a[1], a[2]), (b[1], b[2]), 2500, 0.7)
+            b = (len(keypoints), descriptors)
+            image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7)
             if image_fraction_matched < 0.1:
-                save_to_memory(ImgObj(b[0], b[1], b[2]), 'image' + str(i) + '.pkl', folder)
-                distinct_frames.append((i, a))
+                save_to_memory(ImgObj(b[0], b[1]), 'image' + str(i) + '.pkl', folder)
+                distinct_frames.append((i, b[0], b[1], b[2]))
                 a = b
 
             i = i + 1
@@ -318,11 +323,11 @@ def compare_videos_and_print(frames1, frames2):
                 print(str(frames2[j][0]) + " : confidence is " + str(image_fraction_matched))
 
 
-# FRAMES1 = save_distinct_ImgObj("testData/20190518_155651.mp4", "v1", 4)
-# FRAMES2 = save_distinct_ImgObj("testData/20190518_155820.mp4", "v2", 4)
+FRAMES1 = save_distinct_ImgObj("testData/sushant_mc/20190518_155651.mp4", "v1", 4)
+FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
-FRAMES1 = read_images("v1")
-FRAMES2 = read_images("v2")
+# FRAMES1 = read_images("v1")
+# FRAMES2 = read_images("v2")
 # compare_videos_and_print(frames1, frames2)
 compare_videos(FRAMES2, FRAMES1)
 
