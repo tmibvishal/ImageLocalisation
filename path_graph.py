@@ -1,8 +1,9 @@
 
 class Node:
-    def __init__(self, no):
+    def __init__(self, no, ):
         self.no = no
         self.connections = []
+        #self.node_data = node_data
 
 class Edge:
     def __init__(self, src, dest, edge_data):
