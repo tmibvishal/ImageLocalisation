@@ -80,7 +80,7 @@ def save_to_memory(pyobject, file_name: str, folder: str = None):
     :param folder: name of the folder where to save, folder = None means current folder
     :return: True if file is loader or False otherwise
     """
-    
+
     try:
         os.mkdir(folder)
     except FileExistsError:
@@ -94,7 +94,8 @@ def save_to_memory(pyobject, file_name: str, folder: str = None):
         raise e
 
 
-def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = True, hessianThreshold: int = 2500):
+def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = True,
+                         hessian_threshold: int = 2500):
     """Saves non redundent and distinct frames of a video in folder
     Parameters
     ----------
@@ -124,7 +125,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     b = None
     check_next_frame = False
 
-    detector = cv2.xfeatures2d_SURF.create(hessianThreshold)
+    detector = cv2.xfeatures2d_SURF.create(hessian_threshold)
 
     ret, frame = cap.read()
 
@@ -154,7 +155,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
             image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7)
             if image_fraction_matched < 0.1:
                 save_to_memory(ImgObj(b[0], b[1]), 'image' + str(i) + '.pkl', folder)
-                distinct_frames.append((i, b[0], b[1], b[2]))
+                distinct_frames.append((i, b[0], b[1]))
                 a = b
 
             i = i + 1
@@ -185,7 +186,8 @@ def read_images(folder):
     """
     distinct_frames = []
 
-    for file in sorted(sorted(os.listdir(folder)), key=len):  # sorting files on basis of 1) length and 2) numerical order
+    for file in sorted(sorted(os.listdir(folder)),
+                       key=len):  # sorting files on basis of 1) length and 2) numerical order
         '''
             Sorting is done 2 times because
             if files in the folder are
@@ -195,9 +197,9 @@ def read_images(folder):
             firstly sort them to image100.pkl,image21.pkl,image22.pkl then according to length to image21.pkl,image22.pkl,image100.pkl
         '''
         img_obj = load_from_memory(file, folder)
-        frame, len_keypoints, descriptors = img_obj.get_elements()
+        len_keypoints, descriptors = img_obj.get_elements()
         time_stamp = int(file.replace('image', '').replace('.pkl', ''), 10)
-        distinct_frames.append((time_stamp, frame, len_keypoints, descriptors))
+        distinct_frames.append((time_stamp, len_keypoints, descriptors))
         print("Reading image .." + str(time_stamp) + " from " + folder)  # for debug purpose
     return distinct_frames
 
@@ -246,10 +248,11 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
     maxmatch = fraction matching between (i)th and (match) frames
     """
     while True:
-        for j in range(j_last_matched+1, j_last_matched + 5):
+        for j in range(j_last_matched + 1, j_last_matched + 5):
             if j >= len(frames2):
                 break
-            image_fraction_matched = mt.SURF_match_2((frames1[i][2], frames1[i][3]), (frames2[j][2], frames2[j][3]), 2500, 0.7)
+            image_fraction_matched = mt.SURF_match_2((frames1[i][1], frames1[i][2]), (frames2[j][1], frames2[j][2]),
+                                                     2500, 0.7)
             if image_fraction_matched > 0.15:
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
@@ -292,7 +295,7 @@ def compare_videos(frames1, frames2):
     while (i < len1):
         match, maxmatch = None, 0
         for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match_2((frames1[i][2], frames1[i][3]), (frames2[j][2], frames2[j][3]),
+            image_fraction_matched = mt.SURF_match_2((frames1[i][1], frames1[i][2]), (frames2[j][1], frames2[j][2]),
                                                      2500, 0.7)
             if image_fraction_matched > 0.15:
                 if image_fraction_matched > maxmatch:
@@ -312,7 +315,7 @@ def compare_videos_and_print(frames1, frames2):
         print("")
         print(str(frames1[i][0]) + "->")
         for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match_2((frames1[i][2], frames1[i][3]), (frames2[j][2], frames2[j][3]),
+            image_fraction_matched = mt.SURF_match_2((frames1[i][1], frames1[i][2]), (frames2[j][1], frames2[j][2]),
                                                      2500, 0.7)
             if image_fraction_matched > 0.2:
                 print(str(frames2[j][0]) + " : confidence is " + str(image_fraction_matched))
