@@ -211,7 +211,6 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
             if confidence == 0:
                 break
         else:
-            print("i:",i," j:",match)
             confidence = 5
             j_last_matched = match
             i_last_matched = i
@@ -254,7 +253,6 @@ def compare_videos(frames1, frames2):
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
         if match is not None:
-            print("first i:",i,"first j:",match)
             status, i, j = edge_from_specific_pt(i, match, frames1, frames2)
             lower_j = j
             if i >= len1 or lower_j >= len2:
@@ -281,15 +279,16 @@ def compare_videos_and_print(frames1, frames2):
 
 # FRAMES1 = read_images("v1")
 # FRAMES2 = read_images("v2")
-# FRAMES1 = save_distinct_frames("testData/20190518_155651.mp4", "v1", 4)
-# FRAMES2 = save_distinct_frames("testData/20190518_155820.mp4", "v2", 4)
+FRAMES1 = save_distinct_frames("testData/sushant_mc/20190518_155651.mp4", "v1", 4)
+FRAMES2 = save_distinct_frames("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 # compare_videos_and_print(FRAMES2, FRAMES1)
 # compare_videos(FRAMES2, FRAMES1)
 
-
+'''
 FRAMES1 = cv2.imread("v1 old1/image390.jpg", 0)
 FRAMES2 = cv2.imread("v2 old1/image416.jpg", 0)
 image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
 print(image_fraction_matched)
+'''
 
