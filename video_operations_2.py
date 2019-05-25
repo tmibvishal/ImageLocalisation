@@ -289,7 +289,6 @@ def compare_videos(frames1, frames2):
     len1, len2 = len(frames1), len(frames2)
     lower_j = 0
     i = 0
-    matches_found = []
     while (i < len1):
         match, maxmatch = None, 0
         for j in range(lower_j, len2):
@@ -301,13 +300,9 @@ def compare_videos(frames1, frames2):
         if match is not None:
             if i >= len1 or lower_j >= len2:
                 break
-            status, i1, j1 = edge_from_specific_pt(i, match, frames1, frames2)
-            if status:
-                matches_found.append((i, i1, match, j1))
-            i, j = i1, j1
+            status, i, j = edge_from_specific_pt(i, match, frames1, frames2)
             lower_j = j
         i = i + 1
-    return matches_found
 
 
 def compare_videos_and_print(frames1, frames2):
