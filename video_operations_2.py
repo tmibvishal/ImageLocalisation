@@ -39,7 +39,7 @@ def variance_of_laplacian(image):
     return cv2.Laplacian(image, cv2.CV_64F).var()
 
 
-def is_blurry(image):
+def is_blurry_colorful(image):
     """Check if the image passed is blurry or not
 
     Parameters
@@ -52,8 +52,12 @@ def is_blurry(image):
         returns True if image is blurry otherwise returns False
     """
     b, _, _ = cv2.split(image)
-    return (variance_of_laplacian(b) < 120)
+    a = variance_of_laplacian(b)
+    return (variance_of_laplacian(b) < 125)
 
+def is_blurry_grayscale(gray_image):
+    a = variance_of_laplacian(gray_image)
+    return (variance_of_laplacian(gray_image) < 125)
 
 def load_from_memory(file_name: str, folder: str = None):
     """
@@ -94,7 +98,7 @@ def save_to_memory(pyobject, file_name: str, folder: str = None):
         raise e
 
 
-def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = True,
+def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
                          hessian_threshold: int = 2500):
     """Saves non redundent and distinct frames of a video in folder
     Parameters
@@ -128,33 +132,38 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     detector = cv2.xfeatures2d_SURF.create(hessian_threshold)
 
     ret, frame = cap.read()
-
-    keypoints, descriptors = detector.detectAndCompute(frame, None)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    cv2.imshow('frame', gray)
+    keypoints, descriptors = detector.detectAndCompute(gray, None)
 
     a = (len(keypoints), descriptors)
     save_to_memory(ImgObj(a[0], a[1]), 'image' + str(i) + '.pkl', folder)
+    cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
     distinct_frames.append((i, a[0], a[1]))
 
     while True:
         ret, frame = cap.read()
         if ret:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             if (i % frames_skipped != 0 and not check_next_frame):
                 i = i + 1
                 continue
 
             if (check_blurry):
-                if (is_blurry(frame)):
+                if (is_blurry_grayscale(gray)):
                     check_next_frame = True
                     i = i + 1
                     continue
                 check_next_frame = False
 
-            cv2.imshow('frame', frame)
-            keypoints, descriptors = detector.detectAndCompute(frame, None)
+
+            cv2.imshow('frame', gray)
+            keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors)
             image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7)
             if image_fraction_matched < 0.1:
                 save_to_memory(ImgObj(b[0], b[1]), 'image' + str(i) + '.pkl', folder)
+                cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
                 distinct_frames.append((i, b[0], b[1]))
                 a = b
 
@@ -326,12 +335,23 @@ FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 
 
 # FRAMES1 = read_images("v1")
 # FRAMES2 = read_images("v2")
-# compare_videos_and_print(frames1, frames2)
-compare_videos(FRAMES2, FRAMES1)
+compare_videos_and_print(FRAMES1, FRAMES2)
+# compare_videos(FRAMES2, FRAMES1)
 
 '''
 fFRAMES1 = cv2.imread("v1/image295.pkl", 0)
 FRAMES2 = cv2.imread("v2/image1002.pkl", 0)
 image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
 print(image_fraction_matched)
+
+
+
+cap = cv2.VideoCapture("testData/sushant_mc/20190518_155931.mp4")
+ret, frame = cap.read()
+cv2.imshow("frame", frame)
+print(is_blurry_colorful(frame))
+
+
+frame = cv2.imread("v2/jpg/image207.jpg", 0)
+print(is_blurry_grayscale(frame))
 '''
