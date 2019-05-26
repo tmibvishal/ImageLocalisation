@@ -262,19 +262,15 @@ def compare_videos(frames1, frames2):
 
 def compare_videos_and_print(frames1, frames2):
     len1, len2 = len(frames1), len(frames2)
-    # best_matches = []
     lower_j = 0
     for i in range(len1):
         print("")
         print(str(frames1[i][0]) + "->")
-        # best_matches_for_i = []
         for j in range(lower_j, len2):
             image_fraction_matched = mt.SURF_match(frames1[i][1], frames2[j][1], 2500, 0.7)
             if image_fraction_matched > 0.15:
                 print(str(frames2[j][0]) + " : confidence is " +
                       str(image_fraction_matched))
-                # best_matches_for_i.append((frames2[j][0], image_fraction_matched))
-        # best_matches.append((frames1[i][0], best_matches_for_i))
 
 
 # FRAMES1 = read_images("v1")

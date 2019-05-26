@@ -207,19 +207,20 @@ class Graph:
         cv2.destroyAllWindows()
 
     def add_node_images(self, identity, node_images):
-        # node_images = {"front": None, "right": None, "left": None, "bottom": None}
         def is_node_images(node_images):
-            if (isinstance(node_images, dict) == False):
-                return
+            if (not isinstance(node_images, list) or not len(node_images) == 4):
+                return False
+            else:
+                return True
 
         i = 0
         while (i < len(self.Nodes)):
             Nd = self.Nodes[i]
             if Nd.identity == identity:
-                if(isinstance(node_images, dict)):
+                if(is_node_images(node_images)):
                     self.Nodes[i].node_images = node_images
                 else:
-                    raise Exception("node_data is not a dictionary")
+                    raise Exception("node_data is not a size 4 array")
             i = i + 1
 
     def add_edge_data(self, node1: Node, node2: Node, path_of_video: str, folder_to_save: str = None,
