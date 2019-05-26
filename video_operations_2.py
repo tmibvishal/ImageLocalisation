@@ -53,11 +53,11 @@ def is_blurry_colorful(image):
     """
     b, _, _ = cv2.split(image)
     a = variance_of_laplacian(b)
-    return (variance_of_laplacian(b) < 125)
+    return (variance_of_laplacian(b) < 120)
 
 def is_blurry_grayscale(gray_image):
     a = variance_of_laplacian(gray_image)
-    return (variance_of_laplacian(gray_image) < 125)
+    return (variance_of_laplacian(gray_image) < 120)
 
 def load_from_memory(file_name: str, folder: str = None):
     """
