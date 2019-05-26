@@ -8,7 +8,7 @@ import matcher as mt
 import os
 import time
 import pickle
-
+import general
 
 class ImgObj:
     def __init__(self, no_of_keypoints, descriptors):
@@ -113,6 +113,8 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     array,
         returns array contaning non redundant frames(mat format)
     """
+
+    general.ensure_path(folder+"/jpg")
 
     frames_skipped += 1
 
