@@ -275,8 +275,8 @@ def compare_videos_and_print(frames1, frames2):
 
 # FRAMES1 = read_images("v1")
 # FRAMES2 = read_images("v2")
-FRAMES1 = save_distinct_frames("testData/sushant_mc/20190518_155651.mp4", "v1", 4)
-FRAMES2 = save_distinct_frames("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
+FRAMES1 = save_distinct_frames("testData/sushant_mc/20190518_155931.mp4", "testResults/v1", 4)
+# FRAMES2 = save_distinct_frames("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 # compare_videos_and_print(FRAMES2, FRAMES1)
 # compare_videos(FRAMES2, FRAMES1)
