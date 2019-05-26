@@ -11,12 +11,62 @@ import pickle
 import general
 
 class ImgObj:
-    def __init__(self, no_of_keypoints, descriptors):
+    def __init__(self, no_of_keypoints, descriptors, time_stamp):
         self.no_of_keypoints = no_of_keypoints
         self.descriptors = descriptors
+        self.time_stamp = time_stamp
 
     def get_elements(self):
         return (self.no_of_keypoints, self.descriptors)
+
+    def get_time(self):
+        return self.time_stamp
+
+class DistinctFrames:
+    def __init__(self):
+        self.img_objects = []
+        self.time_of_path = None
+    
+    def add_img_obj(self, img_obj):
+        if not isinstance(img_obj, ImgObj):
+            raise Exception("Param is not an img object")
+        self.img_objects.append(img_obj)
+
+    def add_all(self,list_of_img_objects):
+        if isinstance(list_of_img_objects, list):
+            if isinstance(list_of_img_objects[0], ImgObj):
+                self.img_objects = list_of_img_objects
+                return
+        raise Exception("Param is not a list of img objects")
+
+    def calculate_time(self):
+        if len(self.img_objects) != 0:
+            start_time = self.img_objects[0].time_stamp
+            end_time = self.img_objects[-1].time_stamp
+            if isinstance(start_time, int) and isinstance(end_time, int):
+                self.time_of_path = end_time - start_time
+                return
+        raise Exception("Error in calculating time of path")
+
+    def get_time(self):
+        if self.time_of_path is None:
+            self.calculate_time()
+        return self.time_of_path
+
+    def no_of_frames(self):
+        return len(self.img_objects)
+
+    def get_objects(self, start_index = 0, end_index = -1):
+        if (start_index or end_index) not in range(0,self.no_of_frames()):
+            raise Exception("Invalid start / end indexes")
+        if start_index> end_index:
+            raise Exception("Start index should be less than or equal to end index")
+        return self.img_objects[start_index:end_index]
+
+    def get_object(self, index):
+        if index not in range(0,self.no_of_frames()):
+            raise Exception("Invalid index")
+        return self.img_objects[index]
 
 
 def variance_of_laplacian(image):
@@ -125,7 +175,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 200)
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 200)
 
-    distinct_frames = []
+    distinct_frames = DistinctFrames()
     i = 0
     a = None
     b = None
@@ -139,9 +189,10 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     keypoints, descriptors = detector.detectAndCompute(gray, None)
 
     a = (len(keypoints), descriptors)
-    save_to_memory(ImgObj(a[0], a[1]), 'image' + str(i) + '.pkl', folder)
+    img_obj = ImgObj(a[0], a[1], i)
+    save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
     cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
-    distinct_frames.append((i, a[0], a[1]))
+    distinct_frames.add_img_obj(img_obj)
 
     while True:
         ret, frame = cap.read()
@@ -164,9 +215,10 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
             b = (len(keypoints), descriptors)
             image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7)
             if image_fraction_matched < 0.1:
-                save_to_memory(ImgObj(b[0], b[1]), 'image' + str(i) + '.pkl', folder)
+                img_obj2 = ImgObj(b[0], b[1], i)
+                save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
-                distinct_frames.append((i, b[0], b[1]))
+                distinct_frames.add_img_obj(img_obj2)
                 a = b
 
             i = i + 1
@@ -195,7 +247,7 @@ def read_images(folder):
         (time_stamp, frame, len_keypoints, descriptors) where time_stamp is the <int> part of
         image<int>.pkl and frame is object of the image created using imread
     """
-    distinct_frames = []
+    distinct_frames = DistinctFrames()
 
     for file in sorted(sorted(os.listdir(folder)),
                        key=len):  # sorting files on basis of 1) length and 2) numerical order
@@ -208,9 +260,10 @@ def read_images(folder):
             firstly sort them to image100.pkl,image21.pkl,image22.pkl then according to length to image21.pkl,image22.pkl,image100.pkl
         '''
         img_obj = load_from_memory(file, folder)
-        len_keypoints, descriptors = img_obj.get_elements()
-        time_stamp = int(file.replace('image', '').replace('.pkl', ''), 10)
-        distinct_frames.append((time_stamp, len_keypoints, descriptors))
+        # len_keypoints, descriptors = img_obj.get_elements()
+        # time_stamp = int(file.replace('image', '').replace('.pkl', ''), 10)
+        time_stamp = img_obj.get_time()
+        distinct_frames.add_img_obj(img_obj)
         print("Reading image .." + str(time_stamp) + " from " + folder)  # for debug purpose
     return distinct_frames
 
@@ -260,9 +313,9 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
     """
     while True:
         for j in range(j_last_matched + 1, j_last_matched + 5):
-            if j >= len(frames2):
+            if j >= frames2.no_of_frames():
                 break
-            image_fraction_matched = mt.SURF_match_2((frames1[i][1], frames1[i][2]), (frames2[j][1], frames2[j][2]),
+            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(), frames2.get_object(j).get_elements(),
                                                      2500, 0.7)
             if image_fraction_matched > 0.15:
                 if image_fraction_matched > maxmatch:
@@ -276,20 +329,20 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
             j_last_matched = match
             i_last_matched = i
         i = i + 1
-        if i >= len(frames1):
+        if i >= frames1.no_of_frames():
             break
         match, maxmatch = None, 0
 
     if i_last_matched > i_init and j_last_matched > j_init:
         print("Edge found from :")
-        print(str(frames1[i_init][0]) + "to" + str(frames1[i_last_matched][0]) + "of video 1")
-        print(str(frames2[j_init][0]) + "to" + str(frames2[j_last_matched][0]) + "of video 2")
+        print(str(frames1.get_object(i_init).get_time()) + "to" + str(frames1.get_object(i_last_matched).get_time()) + "of video 1")
+        print(str(frames2.get_object(j_init).get_time()) + "to" + str(frames2.get_object(j_last_matched).get_time()) + "of video 2")
         return True, i_last_matched, j_last_matched
     else:
         return False, i_init, j_init
 
 
-def compare_videos(frames1, frames2):
+def compare_videos(frames1: DistinctFrames, frames2: DistinctFrames):
     """
     :param frames1:
     :param frames2: are lists containing tuples of the form (time_stamp, frame) along path1 and path2
@@ -300,13 +353,13 @@ def compare_videos(frames1, frames2):
     lower_j is incremented to j_last_matched
     """
 
-    len1, len2 = len(frames1), len(frames2)
+    len1, len2 = frames1.no_of_frames(), frames2.no_of_frames()
     lower_j = 0
     i = 0
     while (i < len1):
         match, maxmatch = None, 0
         for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match_2((frames1[i][1], frames1[i][2]), (frames2[j][1], frames2[j][2]),
+            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(), frames2.get_object(j).get_elements(),
                                                      2500, 0.7)
             if image_fraction_matched > 0.15:
                 if image_fraction_matched > maxmatch:
@@ -320,23 +373,23 @@ def compare_videos(frames1, frames2):
 
 
 def compare_videos_and_print(frames1, frames2):
-    len1, len2 = len(frames1), len(frames2)
+    len1, len2 = frames1.no_of_frames(), frames2.no_of_frames()
     lower_j = 0
     for i in range(len1):
         print("")
-        print(str(frames1[i][0]) + "->")
+        print(str(frames1.get_object(i).get_time()) + "->")
         for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match_2((frames1[i][1], frames1[i][2]), (frames2[j][1], frames2[j][2]),
+            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(), frames2.get_object(j).get_elements(),
                                                      2500, 0.7)
             if image_fraction_matched > 0.2:
-                print(str(frames2[j][0]) + " : confidence is " + str(image_fraction_matched))
+                print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
 
 
-FRAMES1 = save_distinct_ImgObj("testData/sushant_mc/20190518_155651.mp4", "v1", 4)
-FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
+# FRAMES1 = save_distinct_ImgObj("testData/sushant_mc/20190518_155651.mp4", "v1", 4)
+# FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
-# FRAMES1 = read_images("v1")
-# FRAMES2 = read_images("v2")
+FRAMES1 = read_images("v1")
+FRAMES2 = read_images("v2")
 compare_videos_and_print(FRAMES1, FRAMES2)
 # compare_videos(FRAMES2, FRAMES1)
 
