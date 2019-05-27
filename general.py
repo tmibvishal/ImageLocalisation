@@ -14,19 +14,13 @@ def ensure_path(path: str):
     Bool : True if the path exists/ is created
     False if any error occured
     """
-
+    """
     # handling case like /folder1/folder2
-    if (str[0] == "." and str[1] == "/"):
-        str = str[1:]
-
-    # handling case like ./folder1/folder2
-    if(str[0] == "." and str[1] == "/"):
-        str = str[2:]
-
-    # handling case like folder1/folder2/
-    n = len(str)
-    if(str[n-1] == '/'):
-        str = str[:-1]
+    # can't; permission is denied to create directory in "/"
+    
+    # handling case like ./folder1/folder2 or folder1/folder2/
+    # already handled below
+        """
 
     folders = path.split('/')
     current_path = ''
@@ -38,7 +32,8 @@ def ensure_path(path: str):
         if not os.path.isdir(current_path):
             try:
                 os.mkdir(current_path)
-            except:
+            except Exception as e:
+                print(e)
                 return False
     return True
 
