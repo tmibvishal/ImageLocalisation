@@ -1,15 +1,16 @@
 import cv2
 import video_operations_2 as vo2
+import os
+import general
 
 
 class Node:
-    def __init__(self, identity:int, name:str, x:int, y:int, z:int, links=[], node_images={}):
+    def __init__(self, identity:int, name:str, x:int, y:int, z:int):
         self.identity = identity
         self.name = name
         self.coordinates = (x, y, z)
-        self.links = links
-        self.node_images = node_images
-
+        self.links = []
+        self.node_images=[]
 
 class Edge:
     def __init__(self, is_connected: bool, src:int, dest:int, distinct_frames=None, video_length:int=None):
@@ -27,12 +28,14 @@ class Graph:
     def __init__(self):
         return
 
-    def create_node(self, name, x, y, z, links):
-        identity = self.Length
-        Nd = Node(identity, name, x, y, z, links)
-        self.add_node(Nd)
+    # private functions
 
-    def add_node(self, Nd):
+    def _create_node(self, name, x, y, z):
+        identity = self.Length
+        Nd = Node(identity, name, x, y, z)
+        self._add_node(Nd)
+
+    def _add_node(self, Nd):
         if isinstance(Nd, Node) and Nd not in self.Nodes:
             # Check if Nd has the format of Node , and if it is already present
             if isinstance(Nd.links, list):
@@ -44,13 +47,7 @@ class Graph:
         else:
             raise Exception("Nd format is not of Node, or is already present")
 
-    def get_node(self, identity):
-        for Nd in self.Nodes:
-            if identity == Nd.identity:
-                return Nd
-        return None
-
-    def nearest_node(self, x, y):
+    def _nearest_node(self, x, y):
         def distance(nd):
             delx = abs(nd.coordinates[0] - x)
             dely = abs(nd.coordinates[1] - y)
@@ -66,7 +63,7 @@ class Graph:
                     return None
         return nearest_node
 
-    def connect(self, nd1, nd2):
+    def _connect(self, nd1, nd2):
         if isinstance(nd1, Node) and isinstance(nd2, Node):
             if (nd2.identity < self.Length and nd1.identity < self.Length):
                 edge = Edge(True, nd1.identity, nd2.identity)
@@ -75,21 +72,8 @@ class Graph:
                 raise Exception("Wrong identities of Nodes")
         else:
             raise Exception("Nd format is not of Node, or is already present")
-
-    def set_edge_data(self, id1: int, id2: int, distinct_frames: vo2.DistinctFrames):
-        if not isinstance(id1, int) or not isinstance(id2, int) or (id1 or id2) >= self.Length:
-            raise Exception("Wrong id's passed")
-        if not isinstance(distinct_frames, vo2.DistinctFrames):
-            raise Exception("Invalid param for distinct_frames")
-        for nd in self.Nodes:
-            if nd.identity == id1:
-                for edge in nd.links:
-                    if edge.dest == id2:
-                        edge.distinct_frames = distinct_frames
-                        edge.video_length = distinct_frames.get_time()
-                        break
             
-    def image_string(self, z, params):
+    def _image_string(self, z, params):
         # pure = 1 : original (not scattered with nodes) image of map
         # pure = -1 : Graph ( with nodes ) of map only
         # In implementation, the original map image is assigned to img object named 'pure', and node one to
@@ -101,15 +85,79 @@ class Graph:
         else:
             raise Exception("Wrong params passed")
 
+    def _delete_node(self, Nd):
+        if Nd in self.Nodes:
+            self.Nodes.remove(Nd)
+            for nd2 in self.Nodes:
+                for edge in nd2.links:
+                    if (Nd.identity == edge.dest):
+                        nd2.links.remove(edge)
+        else:
+            raise Exception("Nd does not exists in Nodes")
+
+    def _add_edge_images(self, id1: int, id2: int, distinct_frames: vo2.DistinctFrames):
+        if not isinstance(id1, int) or not isinstance(id2, int) or (id1 or id2) >= self.Length:
+            raise Exception("Wrong id's passed")
+        if not isinstance(distinct_frames, vo2.DistinctFrames):
+            raise Exception("Invalid param for distinct_frames")
+        for nd in self.Nodes:
+            if nd.identity == id1:
+                for edge in nd.links:
+                    if edge.dest == id2:
+                        edge.distinct_frames = distinct_frames
+                        edge.video_length = distinct_frames.get_time()
+                        break
+
+    def _add_node_images(self, identity, node_images):
+        def is_node_images(node_images):
+            if not isinstance(node_images, vo2.DistinctFrames):
+                return False
+            else:
+                return True
+
+        i = 0
+        while (i < len(self.Nodes)):
+            Nd = self.Nodes[i]
+            if Nd.identity == identity:
+                if(is_node_images(node_images)):
+                    self.Nodes[i].node_images = node_images
+                    break
+                else:
+                    raise Exception("node_data is not DistinctFrames object")
+            i = i + 1
+
+    def _add_node_data(self, identity:int, path_of_video: str, folder_to_save: str = None,
+                       frames_skipped: int = 0, check_blurry: bool = True, hessian_threshold: int = 2500):
+        distinct_frames = vo2.save_distinct_ImgObj(path_of_video, folder_to_save, frames_skipped, check_blurry,
+                                                   hessian_threshold)
+        self._add_node_images(identity, distinct_frames)
+
+    def _add_edge_data(self, id1: int, id2: int, path_of_video: str, folder_to_save: str = None,
+                       frames_skipped: int = 0, check_blurry: bool = True, hessian_threshold: int = 2500):
+        distinct_frames = vo2.save_distinct_ImgObj(path_of_video, folder_to_save, frames_skipped, check_blurry,
+                                                  hessian_threshold)
+        self._add_edge_images(id1, id2, distinct_frames)
+
+
+    # public functions
+
+    def get_node(self, identity):
+        for Nd in self.Nodes:
+            if identity == Nd.identity:
+                return Nd
+        return None
+
     def print_graph(self, z):
-        pure = self.image_string(z, "pure")
-        impure = self.image_string(z, "impure")
+        pure = self._image_string(z, "pure")
+        impure = self._image_string(z, "impure")
         img = cv2.imread(pure)
 
         for Nd in self.Nodes:
             if Nd.coordinates[2] == z:
                 img = cv2.circle(
                     img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1)
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                cv2.putText(img, str(Nd.identity), (Nd.coordinates[0] + 10, Nd.coordinates[1] + 10), font, 1, (66, 126, 255), 2, cv2.LINE_AA)
                 for edge in Nd.links:
                     if edge.is_connected:
                         for Nd2 in self.Nodes:
@@ -129,16 +177,15 @@ class Graph:
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
                 identity = self.Length
-                if self.nearest_node(x, y) is None:
-                    self.create_node('Node-' + str(identity), x, y, z)
+                if self._nearest_node(x, y) is None:
+                    self._create_node('Node-' + str(identity), x, y, z)
                     cv2.circle(img, (x, y), 8, (66, 126, 255), -1)
                     font = cv2.FONT_HERSHEY_SIMPLEX
-                    cv2.putText(img,str(identity),(x+20,y+20), font, 4,(255,255,255),2,cv2.LINE_AA)
+                    cv2.putText(img, str(identity),(x+10,y+10), font, 1,(66,126,255),2,cv2.LINE_AA)
+                    cv2.imshow(window_text, img)
 
-                cv2.imshow(window_text, img)
-
-        pure = self.image_string(z, "pure")
-        impure = self.image_string(z, "impure")
+        pure = self._image_string(z, "pure")
+        impure = self._image_string(z, "impure")
         # img = cv2.imread(impure)
         # if img is None:
         img = cv2.imread(pure)
@@ -155,16 +202,16 @@ class Graph:
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
                 global nd
-                nd = self.nearest_node(x, y)
+                nd = self._nearest_node(x, y)
             elif event == cv2.EVENT_LBUTTONUP:
                 if nd is not None:
-                    ndcur = self.nearest_node(x, y)
-                    self.connect(nd, ndcur)
+                    ndcur = self._nearest_node(x, y)
+                    self._connect(nd, ndcur)
                     cv2.arrowedLine(img, (nd.coordinates[0], nd.coordinates[1]),
                              (ndcur.coordinates[0], ndcur.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
                     cv2.imshow(window_text, img)
 
-        impure = self.image_string(z, "impure")
+        impure = self._image_string(z, "impure")
         img = cv2.imread(impure)
         if img is None:
             return
@@ -174,26 +221,16 @@ class Graph:
         cv2.imwrite(impure, img)
         cv2.destroyAllWindows()
 
-    def delete_node(self, Nd):
-        if Nd in self.Nodes:
-            self.Nodes.remove(Nd)
-            for nd2 in self.Nodes:
-                for edge in nd2.links:
-                    if (Nd.identity == edge.dest):
-                        nd2.links.remove(edge)
-        else:
-            raise Exception("Nd does not exists in Nodes")
-
     def delete_connections(self):
         nd = None
 
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
                 global nd
-                nd = self.nearest_node(x, y)
+                nd = self._nearest_node(x, y)
             elif event == cv2.EVENT_LBUTTONUP:
                 if nd is not None:
-                    ndcur = self.nearest_node(x, y)
+                    ndcur = self._nearest_node(x, y)
                     for edge in nd.links:
                         if edge.dest == ndcur.identity:
                             nd.links.remove(edge)
@@ -221,26 +258,30 @@ class Graph:
         cv2.imwrite('nodegraph.jpg', img)
         cv2.destroyAllWindows()
 
-    def add_node_images(self, identity, node_images):
-        def is_node_images(node_images):
-            if (not isinstance(node_images, list) or not len(node_images) == 4):
-                return False
-            else:
-                return True
+    def read_edges(self, folder):
+        if os.path.isdir(folder):
+            for vid in os.listdir(folder):
+                name, type = vid.split(".")
+                src, dest = name.split("_")
+                self._add_edge_data(src, dest, folder + "/" + vid, "edge_data", 5, True)
 
-        i = 0
-        while (i < len(self.Nodes)):
-            Nd = self.Nodes[i]
-            if Nd.identity == identity:
-                if(is_node_images(node_images)):
-                    self.Nodes[i].node_images = node_images
-                    break
-                else:
-                    raise Exception("node_data is not a size 4 array")
-            i = i + 1
+    def read_nodes(self, folder):
+        if os.path.isdir(folder):
+            for vid in os.listdir(folder):
+                identity,type = vid.split(".")
+                self._add_node_data(identity, folder + "/" + vid, "node_data", 5, True)
 
-    def add_edge_data(self, node1: Node, node2: Node, path_of_video: str, folder_to_save: str = None,
-                      frames_skipped: int = 0, check_blurry: bool = True, hessian_threshold: int = 2500):
-        distinct_frames = vo2.save_distinct_ImgObj(path_of_video, folder_to_save, frames_skipped, check_blurry,
-                                                  hessian_threshold)
-        self.set_edge_data(node1.identity, node2.identity, distinct_frames)
+    def save_graph(self):
+        general.save_to_memory(self, "graph.pkl")
+
+    @staticmethod
+    def load_graph():
+        return general.load_from_memory("graph.pkl")
+
+
+
+graph=Graph()
+graph.mark_nodes()
+graph.make_connections()
+graph.print_graph()
+graph.save_graph()
