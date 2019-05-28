@@ -8,7 +8,8 @@ import matcher as mt
 import os
 import time
 import pickle
-import general
+from general import *
+
 
 class ImgObj:
     def __init__(self, no_of_keypoints, descriptors, time_stamp):
@@ -26,7 +27,7 @@ class DistinctFrames:
     def __init__(self):
         self.img_objects = []
         self.time_of_path = None
-    
+
     def add_img_obj(self, img_obj):
         if not isinstance(img_obj, ImgObj):
             raise Exception("Param is not an img object")
@@ -105,47 +106,10 @@ def is_blurry_colorful(image):
     a = variance_of_laplacian(b)
     return (variance_of_laplacian(b) < 120)
 
+
 def is_blurry_grayscale(gray_image):
     a = variance_of_laplacian(gray_image)
     return (variance_of_laplacian(gray_image) < 120)
-
-def load_from_memory(file_name: str, folder: str = None):
-    """
-    Load a python object saved as .pkl from the memory
-
-    :param file_name: name of the file
-    :param folder: name of the folder, folder = None means current folder
-    :return: pyobject or False if fails to load
-    """
-    try:
-        with open(folder + "/" + file_name, 'rb') if folder is not None else open(file_name, 'rb') as input_rb:
-            pyobject = pickle.load(input_rb)
-            return pyobject
-    except Exception as exception:
-        return False, exception
-
-
-def save_to_memory(pyobject, file_name: str, folder: str = None):
-    """
-    Save a pyobject to the memory
-
-    :param pyobject: python object
-    :param file_name: file_name that pyobject will be saved with
-    :param folder: name of the folder where to save, folder = None means current folder
-    :return: True if file is loader or False otherwise
-    """
-
-    try:
-        os.mkdir(folder)
-    except FileExistsError:
-        pass
-
-    try:
-        with open(folder + "/" + file_name, 'wb') if folder is not None else open(file_name, 'wb') as output:
-            pickle.dump(pyobject, output, pickle.HIGHEST_PROTOCOL)
-        return True
-    except Exception as e:
-        raise e
 
 
 def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
@@ -164,7 +128,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
         returns array contaning non redundant frames(mat format)
     """
 
-    general.ensure_path(folder+"/jpg")
+    ensure_path(folder+"/jpg")
 
     frames_skipped += 1
 
@@ -296,10 +260,10 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
     confidence = 5
     """
     No edge is declared when confidence is zero.
-    
-    Confidence is decreased by 1 whenever match is not found for (i)th frame of frame1 among 
+
+    Confidence is decreased by 1 whenever match is not found for (i)th frame of frame1 among
     the next 4 frames after j_last_matched(inclusive)
-    
+
     If match is found for (i)th frame, i_last_matched is changed to i, j_last_matched is changed to
     the corresponding match; and confidence is restored to initial value(5)
     """
@@ -391,10 +355,10 @@ def compare_videos_and_print(frames1, frames2):
 # FRAMES1 = save_distinct_ImgObj("testData/sushant_mc/20190518_155651.mp4", "v1", 4)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
-FRAMES1 = read_images("v1")
-FRAMES2 = read_images("v2")
-compare_videos_and_print(FRAMES1, FRAMES2)
+# FRAMES1 = read_images("v1")
+# FRAMES2 = read_images("v2")
 
+# compare_videos_and_print(FRAMES1, FRAMES2)
 # compare_videos(FRAMES2, FRAMES1)
 
 '''

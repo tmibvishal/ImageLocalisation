@@ -12,8 +12,11 @@ v2_n
 storage
 v1 sushant
 v2 sushant
+graph/graph.pkl
+graph/images/nodegraph0.jpg
+graph/images/nodegraph1.jpg
+__pycache__
 testResults
 make_edges.py
 make_edges2.py
 making_graph.py
-
