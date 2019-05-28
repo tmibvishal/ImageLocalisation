@@ -2,6 +2,7 @@ import cv2
 import video_operations_2 as vo2
 import os
 import general
+import copy
 
 
 class Node:
@@ -20,13 +21,20 @@ class Edge:
         self.distinct_frames = distinct_frames
         self.video_length = video_length
 
+class FloorMap:
+    def __init__(self, floor_no:int=None, img=None):
+        self.floor_no = floor_no
+        self.pure = img
+        self.impure = copy.deepcopy(img)
+
 
 class Graph:
-    Nodes = []
-    Length = 0
 
     def __init__(self):
-        return
+        self.Length = 0
+        self.Nodes = []
+        self.no_of_floors = 0
+        self.Floor_map = []
 
     # private functions
 
@@ -72,18 +80,6 @@ class Graph:
                 raise Exception("Wrong identities of Nodes")
         else:
             raise Exception("Nd format is not of Node, or is already present")
-            
-    def _image_string(self, z, params):
-        # pure = 1 : original (not scattered with nodes) image of map
-        # pure = -1 : Graph ( with nodes ) of map only
-        # In implementation, the original map image is assigned to img object named 'pure', and node one to
-        # 'impure' img object
-        if params == "pure":
-            return 'images/map' + str(z) + '.jpg'
-        elif params == "impure":
-            return 'images/nodegraph' + str(z) + '.jpg'
-        else:
-            raise Exception("Wrong params passed")
 
     def _delete_node(self, Nd):
         if Nd in self.Nodes:
@@ -138,6 +134,29 @@ class Graph:
                                                   hessian_threshold)
         self._add_edge_images(id1, id2, distinct_frames)
 
+    def _get_floor_img(self, z, params):
+        for floor in self.Floor_map:
+            if floor.floor_no == z:
+                if params == "pure":
+                    return floor.pure
+                elif params == "impure":
+                    return floor.impure
+                else:
+                    raise Exception("Invalid params passed")
+        raise Exception("Couldn't find floor")
+
+    def _set_floor_img(self, z, params, img):
+        for floor in self.Floor_map:
+            if floor.floor_no == z:
+                if params == "pure":
+                    floor.pure = img
+                    return
+                elif params == "impure":
+                    floor.impure = img
+                    return
+                else:
+                    raise Exception("Invalid params")
+        raise Exception("Couldn't find floor")
 
     # public functions
 
@@ -148,9 +167,9 @@ class Graph:
         return None
 
     def print_graph(self, z):
-        pure = self._image_string(z, "pure")
-        impure = self._image_string(z, "impure")
-        img = cv2.imread(pure)
+        #Implementation 1 ( building from pure image)
+        pure = self._get_floor_img(z, "pure")
+        img = copy.deepcopy(pure)
 
         for Nd in self.Nodes:
             if Nd.coordinates[2] == z:
@@ -166,9 +185,13 @@ class Graph:
                                         (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
                     else:
                         raise Exception("linkId does not exists")
+
+        # Implementation 2 ( directly taking impure image )
+        #impure = self._get_floor_img(z, "impure")
+        #img = impure
+
         cv2.imshow('Node graph for floor ' + str(z), img)
         cv2.waitKey(0)
-        cv2.imwrite(impure, img)
         cv2.destroyAllWindows()
 
     def mark_nodes(self, z):
@@ -184,15 +207,11 @@ class Graph:
                     cv2.putText(img, str(identity),(x+10,y+10), font, 1,(66,126,255),2,cv2.LINE_AA)
                     cv2.imshow(window_text, img)
 
-        pure = self._image_string(z, "pure")
-        impure = self._image_string(z, "impure")
-        # img = cv2.imread(impure)
-        # if img is None:
-        img = cv2.imread(pure)
+        impure = self._get_floor_img(z, "impure")
+        img = impure
         cv2.imshow(window_text, img)
         cv2.setMouseCallback(window_text, click_event)
         cv2.waitKey(0)
-        cv2.imwrite(impure, img)
         cv2.destroyAllWindows()
 
     def make_connections(self, z):
@@ -211,14 +230,14 @@ class Graph:
                              (ndcur.coordinates[0], ndcur.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
                     cv2.imshow(window_text, img)
 
-        impure = self._image_string(z, "impure")
-        img = cv2.imread(impure)
+        impure = self._get_floor_img(z, "impure")
+        img = impure
         if img is None:
             return
         cv2.imshow(window_text, img)
         cv2.setMouseCallback(window_text, click_event)
         cv2.waitKey(0)
-        cv2.imwrite(impure, img)
+        # self._set_floor_img(z, "impure", img)
         cv2.destroyAllWindows()
 
     def delete_connections(self):
@@ -271,6 +290,17 @@ class Graph:
                 identity,type = vid.split(".")
                 self._add_node_data(identity, folder + "/" + vid, "node_data", 5, True)
 
+    def add_floor_map(self, floor_no, path):
+        if floor_no > self.no_of_floors:
+            raise Exception("Floor already exists")
+        img = cv2.imread(path)
+        if img is not None:
+            floor_map = FloorMap(floor_no, img)
+            self.Floor_map.append(floor_map)
+            self.no_of_floors = self.no_of_floors + 1
+        else:
+            raise Exception("Cannot read image path")
+
     def save_graph(self):
         general.save_to_memory(self, "graph.pkl")
 
@@ -280,8 +310,9 @@ class Graph:
 
 
 
-graph=Graph()
-graph.mark_nodes()
-graph.make_connections()
-graph.print_graph()
+graph=Graph.load_graph()
+# graph.add_floor_map(0, "images/map0.jpg")
+graph.mark_nodes(0)
+graph.make_connections(0)
+graph.print_graph(0)
 graph.save_graph()
