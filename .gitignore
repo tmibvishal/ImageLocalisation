@@ -1,15 +1,21 @@
-graph/__pycache__/
+./graph/__pycache__/
 .idea
+./testData
+./v1
+./v2
+graph/graph.pkl
+graph/images/nodraph0.jpg
+graph/images/nodegraph1.jpg
+graph/edges
+graph/nodes
+graph/images
+graph/node_data
+graph/edge_data
 testData
-v1
-v2
+__pycache__
 v1 old1
 v2 old1
 v1 old2
 v2 old2
 v1 sushant
 v2 sushant
-graph/graph.pkl
-graph/images/nodegraph0.jpg
-graph/images/nodegraph1.jpg
-__pycache__
