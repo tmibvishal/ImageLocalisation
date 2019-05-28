@@ -13,6 +13,7 @@ class Node:
         self.links = []
         self.node_images=[]
 
+
 class Edge:
     def __init__(self, is_connected: bool, src:int, dest:int, distinct_frames=None, video_length:int=None):
         self.is_connected = is_connected
@@ -20,6 +21,7 @@ class Edge:
         self.dest = dest
         self.distinct_frames = distinct_frames
         self.video_length = video_length
+
 
 class FloorMap:
     def __init__(self, floor_no:int=None, img=None):
@@ -92,7 +94,7 @@ class Graph:
             raise Exception("Nd does not exists in Nodes")
 
     def _add_edge_images(self, id1: int, id2: int, distinct_frames: vo2.DistinctFrames):
-        if not isinstance(id1, int) or not isinstance(id2, int) or (id1 or id2) >= self.Length:
+        if (not isinstance(id1, int)) or (not isinstance(id2, int)) or ((id1 or id2) >= self.Length):
             raise Exception("Wrong id's passed")
         if not isinstance(distinct_frames, vo2.DistinctFrames):
             raise Exception("Invalid param for distinct_frames")
@@ -102,25 +104,19 @@ class Graph:
                     if edge.dest == id2:
                         edge.distinct_frames = distinct_frames
                         edge.video_length = distinct_frames.get_time()
-                        break
+                        return
+        raise Exception("Edge from "+str(id1)+" to "+str(id2)+" not found")
 
     def _add_node_images(self, identity, node_images):
-        def is_node_images(node_images):
-            if not isinstance(node_images, vo2.DistinctFrames):
-                return False
-            else:
-                return True
+        if not isinstance(node_images, vo2.DistinctFrames):
+            raise Exception("node_images is not DistinctFrames object")
 
-        i = 0
-        while (i < len(self.Nodes)):
-            Nd = self.Nodes[i]
+        for Nd in self.Nodes:
             if Nd.identity == identity:
-                if(is_node_images(node_images)):
-                    self.Nodes[i].node_images = node_images
-                    break
-                else:
-                    raise Exception("node_data is not DistinctFrames object")
-            i = i + 1
+                    Nd.node_images = node_images
+                    return
+        raise Exception("Node "+str(identity)+" not found!")
+
 
     def _add_node_data(self, identity:int, path_of_video: str, folder_to_save: str = None,
                        frames_skipped: int = 0, check_blurry: bool = True, hessian_threshold: int = 2500):
@@ -189,7 +185,7 @@ class Graph:
         # Implementation 2 ( directly taking impure image )
         #impure = self._get_floor_img(z, "impure")
         #img = impure
-
+        return img
         cv2.imshow('Node graph for floor ' + str(z), img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -228,6 +224,10 @@ class Graph:
                     self._connect(nd, ndcur)
                     cv2.arrowedLine(img, (nd.coordinates[0], nd.coordinates[1]),
                              (ndcur.coordinates[0], ndcur.coordinates[1]), (66, 126, 255), 1, cv2.LINE_AA)
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    meanx = (nd.coordinates[0] + ndcur.coordinates[0])//2
+                    meany = (nd.coordinates[1] + ndcur.coordinates[1])//2
+                    cv2.putText(img, str(nd.identity)+"_"+str(ndcur.identity), ( meanx, meany), font, 1, (100, 126, 255), 2, cv2.LINE_AA)
                     cv2.imshow(window_text, img)
 
         impure = self._get_floor_img(z, "impure")
@@ -237,8 +237,26 @@ class Graph:
         cv2.imshow(window_text, img)
         cv2.setMouseCallback(window_text, click_event)
         cv2.waitKey(0)
-        # self._set_floor_img(z, "impure", img)
         cv2.destroyAllWindows()
+
+    def delete_nodes(self, z):
+        window_text = 'Delete Nodes for floor ' + str(z)
+
+        def click_event(event, x, y, flags, param):
+            if event == cv2.EVENT_LBUTTONDOWN:
+                if self._nearest_node(x, y) is not None:
+                    nd = self._nearest_node(x, y)
+                    self._delete_node(nd)
+                    img = self.print_graph(z)
+                    cv2.imshow(window_text, img)
+
+        impure = self._get_floor_img(z, "impure")
+        img = impure
+        cv2.imshow(window_text, img)
+        cv2.setMouseCallback(window_text, click_event)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
 
     def delete_connections(self):
         nd = None
@@ -277,22 +295,22 @@ class Graph:
         cv2.imwrite('nodegraph.jpg', img)
         cv2.destroyAllWindows()
 
-    def read_edges(self, folder):
+    def read_edges(self, folder, frames_skipped = 0, check_blurry = True):
         if os.path.isdir(folder):
             for vid in os.listdir(folder):
                 name, type = vid.split(".")
                 src, dest = name.split("_")
-                self._add_edge_data(src, dest, folder + "/" + vid, "edge_data", 5, True)
+                self._add_edge_data(int(src), int(dest), folder + "/" + vid, "edge_data/edge_"+str(name), frames_skipped, check_blurry)
 
-    def read_nodes(self, folder):
+    def read_nodes(self, folder, frames_skipped = 0, check_blurry = True):
         if os.path.isdir(folder):
             for vid in os.listdir(folder):
                 identity,type = vid.split(".")
-                self._add_node_data(identity, folder + "/" + vid, "node_data", 5, True)
+                self._add_node_data(int(identity), folder + "/" + vid, "node_data/node_"+str(identity), frames_skipped, check_blurry)
 
     def add_floor_map(self, floor_no, path):
         if floor_no > self.no_of_floors:
-            raise Exception("Floor already exists")
+            raise Exception("Add floor "+str(self.no_of_floors)+" first!!")
         img = cv2.imread(path)
         if img is not None:
             floor_map = FloorMap(floor_no, img)
@@ -311,8 +329,7 @@ class Graph:
 
 
 graph=Graph.load_graph()
-# graph.add_floor_map(0, "images/map0.jpg")
 graph.mark_nodes(0)
 graph.make_connections(0)
-graph.print_graph(0)
+graph.delete_nodes(0)
 graph.save_graph()
