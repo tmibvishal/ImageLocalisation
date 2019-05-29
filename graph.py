@@ -328,8 +328,10 @@ class Graph:
 
 
 
-graph=Graph.load_graph()
+graph=Graph()
+graph.add_floor_map(0, "graph/images/map0.jpg")
 graph.mark_nodes(0)
 graph.make_connections(0)
-graph.delete_nodes(0)
+graph.read_nodes()
+graph.read_edges()
 graph.save_graph()
