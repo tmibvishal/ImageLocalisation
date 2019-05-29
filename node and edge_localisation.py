@@ -40,28 +40,29 @@ class node_and_image_maching:
         print(self.matched_nodes)
 
 
-    # def locate_edge(self,query_video_frames, confidence_level:int=4):
-    #     for node in self.matched_nodes:
-    #         for edge in node.links:
-    #             self.matched_edges.append((edge, 0, 0)) #(edge, confidence, frame_position_matched)
-    #
-    #     for i in query_video_frames:
-    #         for j in self.matched_edges:
-    #             match, maximum_match= None, 0
-    #             for k in range(int(j[2]),len(j[0].distinct_frames)):#starting from matched_edges[j][2] till end #edge folder
-    #                 image_fraction_matched = mt.SURF_match_2((j[0].distinct_frames[k][1], j[0].distinct_frames[k][2]), (i[1], i[2]), 2500, 0.7))
-    #                 if image_fraction_matched >0.15:
-    #                     if image_fraction_matched > maximum_matchmatch:
-    #                         match, maxmatch = k, image_fraction_matched
-    #             if match is not None:
-    #                 self.matched_edges[j]=(self.matched_edges[j][0],self.matched_edges[j][1]+1, match)
-    #             else:
-    #                 self.matched_edges[j]=(self.matched_edges[j][0],self.matched_edges[j][1]-1, self.matched_edges[j][2])
-    #             if self.matched_edges[j][1]< (-1)*confidence_level:
-    #                 self.matched_edges.pop(j)
-    #             if self.matched_edges[j][1]> confidence_level and len(self.matched_edges)==1:
-    #                 print("edge found")
-    #                 break
+    def locate_edge(self,query_video_frames, confidence_level:int=4):
+        for node in self.matched_nodes:
+            for edge in node.links:
+                self.matched_edges.append((edge, 0, 0)) #(edge, confidence, frame_position_matched)
+
+        for i in range(query_video_frames.no_of_frames()):
+            for edge in self.matched_edges:
+                match, maximum_match= None, 0
+                for k in range(int(edge[2]),edge[0].distinct_frames.no_of_frames()):#starting from matched_edges[j][2] till end #edge folder
+                    image_fraction_matched = mt.SURF_match_2(edge[0].distinct_frames.get_object(k).get_elements(), query_video_frames.get_object(i).get_elements(), 2500, 0.7)
+                    if image_fraction_matched >0.15:
+                        if image_fraction_matched > maximum_match:
+                            match, maximum_match = k, image_fraction_matched
+                if match is not None:
+                    edge[1]=edge[1]+1
+                    edge[2]=match
+                else:
+                    edge[1] = edge[1]-1
+                if edge[1]< (-1)*confidence_level:
+                    self.matched_edges.remove(edge)
+                if edge[1]> confidence_level and len(self.matched_edges)==1:
+                    print("edge found")
+                    break
 
 
 
