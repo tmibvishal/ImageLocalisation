@@ -3,6 +3,9 @@ import video_operations_2 as vo2
 import os
 import general
 import copy
+import matcher as mt
+import shutil
+import time
 
 
 class Node:
@@ -11,7 +14,7 @@ class Node:
         self.name = name
         self.coordinates = (x, y, z)
         self.links = []
-        self.node_images=[]
+        self.node_images=None
 
 
 class Edge:
@@ -185,7 +188,6 @@ class Graph:
         # Implementation 2 ( directly taking impure image )
         #impure = self._get_floor_img(z, "impure")
         #img = impure
-        return img
         cv2.imshow('Node graph for floor ' + str(z), img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -322,14 +324,66 @@ class Graph:
     def save_graph(self):
         general.save_to_memory(self, "graph.pkl")
 
-    @staticmethod
-    def load_graph():
-        return general.load_from_memory("graph.pkl")
+# @staticmethod
+def load_graph():
+    return general.load_from_memory("graph.pkl")
 
 
 
-graph=Graph.load_graph()
-graph.mark_nodes(0)
-graph.make_connections(0)
-graph.delete_nodes(0)
-graph.save_graph()
+
+class node_and_image_matching:
+    def __init__(self):
+        self.matched_nodes=[]
+        self.matched_edges=[]
+
+    def convert_query_video_to_objects(path, destination_folder):
+        return vo2.save_distinct_ImgObj(path,destination_folder)
+
+    """ Assume that a person starts frpom a specific node.
+    Query on all nodes.
+    Store the nodes with maximum match"""
+
+    def locate_node(self,nodes_list, query_video_frames, no_of_frames_of_query_video_to_be_matched:int=2):
+        if len(self.matched_nodes)!=0:
+            self.matched_nodes=[]
+        for node in nodes_list:
+            confidence=0
+            node_images= node.node_images
+            if(node_images == None):
+                continue
+            no_of_node_images= node_images.no_of_frames()
+            for j in range(no_of_frames_of_query_video_to_be_matched):
+                for k in range(no_of_node_images):
+                    image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(), node_images.get_object(k).get_elements(),
+                                                         2500, 0.7)
+                    if image_fraction_matched> 0.15:
+                        print(image_fraction_matched)
+                        print(j)
+                        print(k)
+                        print()
+                        confidence= confidence+1
+            if confidence/no_of_frames_of_query_video_to_be_matched >0.32:
+                self.matched_nodes.append(node)
+        for nd in self.matched_nodes:
+            print(nd.name)
+
+
+
+
+
+# graph=Graph()
+# graph.add_floor_map(0, "graph/images/map0.jpg")
+# graph.mark_nodes(0)
+# graph.make_connections(0)
+# graph.read_nodes("testData/Morning_sit/nodes",4)
+# graph.read_edges("testData/Morning_sit/edges",4)
+# graph.print_graph(0)
+# graph.save_graph()
+
+
+query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160046.mp4","query_distinct_frame",4, True)
+# graph1=graph.load_graph()
+graph =load_graph()
+node_and_image_matching_obj = node_and_image_matching()
+node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
+# graph.print_graph(0)

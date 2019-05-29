@@ -7,8 +7,9 @@ from imutils import paths
 import video_operations_2 as vo2
 import matcher as mt
 import graph
+from graph import Graph
 
-graph= graph.Graph()
+graph = graph.Graph()
 
 class node_and_image_maching:
     def __init__(self):
@@ -16,7 +17,7 @@ class node_and_image_maching:
         self.matched_edges=[]
 
     def convert_query_video_to_objects(path, destination_folder):
-        return vo2.save_distinct_ImgObj(path, "storage/"+destination_folder)
+        return vo2.save_distinct_ImgObj(path,destination_folder)
 
     """ Assume that a person starts from a specific node.
     Query on all nodes.
@@ -30,12 +31,13 @@ class node_and_image_maching:
             node_images= node.node_images
             for j in range(no_of_frames_of_query_video_to_be_matched):
                 for k in range(len(node_images)):
-                    image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(), node_images.get_object(k).get_elements(),
+                    image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(), node_images[k].get_elements(),
                                                          2500, 0.7)
                     if image_fraction_matched> 0.15:
                        confidence= confidence+1
             if confidence/no_of_frames_of_query_video_to_be_matched >0.32:
                 self.matched_nodes.append(node)
+        print(self.matched_nodes)
 
 
     # def locate_edge(self,query_video_frames, confidence_level:int=4):
@@ -75,4 +77,7 @@ class node_and_image_maching:
 
 
 
-query_video_frames= convert_query_video_to_objects(path, destination_folder)
+query_video_frames= vo2.read_images("query_distinct_frame")
+graph1=graph.load_graph()
+node_and_image_maching.locate_node(graph1.Nodes, query_video_frames)
+print(graph[2])
