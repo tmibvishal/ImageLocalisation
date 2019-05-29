@@ -104,12 +104,12 @@ def is_blurry_colorful(image):
     """
     b, _, _ = cv2.split(image)
     a = variance_of_laplacian(b)
-    return (variance_of_laplacian(b) < 120)
+    return (variance_of_laplacian(b) < 100)
 
 
 def is_blurry_grayscale(gray_image):
     a = variance_of_laplacian(gray_image)
-    return (variance_of_laplacian(gray_image) < 120)
+    return (variance_of_laplacian(gray_image) < 100)
 
 
 def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
@@ -161,33 +161,36 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     while True:
         ret, frame = cap.read()
         if ret:
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            if (i % frames_skipped != 0 and not check_next_frame):
-                i = i + 1
-                continue
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            if (check_blurry):
-                if (is_blurry_grayscale(gray)):
-                    check_next_frame = True
+                if (i % frames_skipped != 0 and not check_next_frame):
                     i = i + 1
                     continue
-                check_next_frame = False
+
+                cv2.imshow('frame', gray) # this line is above checking blurry why the heck it still is not printing anything my bro bro = broda
+
+                if (check_blurry):
+                    if (is_blurry_grayscale(gray)):
+                        check_next_frame = True
+                        i = i + 1
+                        continue
+                    check_next_frame = False
 
 
-            cv2.imshow('frame', gray)
-            keypoints, descriptors = detector.detectAndCompute(gray, None)
-            b = (len(keypoints), descriptors)
-            image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7)
-            if image_fraction_matched < 0.1:
-                img_obj2 = ImgObj(b[0], b[1], i)
-                save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
-                cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
-                distinct_frames.add_img_obj(img_obj2)
-                a = b
 
-            i = i + 1
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+                keypoints, descriptors = detector.detectAndCompute(gray, None)
+                b = (len(keypoints), descriptors)
+                image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7, False)
+                if image_fraction_matched < 0.1:
+                    img_obj2 = ImgObj(b[0], b[1], i)
+                    save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
+                    cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
+                    distinct_frames.add_img_obj(img_obj2)
+                    a = b
+
+                i = i + 1
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
         else:
             break
 
@@ -350,9 +353,7 @@ def compare_videos_and_print(frames1, frames2):
             if image_fraction_matched > 0.2:
                 print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
 
-
-
-# FRAMES1 = save_distinct_ImgObj("testData/sushant_mc/20190518_155651.mp4", "v1", 4)
+# FRAMES1 = save_distinct_ImgObj("testData/new things/6_2.MP4", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 # FRAMES1 = read_images("v1")
@@ -360,6 +361,7 @@ def compare_videos_and_print(frames1, frames2):
 
 # compare_videos_and_print(FRAMES1, FRAMES2)
 # compare_videos(FRAMES2, FRAMES1)
+
 
 '''
 fFRAMES1 = cv2.imread("v1/image295.pkl", 0)

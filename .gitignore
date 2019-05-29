@@ -12,6 +12,12 @@ graph/images
 graph/node_data
 graph/edge_data
 testData
+v3
+edge_data
+node_data
+query_distinct_frame
+graph.pkl
+storage
 __pycache__
 v1 old1
 v2 old1
