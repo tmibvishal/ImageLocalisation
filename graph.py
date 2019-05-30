@@ -369,16 +369,16 @@ class node_and_image_matching:
             print(nd.name)
 
 
-    def match_next_node(self, nodes_list, query_video_frames, last_frame_matched_with_edge,no_of_frames_of_query_video_to_be_matched:int=2):
+    def match_next_node(self, nodes_list, query_video_frames, last_frame_object,no_of_frames_of_query_video_to_be_matched:int=2):
         if len(self.matched_nodes)!=0:
             self.matched_nodes=[]
-        new_src_node= last_frame_matched_with_edge[1].dest
+        new_src_node= last_frame_object[1].dest
         for node in nodes_list:
             if node.identity== new_src_node:
                 confidence=0
                 node_images = node.node_images
                 no_of_node_images = node_images.no_of_frames()
-                for j in range(last_frame_matched_with_edge[0],last_frame_matched_with_edge[0]+ no_of_frames_of_query_video_to_be_matched):
+                for j in range(last_frame_object[0],last_frame_object[0]+ no_of_frames_of_query_video_to_be_matched):
                     for k in range(no_of_node_images):
                         image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(),
                                                                  node_images.get_object(k).get_elements(),
@@ -387,23 +387,24 @@ class node_and_image_matching:
                             confidence = confidence + 1
                 if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
                     self.matched_nodes.append(node)
-                    self.locate_edge(nodes_list, query_video_frames)
+                    self.locate_edge(nodes_list, query_video_frames, last_frame_object[0])
                     break
 
 
 
 
 
-    def locate_edge(self, nodes_list, query_video_frames, confidence_level: int = 2):
+    def locate_edge(self, nodes_list, query_video_frames, query_video_frames_begin: int=0,confidence_level: int = 2):
         last_frame_matched_with_edge=None
         for node in self.matched_nodes:
             for edge in node.links:
                 self.matched_edges.append([edge, 0, 0])  # (edge, confidence, frame_position_matched)
                 print("edges added"+str(edge.src)+"_"+str(edge.dest))
                 print()
-
-        for i in range(query_video_frames.no_of_frames()):
+        last_frame_matched_with_edge= query_video_frames_begin
+        for i in range(query_video_frames_begin, query_video_frames.no_of_frames()):
             edge_list=self.matched_edges
+
             j=0
             while j <len(edge_list):
                 match, maximum_match = None, 0
@@ -412,7 +413,7 @@ class node_and_image_matching:
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
                     if image_fraction_matched > 0.15:
                         if image_fraction_matched > maximum_match:
-                            last_frame_matched_with_edge=(i,edge_list[j][0])
+                            last_frame_matched_with_edge=i
                             print(image_fraction_matched)
                             print(i)
                             print(str(edge_list[j][0].src)+"_"+str(edge_list[j][0].dest))
@@ -435,6 +436,7 @@ class node_and_image_matching:
                     j += 1
             if len(edge_list) == 1:
                 print("edge found finally")
+                last_frame_object= (last_frame_matched_with_edge,edge_list[0][0])
                 print(str(edge_list[0][0].src)+"_"+str(edge_list[0][0].dest))
                 source_node= edge_list[0][0].src
 
@@ -444,7 +446,7 @@ class node_and_image_matching:
                         self.matched_nodes=[]
                         self.final_path.append(edge_list[0][0])
                         self.matched_edges=[]
-                self.match_next_node(nodes_list, query_video_frames1, last_frame_matched_with_edge)
+                self.match_next_node(nodes_list, query_video_frames, last_frame_object)
                 break
 
 
@@ -452,7 +454,7 @@ class node_and_image_matching:
         print("path is: ")
         for element in self.final_path:
             if isinstance(element, Node):
-                print(element.identity)
+                print(element.name)
                 print()
             elif isinstance(element, Edge):
                 print(str(element.src)+"_"+str(element.dest))
