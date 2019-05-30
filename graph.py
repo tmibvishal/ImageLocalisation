@@ -298,7 +298,7 @@ class Graph:
         cv2.destroyAllWindows()
 
     def read_edges(self, folder, frames_skipped = 0, check_blurry = True):
-        if os.path.isdir(folder)
+        if os.path.isdir(folder):
             for vid in os.listdir(folder):
                 name, type = vid.split(".")
                 src, dest = name.split("_")
@@ -335,6 +335,7 @@ class node_and_image_matching:
     def __init__(self):
         self.matched_nodes=[]
         self.matched_edges=[]
+        self.final_path=[]
 
     def convert_query_video_to_objects(path, destination_folder):
         return vo2.save_distinct_ImgObj(path,destination_folder)
@@ -365,33 +366,68 @@ class node_and_image_matching:
             if confidence/no_of_frames_of_query_video_to_be_matched >0.32:
                 self.matched_nodes.append(node)
         for nd in self.matched_nodes:
-            print(nd.name
+            print(nd.name)
 
     def locate_edge(self, query_video_frames, confidence_level: int = 2):
         for node in self.matched_nodes:
             for edge in node.links:
-                self.matched_edges.append((edge, 0, 0))  # (edge, confidence, frame_position_matched)
+                self.matched_edges.append([edge, 0, 0])  # (edge, confidence, frame_position_matched)
+                print("edges added"+str(edge.src)+"_"+str(edge.dest))
+                print()
 
         for i in range(query_video_frames.no_of_frames()):
-            for edge in self.matched_edges:
+            edge_list=self.matched_edges
+            j=0
+            while j <len(edge_list):
                 match, maximum_match = None, 0
-                for k in range(int(edge[2]), edge[
-                    0].distinct_frames.no_of_frames()):  # starting from matched_edges[j][2] till end #edge folder
-                    image_fraction_matched = mt.SURF_match_2(edge[0].distinct_frames.get_object(k).get_elements(),
+                for k in range(int(edge_list[j][2]), edge_list[j][0].distinct_frames.no_of_frames()):  # starting from matched_edges[j][2] till end #edge folder
+                    image_fraction_matched = mt.SURF_match_2(edge_list[j][0].distinct_frames.get_object(k).get_elements(),
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
                     if image_fraction_matched > 0.15:
                         if image_fraction_matched > maximum_match:
-                    match, maximum_match = k, image_fraction_matched
-                    if match is not None:
-                        edge[1] = edge[1] + 1
-                        edge[2] = match
-                    else:
-                        edge[1] = edge[1] - 1
-                    if edge[1] < (-1) * confidence_level:
-                        self.matched_edges.remove(edge)
-                    if edge[1] > confidence_level and len(self.matched_edges) == 1:
-                        print("edge found")
-                        break
+                            print(image_fraction_matched)
+                            print(i)
+                            print(str(edge_list[j][0].src)+"_"+str(edge_list[j][0].dest))
+                            print(k)
+                            match, maximum_match = k, image_fraction_matched
+                if match is not None:
+                    edge_list[j][1] = edge_list[j][1] + 1
+                    edge_list[j][2] = match
+                    print(str(edge_list[j][0].src)+"_"+str(edge_list[j][0].dest)+" has increased confidence = "+ str(edge_list[j][1]))
+                else:
+                    edge_list[j][1] = edge_list[j][1] - 1
+                    print(str(edge_list[j][0].src) + "_" + str(edge_list[j][0].dest) + " has decreased confidence = " + str(edge_list[j][1]))
+                if edge_list[j][1] < (-1) * confidence_level:
+                    print(str(edge_list[j][0].src)+"_"+str(edge_list[j][0].dest)+"deleted")
+                    del edge_list[j]
+                elif edge_list[j][1] > confidence_level or len(edge_list) == 1:
+                    print("edge found")
+                    break
+                else:
+                    j += 1
+            if len(edge_list) == 1:
+                print("edge found finally")
+                print(str(edge_list[0][0].src)+"_"+str(edge_list[0][0].dest))
+                source_node= edge_list[0][0].src
+
+                for node in self.matched_nodes:
+                    if node.name== source_node:
+                        self.final_path.append(node)
+                        self.matched_nodes=[]
+                        self.final_path.append(edge_list[0])
+                break
+
+    def print_final_path(self):
+        print("path is: ")
+        for element in self.final_path:
+            if isinstance(element, Node):
+                print(element.name)
+                print()
+            elif isinstance(element, Edge):
+                print(str(element.src)+"_"+str(element.dest))
+                print()
+            else:
+                raise Exception("Path not right")
 
 
 
@@ -407,9 +443,11 @@ class node_and_image_matching:
 # graph.save_graph()
 
 
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160046.mp4","query_distinct_frame",4, True)
+query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160046.mp4","query_distinct_frame",4,True)
 # graph1=graph.load_graph()
 graph =load_graph()
 node_and_image_matching_obj = node_and_image_matching()
 node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
+node_and_image_matching_obj.locate_edge(query_video_frames1)
+node_and_image_matching_obj.print_final_path()
 # graph.print_graph(0)
