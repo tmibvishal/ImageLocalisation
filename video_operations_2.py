@@ -35,7 +35,11 @@ class DistinctFrames:
 
     def add_all(self,list_of_img_objects):
         if isinstance(list_of_img_objects, list):
-            if isinstance(list_of_img_objects[0], ImgObj):
+            if(len(list_of_img_objects) != 0):
+                if isinstance(list_of_img_objects[0], ImgObj):
+                    self.img_objects = list_of_img_objects
+                    return
+            else:
                 self.img_objects = list_of_img_objects
                 return
         raise Exception("Param is not a list of img objects")
@@ -58,9 +62,11 @@ class DistinctFrames:
         return len(self.img_objects)
 
     def get_objects(self, start_index = 0, end_index = -1):
+        if(start_index == 0 and end_index == -1 ):
+            return self.img_objects[start_index:end_index]
         if (start_index or end_index) not in range(0,self.no_of_frames()):
             raise Exception("Invalid start / end indexes")
-        if start_index> end_index:
+        if start_index > end_index:
             raise Exception("Start index should be less than or equal to end index")
         return self.img_objects[start_index:end_index]
 
@@ -196,6 +202,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
 
     cap.release()
     cv2.destroyAllWindows()
+    distinct_frames.calculate_time()
     return distinct_frames
 
 
@@ -226,12 +233,15 @@ def read_images(folder):
                 3. image21.pkl
             firstly sort them to image100.pkl,image21.pkl,image22.pkl then according to length to image21.pkl,image22.pkl,image100.pkl
         '''
-        img_obj = load_from_memory(file, folder)
-        # len_keypoints, descriptors = img_obj.get_elements()
-        # time_stamp = int(file.replace('image', '').replace('.pkl', ''), 10)
-        time_stamp = img_obj.get_time()
-        distinct_frames.add_img_obj(img_obj)
-        print("Reading image .." + str(time_stamp) + " from " + folder)  # for debug purpose
+        try:
+            img_obj = load_from_memory(file, folder)
+            time_stamp = img_obj.get_time()
+            distinct_frames.add_img_obj(img_obj)
+            print("Reading image .." + str(time_stamp) + " from " + folder)  # for debug purpose
+        except:
+            # exception will occur for files like .DS_Store and jpg directory
+            continue
+    distinct_frames.calculate_time()
     return distinct_frames
 
 
@@ -352,10 +362,12 @@ def compare_videos_and_print(frames1, frames2):
                 print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
 
 
-FRAMES1 = save_distinct_ImgObj("testData/MOV_0004.MP4", "v3", 4, True)
+# FRAMES1 = save_distinct_ImgObj("testData/MOV_0004.MP4", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
-# FRAMES1 = read_images("v1")
+FRAMES1 = read_images("v3")
+img_obj = FRAMES1.get_object(0)
+img_obj.get_time()
 # FRAMES2 = read_images("v2")
 
 # compare_videos_and_print(FRAMES1, FRAMES2)
