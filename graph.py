@@ -369,13 +369,27 @@ class node_and_image_matching:
             print(nd.name)
 
 
-    def match_next_node(self, nodes_list, query_video_frames1, last_frame_matched_with_edge):
+    def match_next_node(self, nodes_list, query_video_frames, last_frame_matched_with_edge,no_of_frames_of_query_video_to_be_matched:int=2):
         if len(self.matched_nodes)!=0:
             self.matched_nodes=[]
         new_src_node= last_frame_matched_with_edge[1].dest
         for node in nodes_list:
             if node.identity== new_src_node:
-                print("hi")
+                confidence=0
+                node_images = node.node_images
+                no_of_node_images = node_images.no_of_frames()
+                for j in range(last_frame_matched_with_edge[0],last_frame_matched_with_edge[0]+ no_of_frames_of_query_video_to_be_matched):
+                    for k in range(no_of_node_images):
+                        image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(),
+                                                                 node_images.get_object(k).get_elements(),
+                                                                 2500, 0.7)
+                        if image_fraction_matched > 0.15:
+                            confidence = confidence + 1
+                if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
+                    self.matched_nodes.append(node)
+                    self.locate_edge(nodes_list, query_video_frames)
+                    break
+
 
 
 
@@ -429,6 +443,7 @@ class node_and_image_matching:
                         self.final_path.append(node)
                         self.matched_nodes=[]
                         self.final_path.append(edge_list[0][0])
+                        self.matched_edges=[]
                 self.match_next_node(nodes_list, query_video_frames1, last_frame_matched_with_edge)
                 break
 
