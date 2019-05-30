@@ -310,28 +310,6 @@ class Graph:
                 identity,type = vid.split(".")
                 self._add_node_data(int(identity), folder + "/" + vid, "node_data/node_"+str(identity), frames_skipped, check_blurry)
 
-    def read_edges_from_images(self, folder):
-        if os.path.isdir(folder):
-            for edge_folder in os.listdir(folder):
-                e, src, dest = edge_folder.split('_')
-                distinct_frames_obj = vo2.read_images(folder+"/"+edge_folder)
-                for nd in self.Nodes:
-                    if nd.identity == src:
-                        for edge in nd.links:
-                            if edge.dest == dest:
-                                edge.distinct_frames = distinct_frames_obj
-                                break
-
-    def read_nodes_from_images(self, folder):
-        if os.path.isdir(folder):
-            for node_folder in os.listdir(folder):
-                n, identity = node_folder.split('_')
-                distinct_frames_obj = vo2.read_images(folder+"/"+node_folder)
-                for node in self.Nodes:
-                    if node.identity == identity:
-                        node.node_images = distinct_frames_obj
-                        break
-
     def add_floor_map(self, floor_no, path):
         if floor_no > self.no_of_floors:
             raise Exception("Add floor "+str(self.no_of_floors)+" first!!")
@@ -421,7 +399,6 @@ class node_and_image_matching:
                     if image_fraction_matched > 0.15:
                         if image_fraction_matched > maximum_match:
                             last_frame_matched_with_edge=(i,edge_list[j][0])
-                            print(last_frame_matched_with_edge)
                             print(image_fraction_matched)
                             print(i)
                             print(str(edge_list[j][0].src)+"_"+str(edge_list[j][0].dest))
@@ -446,23 +423,21 @@ class node_and_image_matching:
                 print("edge found finally")
                 print(str(edge_list[0][0].src)+"_"+str(edge_list[0][0].dest))
                 source_node= edge_list[0][0].src
-                print(source_node)
 
                 for node in self.matched_nodes:
-                    if node.name== source_node:
+                    if str(node.identity)== str(source_node):
                         self.final_path.append(node)
                         self.matched_nodes=[]
-                        self.final_path.append(edge_list[0])
-                        print(self.final_path)
+                        self.final_path.append(edge_list[0][0])
+                self.match_next_node(nodes_list, query_video_frames1, last_frame_matched_with_edge)
                 break
 
-                # match_next_node(nodes_list, query_video_frames1, last_frame_matched_with_edge)
 
     def print_final_path(self):
         print("path is: ")
         for element in self.final_path:
             if isinstance(element, Node):
-                print(element.name)
+                print(element.identity)
                 print()
             elif isinstance(element, Edge):
                 print(str(element.src)+"_"+str(element.dest))
@@ -484,7 +459,7 @@ class node_and_image_matching:
 # graph.save_graph()
 
 
-query_video_frames1 = vo2.read_images("query_distinct_frame")
+query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160046.mp4","query_distinct_frame",4,True)
 # graph1=graph.load_graph()
 graph =load_graph()
 node_and_image_matching_obj = node_and_image_matching()
