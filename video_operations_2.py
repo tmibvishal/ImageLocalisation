@@ -166,6 +166,9 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
                 i = i + 1
                 continue
 
+            cv2.imshow('frame', gray)
+            print(i)
+
             if (check_blurry):
                 if (is_blurry_grayscale(gray)):
                     check_next_frame = True
@@ -174,10 +177,10 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
                 check_next_frame = False
 
 
-            cv2.imshow('frame', gray)
+
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors)
-            image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7)
+            image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7, False)
             if image_fraction_matched < 0.1:
                 img_obj2 = ImgObj(b[0], b[1], i)
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
@@ -349,7 +352,7 @@ def compare_videos_and_print(frames1, frames2):
                 print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
 
 
-# FRAMES1 = save_distinct_ImgObj("testData/sushant_mc/20190518_155651.mp4", "v1", 4)
+FRAMES1 = save_distinct_ImgObj("testData/MOV_0004.MP4", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 # FRAMES1 = read_images("v1")
