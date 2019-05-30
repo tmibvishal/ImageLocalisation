@@ -310,6 +310,28 @@ class Graph:
                 identity,type = vid.split(".")
                 self._add_node_data(int(identity), folder + "/" + vid, "node_data/node_"+str(identity), frames_skipped, check_blurry)
 
+    def read_edges_from_images(self, folder):
+        if os.path.isdir(folder):
+            for edge_folder in os.listdir(folder):
+                e, src, dest = edge_folder.split('_')
+                distinct_frames_obj = vo2.read_images(folder+"/"+edge_folder)
+                for nd in self.Nodes:
+                    if nd.identity == src:
+                        for edge in nd.links:
+                            if edge.dest == dest:
+                                edge.distinct_frames = distinct_frames_obj
+                                break
+
+    def read_nodes_from_images(self, folder):
+        if os.path.isdir(folder):
+            for node_folder in os.listdir(folder):
+                n, identity = node_folder.split('_')
+                distinct_frames_obj = vo2.read_images(folder+"/"+node_folder)
+                for node in self.Nodes:
+                    if node.identity == identity:
+                        node.node_images = distinct_frames_obj
+                        break
+
     def add_floor_map(self, floor_no, path):
         if floor_no > self.no_of_floors:
             raise Exception("Add floor "+str(self.no_of_floors)+" first!!")
