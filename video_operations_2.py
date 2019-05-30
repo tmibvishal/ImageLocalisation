@@ -247,14 +247,14 @@ def read_images(folder):
 
 def edge_from_specific_pt(i_init, j_init, frames1, frames2):
     """
-    Called when frames1[i_init][1] matches best with frames2[j_init][1]. This function checks 
+    Called when frames1[i_init][1] matches best with frames2[j_init][1]. This function checks
     subsequent frames of frames1 and frames2 to see if edge is detected.
 
     Parameters
     ----------
-    i_init: index of the frame in frames1 list , which matches with the corresponding frame 
+    i_init: index of the frame in frames1 list , which matches with the corresponding frame
             in frame2 list
-    j_init: index of the frame in frames2 list , which matches with the corresponding frame 
+    j_init: index of the frame in frames2 list , which matches with the corresponding frame
             in frame1 list
     frames1:
     frames2: are lists containing tuples of the form
@@ -271,10 +271,10 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
     confidence = 5
     """
     No edge is declared when confidence is zero.
-    
-    Confidence is decreased by 1 whenever match is not found for (i)th frame of frame1 among 
+
+    Confidence is decreased by 1 whenever match is not found for (i)th frame of frame1 among
     the next 4 frames after j_last_matched(inclusive)
-    
+
     If match is found for (i)th frame, i_last_matched is changed to i, j_last_matched is changed to
     the corresponding match; and confidence is restored to initial value(5)
     """
@@ -361,8 +361,7 @@ def compare_videos_and_print(frames1, frames2):
             if image_fraction_matched > 0.2:
                 print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
 
-
-# FRAMES1 = save_distinct_ImgObj("testData/MOV_0004.MP4", "v3", 4, True)
+# FRAMES1 = save_distinct_ImgObj("testData/new things/6_2.MP4", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 FRAMES1 = read_images("v3")

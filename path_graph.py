@@ -1,10 +1,15 @@
-import video_operations_2 as vd2
-
 
 class Node:
-    def __init__(self, no):
+    def __init__(self, no, ):
         self.no = no
         self.connections = []
+        #self.node_data = node_data
+
+class Edge:
+    def __init__(self, src, dest, edge_data):
+        self.src =src
+        self.dest = dest
+        self.edge_data= edge_data
 
 
 class Graph:
@@ -12,6 +17,7 @@ class Graph:
     def __init__(self):
         self.length = 0
         self.graph = []
+        self.edges =[]
 
     def add_node(self):
         node_id = self.length
@@ -27,7 +33,11 @@ class Graph:
         nd.connections.append((dest, edge_data))
 
         self.graph[src] = nd
+        new_edge = Edge(src, dest, edge_data)
+        self.edges.append(new_edge)
+        return new_edge
 
+    #def remove_edge(self, src, dest)
     def search_edge(self, src, dest=None):
         if dest is None:
             if src >= self.length:
@@ -64,12 +74,12 @@ class Graph:
             print("")
 
 
-graph = Graph()
-for i in range(5):
-    graph.add_node()
-graph.add_edge(0, 1, "data_0_to_1")
-graph.add_edge(0, 3, "data_0_to_3")
-graph.add_edge(1, 2, "data_1_to_2")
-graph.add_edge(2, 4, "data_2_to_4")
-graph.add_edge(3, 5, "data_3_to_5")
-graph.print_graph()
+# graph = Graph()
+# for i in range(5):
+#     graph.add_node()
+# graph.add_edge(0, 1, "data_0_to_1")
+# graph.add_edge(0, 3, "data_0_to_3")
+# graph.add_edge(1, 2, "data_1_to_2")
+# graph.add_edge(2, 4, "data_2_to_4")
+# graph.add_edge(3, 5, "data_3_to_5")
+# graph.print_graph()
