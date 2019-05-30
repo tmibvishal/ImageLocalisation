@@ -374,7 +374,8 @@ class node_and_image_matching:
             self.matched_nodes=[]
         new_src_node= last_frame_matched_with_edge[1].dest
         for node in nodes_list:
-            if node.identity== new_src_node
+            if node.identity== new_src_node:
+                print("hi")
 
 
 
@@ -397,7 +398,8 @@ class node_and_image_matching:
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
                     if image_fraction_matched > 0.15:
                         if image_fraction_matched > maximum_match:
-                            last_frame_matched_with_edge=(i,edge_list[j][1])
+                            last_frame_matched_with_edge=(i,edge_list[j][0])
+                            print(last_frame_matched_with_edge)
                             print(image_fraction_matched)
                             print(i)
                             print(str(edge_list[j][0].src)+"_"+str(edge_list[j][0].dest))
@@ -422,12 +424,14 @@ class node_and_image_matching:
                 print("edge found finally")
                 print(str(edge_list[0][0].src)+"_"+str(edge_list[0][0].dest))
                 source_node= edge_list[0][0].src
+                print(source_node)
 
                 for node in self.matched_nodes:
                     if node.name== source_node:
                         self.final_path.append(node)
                         self.matched_nodes=[]
                         self.final_path.append(edge_list[0])
+                        print(self.final_path)
                 break
 
                 # match_next_node(nodes_list, query_video_frames1, last_frame_matched_with_edge)
@@ -458,7 +462,7 @@ class node_and_image_matching:
 # graph.save_graph()
 
 
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160046.mp4","query_distinct_frame",4,True)
+query_video_frames1 = vo2.read_images("query_distinct_frame")
 # graph1=graph.load_graph()
 graph =load_graph()
 node_and_image_matching_obj = node_and_image_matching()
