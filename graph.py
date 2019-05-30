@@ -368,7 +368,19 @@ class node_and_image_matching:
         for nd in self.matched_nodes:
             print(nd.name)
 
-    def locate_edge(self, query_video_frames, confidence_level: int = 2):
+
+    def match_next_node(self, nodes_list, query_video_frames1, last_frame_matched_with_edge):
+        if len(self.matched_nodes)!=0:
+            self.matched_nodes=[]
+        new_src_node= last_frame_matched_with_edge[1].dest
+        for node in nodes_list:
+            if node.identity== new_src_node
+
+
+
+
+    def locate_edge(self, nodes_list, query_video_frames, confidence_level: int = 2):
+        last_frame_matched_with_edge=None
         for node in self.matched_nodes:
             for edge in node.links:
                 self.matched_edges.append([edge, 0, 0])  # (edge, confidence, frame_position_matched)
@@ -385,6 +397,7 @@ class node_and_image_matching:
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
                     if image_fraction_matched > 0.15:
                         if image_fraction_matched > maximum_match:
+                            last_frame_matched_with_edge=(i,edge_list[j][1])
                             print(image_fraction_matched)
                             print(i)
                             print(str(edge_list[j][0].src)+"_"+str(edge_list[j][0].dest))
@@ -417,6 +430,8 @@ class node_and_image_matching:
                         self.final_path.append(edge_list[0])
                 break
 
+                # match_next_node(nodes_list, query_video_frames1, last_frame_matched_with_edge)
+
     def print_final_path(self):
         print("path is: ")
         for element in self.final_path:
@@ -448,6 +463,6 @@ query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160
 graph =load_graph()
 node_and_image_matching_obj = node_and_image_matching()
 node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
-node_and_image_matching_obj.locate_edge(query_video_frames1)
+node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
 node_and_image_matching_obj.print_final_path()
 # graph.print_graph(0)
