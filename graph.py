@@ -368,7 +368,8 @@ class node_and_image_matching:
         for nd in self.matched_nodes:
             print(nd.name)
 
-    def match_next_node(self, nodes_list, query_video_frames, last_frame_object,
+    def match_next_node(self, nodes_list: vo2.DistinctFrames, query_video_frames: vo2.DistinctFrames,
+                        last_frame_object: vo2.ImgObj,
                         no_of_frames_of_query_video_to_be_matched: int = 2):
         if len(self.matched_nodes) != 0:
             self.matched_nodes = []
@@ -390,7 +391,8 @@ class node_and_image_matching:
                     self.locate_edge(nodes_list, query_video_frames, last_frame_object[0])
                     break
 
-    def locate_edge(self, nodes_list, query_video_frames, query_video_frames_begin: int = 0, confidence_level: int = 2):
+    def locate_edge(self, nodes_list: vo2.DistinctFrames, query_video_frames: vo2.DistinctFrames,
+                    query_video_frames_begin: int = 0, confidence_level: int = 2):
         last_frame_matched_with_edge = None
         for node in self.matched_nodes:
             for edge in node.links:
