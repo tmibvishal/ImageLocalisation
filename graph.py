@@ -36,7 +36,7 @@ class FloorMap:
 class Graph:
 
     def __init__(self):
-        self.Length = 0
+        self.new_node_index = 0
         self.Nodes = []
         self.no_of_floors = 0
         self.Floor_map = []
@@ -44,7 +44,7 @@ class Graph:
     # private functions
 
     def _create_node(self, name, x, y, z):
-        identity = self.Length
+        identity = self.new_node_index
         Nd = Node(identity, name, x, y, z)
         self._add_node(Nd)
 
@@ -201,7 +201,7 @@ class Graph:
 
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
-                identity = self.Length
+                identity = self.new_node_index
                 if self._nearest_node(x, y) is None:
                     self._create_node('Node-' + str(identity), x, y, z)
                     cv2.circle(img, (x, y), 8, (66, 126, 255), -1)
@@ -368,7 +368,7 @@ class node_and_image_matching:
         for nd in self.matched_nodes:
             print(nd.name)
 
-    def match_next_node(self, nodes_list: vo2.DistinctFrames, query_video_frames: vo2.DistinctFrames,
+    def match_next_node(self, nodes_list: list, query_video_frames: vo2.DistinctFrames,
                         last_frame_object: vo2.ImgObj,
                         no_of_frames_of_query_video_to_be_matched: int = 2):
         if len(self.matched_nodes) != 0:
@@ -376,16 +376,21 @@ class node_and_image_matching:
         new_src_node = last_frame_object[1].dest
         for node in nodes_list:
             if node.identity == new_src_node:
+                print("matching new node" + node.name)
                 confidence = 0
                 node_images = node.node_images
                 no_of_node_images = node_images.no_of_frames()
-                for j in range(last_frame_object[0], last_frame_object[0] + no_of_frames_of_query_video_to_be_matched):
+                for j in range(query_video_frames.no_of_frames()):
                     for k in range(no_of_node_images):
                         image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(),
                                                                  node_images.get_object(k).get_elements(),
                                                                  2500, 0.7)
-                        if image_fraction_matched > 0.15:
+
+                        if image_fraction_matched > 0.10:
                             confidence = confidence + 1
+                            print("query video frame " + str(j))
+                            print("node frame" + str(k) + " of " + node.name)
+                            print(image_fraction_matched)
                 if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
                     self.matched_nodes.append(node)
                     self.locate_edge(nodes_list, query_video_frames, last_frame_object[0])
@@ -413,6 +418,9 @@ class node_and_image_matching:
                     image_fraction_matched = mt.SURF_match_2(
                         edge_list[j][0].distinct_frames.get_object(k).get_elements(),
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
+                    print("query frame "+ str(i))
+                    print("query frame" + str(k))
+                    print(image_fraction_matched)
                     if image_fraction_matched > 0.15:
                         if image_fraction_matched > maximum_match:
                             last_frame_matched_with_edge = i
@@ -476,12 +484,24 @@ class node_and_image_matching:
 # graph.save_graph()
 
 
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160046.mp4", "query_distinct_frame", 4,
-                                               True)
-# graph1=graph.load_graph()
+# query_video_frames1 = vo2.save_distinct_ImgObj("testData/query videos/20190528_160046.mp4", "query_distinct_frame", 2, True)
+query_video_frames1 = vo2.read_images("query_distinct_frame")
+
+# graph = load_graph()
+# Nd = graph.get_node(2)
+# i = 0
+
 graph = load_graph()
 node_and_image_matching_obj = node_and_image_matching()
 node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
 node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
 node_and_image_matching_obj.print_final_path()
-# graph.print_graph(0)
+
+# FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
+# FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
+# FRAMES3 = vo2.read_images_jpg("testData/Photo frames sit 0/6")
+# graph1 = load_graph()
+# graph1._add_edge_images(2, 6, FRAMES1)
+# graph1._add_node_images(3, FRAMES2)
+# graph1._add_node_images(6, FRAMES3)
+# graph1.save_graph()

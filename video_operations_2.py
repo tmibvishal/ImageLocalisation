@@ -111,12 +111,12 @@ def is_blurry_colorful(image):
     """
     b, _, _ = cv2.split(image)
     a = variance_of_laplacian(b)
-    return (variance_of_laplacian(b) < 120)
+    return (variance_of_laplacian(b) < 100)
 
 
 def is_blurry_grayscale(gray_image):
     a = variance_of_laplacian(gray_image)
-    return (variance_of_laplacian(gray_image) < 120)
+    return (variance_of_laplacian(gray_image) < 100)
 
 
 def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
@@ -414,10 +414,8 @@ def compare_videos_and_print(frames1, frames2):
 # FRAMES1 = save_distinct_ImgObj("testData/new things/6_2.MP4", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
-FRAMES1 = read_images("v3")
-FRAMES2 = read_images_jpg("v3/jpg")
-img_obj = FRAMES1.get_object(0)
-img_obj.get_time()
+# img_obj = FRAMES1.get_object(0)
+# img_obj.get_time()
 # FRAMES2 = read_images("v2")
 
 # compare_videos_and_print(FRAMES1, FRAMES2)
