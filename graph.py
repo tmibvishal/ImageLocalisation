@@ -9,16 +9,16 @@ import time
 
 
 class Node:
-    def __init__(self, identity:int, name:str, x:int, y:int, z:int):
+    def __init__(self, identity: int, name: str, x: int, y: int, z: int):
         self.identity = identity
         self.name = name
         self.coordinates = (x, y, z)
         self.links = []
-        self.node_images=None
+        self.node_images = None
 
 
 class Edge:
-    def __init__(self, is_connected: bool, src:int, dest:int, distinct_frames=None, video_length:int=None):
+    def __init__(self, is_connected: bool, src: int, dest: int, distinct_frames=None, video_length: int = None):
         self.is_connected = is_connected
         self.src = src
         self.dest = dest
@@ -27,7 +27,7 @@ class Edge:
 
 
 class FloorMap:
-    def __init__(self, floor_no:int=None, img=None):
+    def __init__(self, floor_no: int = None, img=None):
         self.floor_no = floor_no
         self.pure = img
         self.impure = copy.deepcopy(img)
@@ -36,7 +36,7 @@ class FloorMap:
 class Graph:
 
     def __init__(self):
-        self.Length = 0
+        self.new_node_index = 0
         self.Nodes = []
         self.no_of_floors = 0
         self.Floor_map = []
@@ -44,7 +44,7 @@ class Graph:
     # private functions
 
     def _create_node(self, name, x, y, z):
-        identity = self.Length
+        identity = self.new_node_index
         Nd = Node(identity, name, x, y, z)
         self._add_node(Nd)
 
@@ -201,12 +201,12 @@ class Graph:
 
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
-                identity = self.Length
+                identity = self.new_node_index
                 if self._nearest_node(x, y) is None:
                     self._create_node('Node-' + str(identity), x, y, z)
                     cv2.circle(img, (x, y), 8, (66, 126, 255), -1)
                     font = cv2.FONT_HERSHEY_SIMPLEX
-                    cv2.putText(img, str(identity),(x+10,y+10), font, 1,(66,126,255),2,cv2.LINE_AA)
+                    cv2.putText(img, str(identity), (x + 10, y + 10), font, 1, (66, 126, 255), 2, cv2.LINE_AA)
                     cv2.imshow(window_text, img)
 
         impure = self._get_floor_img(z, "impure")
@@ -233,7 +233,7 @@ class Graph:
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     meanx = (nd.coordinates[0] + ndcur.coordinates[0]) // 2
                     meany = (nd.coordinates[1] + ndcur.coordinates[1]) // 2
-                    cv2.putText(img, str(nd.identity) + "_" + str(ndcur.identity), (meanx+5, meany+5), font, 0.5,
+                    cv2.putText(img, str(nd.identity) + "_" + str(ndcur.identity), (meanx + 5, meany + 5), font, 0.5,
                                 (100, 126, 255), 2, cv2.LINE_AA)
                     cv2.imshow(window_text, img)
 
@@ -323,59 +323,61 @@ class Graph:
     def save_graph(self):
         general.save_to_memory(self, "graph.pkl")
 
+
 # @staticmethod
 def load_graph():
     return general.load_from_memory("graph.pkl")
 
 
-
-
 class node_and_image_matching:
     def __init__(self):
-        self.matched_nodes=[]
-        self.matched_edges=[]
-        self.final_path=[]
+        self.matched_nodes = []
+        self.matched_edges = []
+        self.final_path = []
 
     def convert_query_video_to_objects(path, destination_folder):
-        return vo2.save_distinct_ImgObj(path,destination_folder)
+        return vo2.save_distinct_ImgObj(path, destination_folder)
 
-    """ Assume that a person starts frpom a specific node.
+    """ Assume that a person startas frpom a specific node.
     Query on all nodes.
     Store the nodes with maximum match"""
 
-    def locate_node(self,nodes_list, query_video_frames, no_of_frames_of_query_video_to_be_matched:int=2):
-        if len(self.matched_nodes)!=0:
-            self.matched_nodes=[]
+    def locate_node(self, nodes_list: vo2.DistinctFrames, query_video_frames: vo2.DistinctFrames,
+                    no_of_frames_of_query_video_to_be_matched: int = 2):
+        if len(self.matched_nodes) != 0:
+            self.matched_nodes = []
         for node in nodes_list:
-            confidence=0
-            node_images= node.node_images
-            if(node_images == None):
+            confidence = 0
+            node_images = node.node_images
+            if node_images is None:
                 continue
-            no_of_node_images= node_images.no_of_frames()
+            no_of_node_images = node_images.no_of_frames()
             for j in range(no_of_frames_of_query_video_to_be_matched):
                 for k in range(no_of_node_images):
-                    image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(), node_images.get_object(k).get_elements(),
-                                                         2500, 0.7)
-                    if image_fraction_matched> 0.15:
+                    image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(),
+                                                             node_images.get_object(k).get_elements(),
+                                                             2500, 0.7)
+                    if image_fraction_matched > 0.15:
                         print(image_fraction_matched)
                         print(j)
                         print(k)
                         print()
-                        confidence= confidence+1
-            if confidence/no_of_frames_of_query_video_to_be_matched >0.32:
+                        confidence = confidence + 1
+            if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
                 self.matched_nodes.append(node)
         for nd in self.matched_nodes:
             print(nd.name)
 
-
-    def match_next_node(self, nodes_list, query_video_frames, last_frame_object,no_of_frames_of_query_video_to_be_matched:int=2):
-        if len(self.matched_nodes)!=0:
-            self.matched_nodes=[]
-        new_src_node= last_frame_object[1].dest
-        print(" new destination node "+ str(new_src_node))
+    def match_next_node(self, nodes_list: list, query_video_frames: vo2.DistinctFrames,
+                        last_frame_object: vo2.ImgObj,
+                        no_of_frames_of_query_video_to_be_matched: int = 2):
+        if len(self.matched_nodes) != 0:
+            self.matched_nodes = []
+        new_src_node = last_frame_object[1].dest
         for node in nodes_list:
-            if node.identity== new_src_node:
-                confidence=0
+            if node.identity == new_src_node:
+                print("matching new node" + node.name)
+                confidence = 0
                 node_images = node.node_images
                 no_of_node_images = node_images.no_of_frames()
                 for j in range(query_video_frames.no_of_frames()):
@@ -383,8 +385,12 @@ class node_and_image_matching:
                         image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(),
                                                                  node_images.get_object(k).get_elements(),
                                                                  2500, 0.7)
-                        if image_fraction_matched > 0.15:
+
+                        if image_fraction_matched > 0.10:
                             confidence = confidence + 1
+                            print("query video frame " + str(j))
+                            print("node frame" + str(k) + " of " + node.name)
+                            print(image_fraction_matched)
                 if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
                     self.matched_nodes.append(node)
                     self.locate_edge(nodes_list, query_video_frames)
@@ -395,44 +401,50 @@ class node_and_image_matching:
                     self.locate_edge(nodes_list, query_video_frames)
                     break
 
-
-
-
-
-    def locate_edge(self, nodes_list, query_video_frames, query_video_frames_begin: int=0,confidence_level: int = 2):
-        last_frame_matched_with_edge=None
+    def locate_edge(self, nodes_list: vo2.DistinctFrames, query_video_frames: vo2.DistinctFrames,
+                    query_video_frames_begin: int = 0, confidence_level: int = 2):
+        last_frame_matched_with_edge = None
         for node in self.matched_nodes:
             for edge in node.links:
                 self.matched_edges.append([edge, 0, 0])  # (edge, confidence, frame_position_matched)
-                print("edges added"+str(edge.src)+"_"+str(edge.dest))
+                print("edges added" + str(edge.src) + "_" + str(edge.dest))
                 print()
-        last_frame_matched_with_edge= query_video_frames_begin
-        for i in range(query_video_frames_begin, query_video_frames.no_of_frames()):
-            edge_list=self.matched_edges
 
-            j=0
-            while j <len(edge_list):
+        last_frame_matched_with_edge = query_video_frames_begin
+        for i in range(query_video_frames_begin, query_video_frames.no_of_frames()):
+            edge_list = self.matched_edges
+
+            j = 0
+            while j < len(edge_list):
+
                 match, maximum_match = None, 0
-                for k in range(int(edge_list[j][2]), edge_list[j][0].distinct_frames.no_of_frames()):  # starting from matched_edges[j][2] till end #edge folder
-                    image_fraction_matched = mt.SURF_match_2(edge_list[j][0].distinct_frames.get_object(k).get_elements(),
+                for k in range(int(edge_list[j][2]), edge_list[j][0].distinct_frames.no_of_frames()):
+                    # starting from matched_edges[j][2] till end #edge folder
+                    image_fraction_matched = mt.SURF_match_2(
+                        edge_list[j][0].distinct_frames.get_object(k).get_elements(),
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
+                    print("query frame "+ str(i))
+                    print("query frame" + str(k))
+                    print(image_fraction_matched)
                     if image_fraction_matched > 0.15:
                         if image_fraction_matched > maximum_match:
-                            last_frame_matched_with_edge=i
+                            last_frame_matched_with_edge = i
                             print(image_fraction_matched)
                             print(i)
-                            print(str(edge_list[j][0].src)+"_"+str(edge_list[j][0].dest))
+                            print(str(edge_list[j][0].src) + "_" + str(edge_list[j][0].dest))
                             print(k)
                             match, maximum_match = k, image_fraction_matched
                 if match is not None:
                     edge_list[j][1] = edge_list[j][1] + 1
                     edge_list[j][2] = match
-                    print(str(edge_list[j][0].src)+"_"+str(edge_list[j][0].dest)+" has increased confidence = "+ str(edge_list[j][1]))
+                    print(str(edge_list[j][0].src) + "_" + str(
+                        edge_list[j][0].dest) + " has increased confidence = " + str(edge_list[j][1]))
                 else:
                     edge_list[j][1] = edge_list[j][1] - 1
-                    print(str(edge_list[j][0].src) + "_" + str(edge_list[j][0].dest) + " has decreased confidence = " + str(edge_list[j][1]))
+                    print(str(edge_list[j][0].src) + "_" + str(
+                        edge_list[j][0].dest) + " has decreased confidence = " + str(edge_list[j][1]))
                 if edge_list[j][1] < (-1) * confidence_level:
-                    print(str(edge_list[j][0].src)+"_"+str(edge_list[j][0].dest)+"deleted")
+                    print(str(edge_list[j][0].src) + "_" + str(edge_list[j][0].dest) + "deleted")
                     del edge_list[j]
                 elif edge_list[j][1] > confidence_level or len(edge_list) == 1:
                     print("edge found")
@@ -441,19 +453,18 @@ class node_and_image_matching:
                     j += 1
             if len(edge_list) == 1:
                 print("edge found finally")
-                last_frame_object= (last_frame_matched_with_edge,edge_list[0][0])
-                print(str(edge_list[0][0].src)+"_"+str(edge_list[0][0].dest))
-                source_node= edge_list[0][0].src
+                last_frame_object = (last_frame_matched_with_edge, edge_list[0][0])
+                print(str(edge_list[0][0].src) + "_" + str(edge_list[0][0].dest))
+                source_node = edge_list[0][0].src
 
                 for node in self.matched_nodes:
-                    if str(node.identity)== str(source_node):
+                    if str(node.identity) == str(source_node):
                         self.final_path.append(node)
-                        self.matched_nodes=[]
+                        self.matched_nodes = []
                         self.final_path.append(edge_list[0][0])
-                        self.matched_edges=[]
+                        self.matched_edges = []
                 self.match_next_node(nodes_list, query_video_frames, last_frame_object)
                 break
-
 
     def print_final_path(self):
         print("path is: ")
@@ -462,13 +473,10 @@ class node_and_image_matching:
                 print(element.name)
                 print()
             elif isinstance(element, Edge):
-                print(str(element.src)+"_"+str(element.dest))
+                print(str(element.src) + "_" + str(element.dest))
                 print()
             else:
                 raise Exception("Path not right")
-
-
-
 
 
 # graph=Graph()
@@ -488,4 +496,12 @@ node_and_image_matching_obj = node_and_image_matching()
 node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
 node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
 node_and_image_matching_obj.print_final_path()
-# graph.print_graph(0)
+
+# FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
+# FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
+# FRAMES3 = vo2.read_images_jpg("testData/Photo frames sit 0/6")
+# graph1 = load_graph()
+# graph1._add_edge_images(2, 6, FRAMES1)
+# graph1._add_node_images(3, FRAMES2)
+# graph1._add_node_images(6, FRAMES3)
+# graph1.save_graph()
