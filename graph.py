@@ -372,12 +372,13 @@ class node_and_image_matching:
         if len(self.matched_nodes)!=0:
             self.matched_nodes=[]
         new_src_node= last_frame_object[1].dest
+        print(" new destination node "+ str(new_src_node))
         for node in nodes_list:
             if node.identity== new_src_node:
                 confidence=0
                 node_images = node.node_images
                 no_of_node_images = node_images.no_of_frames()
-                for j in range(last_frame_object[0],last_frame_object[0]+ no_of_frames_of_query_video_to_be_matched):
+                for j in range(query_video_frames.no_of_frames()):
                     for k in range(no_of_node_images):
                         image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(),
                                                                  node_images.get_object(k).get_elements(),
@@ -386,7 +387,12 @@ class node_and_image_matching:
                             confidence = confidence + 1
                 if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
                     self.matched_nodes.append(node)
-                    self.locate_edge(nodes_list, query_video_frames, last_frame_object[0])
+                    self.locate_edge(nodes_list, query_video_frames)
+                    break
+                else:
+                    print("not high confidence but still brute force")
+                    self.matched_nodes.append(node)
+                    self.locate_edge(nodes_list, query_video_frames)
                     break
 
 
@@ -475,7 +481,7 @@ class node_and_image_matching:
 # graph.save_graph()
 
 
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160046.mp4","query_distinct_frame",4,True)
+query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_155931.mp4","query_distinct_frame",2,True)
 # graph1=graph.load_graph()
 graph =load_graph()
 node_and_image_matching_obj = node_and_image_matching()

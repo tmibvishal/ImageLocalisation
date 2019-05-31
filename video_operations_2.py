@@ -364,9 +364,9 @@ def compare_videos_and_print(frames1, frames2):
 # FRAMES1 = save_distinct_ImgObj("testData/new things/6_2.MP4", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
-FRAMES1 = read_images("v3")
-img_obj = FRAMES1.get_object(0)
-img_obj.get_time()
+# FRAMES1 = read_images("v3")
+# img_obj = FRAMES1.get_object(0)
+# img_obj.get_time()
 # FRAMES2 = read_images("v2")
 
 # compare_videos_and_print(FRAMES1, FRAMES2)
