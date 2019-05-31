@@ -23,19 +23,20 @@ class ImgObj:
     def get_time(self):
         return self.time_stamp
 
+
 class DistinctFrames:
     def __init__(self):
         self.img_objects = []
         self.time_of_path = None
-    
+
     def add_img_obj(self, img_obj):
         if not isinstance(img_obj, ImgObj):
             raise Exception("Param is not an img object")
         self.img_objects.append(img_obj)
 
-    def add_all(self,list_of_img_objects):
+    def add_all(self, list_of_img_objects):
         if isinstance(list_of_img_objects, list):
-            if(len(list_of_img_objects) != 0):
+            if (len(list_of_img_objects) != 0):
                 if isinstance(list_of_img_objects[0], ImgObj):
                     self.img_objects = list_of_img_objects
                     return
@@ -61,17 +62,17 @@ class DistinctFrames:
     def no_of_frames(self):
         return len(self.img_objects)
 
-    def get_objects(self, start_index = 0, end_index = -1):
-        if(start_index == 0 and end_index == -1 ):
+    def get_objects(self, start_index=0, end_index=-1):
+        if (start_index == 0 and end_index == -1):
             return self.img_objects[start_index:end_index]
-        if (start_index or end_index) not in range(0,self.no_of_frames()):
+        if (start_index or end_index) not in range(0, self.no_of_frames()):
             raise Exception("Invalid start / end indexes")
         if start_index > end_index:
             raise Exception("Start index should be less than or equal to end index")
         return self.img_objects[start_index:end_index]
 
     def get_object(self, index):
-        if index not in range(0,self.no_of_frames()):
+        if index not in range(0, self.no_of_frames()):
             raise Exception("Invalid index")
         return self.img_objects[index]
 
@@ -134,7 +135,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
         returns array contaning non redundant frames(mat format)
     """
 
-    ensure_path(folder+"/jpg")
+    ensure_path(folder + "/jpg")
 
     frames_skipped += 1
 
@@ -181,8 +182,6 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
                     i = i + 1
                     continue
                 check_next_frame = False
-
-
 
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors)
@@ -241,7 +240,52 @@ def read_images(folder):
         except:
             # exception will occur for files like .DS_Store and jpg directory
             continue
-    distinct_frames.calculate_time()
+
+    if distinct_frames.no_of_frames() != 0 :
+        distinct_frames.calculate_time()
+
+    return distinct_frames
+
+
+def read_images_jpg(folder, hessian_threshold: int = 2500):
+    """Reads images of the form "image<int>.jpg" from folder(passed as string containing
+    relative path of the specific folder)
+
+    Parameters
+    ----------
+    folder
+
+    Returns
+    -------
+    array,
+        distinct_frames : a list containing tuples of the form (time_stamp, frame)
+    where time_stamp is the <int> part of image<int>.jpg and frame is object of the
+    image created using imread
+    """
+    distinct_frames = DistinctFrames()
+    detector = cv2.xfeatures2d_SURF.create(hessian_threshold)
+
+    for file in sorted(sorted(os.listdir(folder)), key=len):  # sorting files on basis of
+        # 1) length and 2) numerical order
+        """
+            Sorting is done 2 times because
+            if files in the folder are
+                1. image100.jpg
+                2. image22.jpg
+                3. image21.jpg
+            firstly sort them to image100.jpg,image21.jpg,image22.jpg then according to length to 
+            image21.jpg,image22.jpg,image100.jpg
+        """
+        try:
+            grey = cv2.imread(folder + "/" + file, 0)
+            time_stamp = int(file.replace('image', '').replace('.jpg', ''), 10)
+            keypoints, descriptors = detector.detectAndCompute(grey, None)
+            img_obj = ImgObj(len(keypoints), descriptors, time_stamp)
+            distinct_frames.add_img_obj(img_obj)
+            print("Reading image .." + str(time_stamp) + " from " + folder)  # for dev phase
+        except:
+            continue
+
     return distinct_frames
 
 
@@ -292,7 +336,8 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
         for j in range(j_last_matched + 1, j_last_matched + 5):
             if j >= frames2.no_of_frames():
                 break
-            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(), frames2.get_object(j).get_elements(),
+            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(),
+                                                     frames2.get_object(j).get_elements(),
                                                      2500, 0.7)
             if image_fraction_matched > 0.15:
                 if image_fraction_matched > maxmatch:
@@ -312,8 +357,10 @@ def edge_from_specific_pt(i_init, j_init, frames1, frames2):
 
     if i_last_matched > i_init and j_last_matched > j_init:
         print("Edge found from :")
-        print(str(frames1.get_object(i_init).get_time()) + "to" + str(frames1.get_object(i_last_matched).get_time()) + "of video 1")
-        print(str(frames2.get_object(j_init).get_time()) + "to" + str(frames2.get_object(j_last_matched).get_time()) + "of video 2")
+        print(str(frames1.get_object(i_init).get_time()) + "to" + str(
+            frames1.get_object(i_last_matched).get_time()) + "of video 1")
+        print(str(frames2.get_object(j_init).get_time()) + "to" + str(
+            frames2.get_object(j_last_matched).get_time()) + "of video 2")
         return True, i_last_matched, j_last_matched
     else:
         return False, i_init, j_init
@@ -336,7 +383,8 @@ def compare_videos(frames1: DistinctFrames, frames2: DistinctFrames):
     while (i < len1):
         match, maxmatch = None, 0
         for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(), frames2.get_object(j).get_elements(),
+            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(),
+                                                     frames2.get_object(j).get_elements(),
                                                      2500, 0.7)
             if image_fraction_matched > 0.15:
                 if image_fraction_matched > maxmatch:
@@ -356,15 +404,18 @@ def compare_videos_and_print(frames1, frames2):
         print("")
         print(str(frames1.get_object(i).get_time()) + "->")
         for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(), frames2.get_object(j).get_elements(),
+            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(),
+                                                     frames2.get_object(j).get_elements(),
                                                      2500, 0.7)
             if image_fraction_matched > 0.2:
                 print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
+
 
 # FRAMES1 = save_distinct_ImgObj("testData/new things/6_2.MP4", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 FRAMES1 = read_images("v3")
+FRAMES2 = read_images_jpg("v3/jpg")
 img_obj = FRAMES1.get_object(0)
 img_obj.get_time()
 # FRAMES2 = read_images("v2")
