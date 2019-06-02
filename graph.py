@@ -365,6 +365,7 @@ class node_and_image_matching:
                         confidence = confidence + 1
             if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
                 self.matched_nodes.append(node)
+                print(node.identity)
         for nd in self.matched_nodes:
             print(nd.name)
 
@@ -414,12 +415,12 @@ class node_and_image_matching:
 
                 match, maximum_match = None, 0
                 for k in range(int(edge_list[j][2]), edge_list[j][0].distinct_frames.no_of_frames()):
-                    # starting from matched_edges[j][2] till end #edge folder
+                    # iterating over a kth edge in edge list
                     image_fraction_matched = mt.SURF_match_2(
                         edge_list[j][0].distinct_frames.get_object(k).get_elements(),
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
                     print("query frame "+ str(i))
-                    print("query frame" + str(k))
+                    print("edge frame" + str(k))
                     print(image_fraction_matched)
                     if image_fraction_matched > 0.15:
                         if image_fraction_matched > maximum_match:
