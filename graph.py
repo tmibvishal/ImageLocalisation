@@ -342,8 +342,18 @@ class node_and_image_matching:
     Query on all nodes.
     Store the nodes with maximum match"""
 
-    def locate_node(self, nodes_list: vo2.DistinctFrames, query_video_frames: vo2.DistinctFrames,
+    def locate_initial_node(self, nodes_list: list, query_video_frames: vo2.DistinctFrames,
                     no_of_frames_of_query_video_to_be_matched: int = 2):
+        """
+
+        :param nodes_list: consist of array of nodes stored in graph
+        :param query_video_frames: distinct image frames of query video
+        :param no_of_frames_of_query_video_to_be_matched: the initial no of frames that has to be matched with each node to locate the starting node
+        :return: the array which consist of object "Node" that have matched with query video
+
+        a node is considered matched if the ratio of the number of frames that of node that match with query video frame to the number of frames of query video queriec
+        is greater than 0.32 or 32%
+        """
         if len(self.matched_nodes) != 0:
             self.matched_nodes = []
         for node in nodes_list:
@@ -367,6 +377,7 @@ class node_and_image_matching:
                 self.matched_nodes.append(node)
         for nd in self.matched_nodes:
             print(nd.name)
+        return self.matched_nodes
 
     def match_next_node(self, nodes_list: list, query_video_frames: vo2.DistinctFrames,
                         last_frame_object: vo2.ImgObj,
@@ -401,8 +412,8 @@ class node_and_image_matching:
                     self.locate_edge(nodes_list, query_video_frames)
                     break
 
-    def locate_edge(self, nodes_list: vo2.DistinctFrames, query_video_frames: vo2.DistinctFrames,
-                    query_video_frames_begin: int = 0, confidence_level: int = 2):
+    def locate_edge(self, nodes_list:list, query_video_frames: vo2.DistinctFrames,
+                    query_video_frames_begin: int = 0, confidence_level: int = 1):
         last_frame_matched_with_edge = None
         for node in self.matched_nodes:
             for edge in node.links:
@@ -424,7 +435,7 @@ class node_and_image_matching:
                         edge_list[j][0].distinct_frames.get_object(k).get_elements(),
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
                     print("query frame "+ str(i))
-                    print("query frame" + str(k))
+                    print("edge frame "+str(edge_list[j][0].src) + "_" + str(edge_list[j][0].dest)+" " + str(k))
                     print(image_fraction_matched)
                     if image_fraction_matched > 0.15:
                         if image_fraction_matched > maximum_match:
@@ -440,14 +451,20 @@ class node_and_image_matching:
                     print(str(edge_list[j][0].src) + "_" + str(
                         edge_list[j][0].dest) + " has increased confidence = " + str(edge_list[j][1]))
                 else:
-                    edge_list[j][1] = edge_list[j][1] - 1
+                    # edge_list[j][1] = edge_list[j][1] - 1
                     print(str(edge_list[j][0].src) + "_" + str(
-                        edge_list[j][0].dest) + " has decreased confidence = " + str(edge_list[j][1]))
-                if edge_list[j][1] < (-1) * confidence_level:
-                    print(str(edge_list[j][0].src) + "_" + str(edge_list[j][0].dest) + "deleted")
-                    del edge_list[j]
-                elif edge_list[j][1] > confidence_level or len(edge_list) == 1:
+                        edge_list[j][0].dest) + " has no change in confidence = " + str(edge_list[j][1]))
+                # if edge_list[j][1] < (-1) * confidence_level:
+                #     print(str(edge_list[j][0].src) + "_" + str(edge_list[j][0].dest) + "deleted")
+                #     del edge_list[j]
+                # elif edge_list[j][1] > confidence_level or len(edge_list) == 1:
+                #     print("edge found")
+                #     break
+                if edge_list[j][1]>= confidence_level:
                     print("edge found")
+                    found_edge= edge_list[j]
+                    edge_list=[]
+                    edge_list.append(found_edge)
                     break
                 else:
                     j += 1
@@ -489,11 +506,11 @@ class node_and_image_matching:
 # graph.save_graph()
 
 
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_155931.mp4","query_distinct_frame",2,True)
+query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/MOV_0015.MP4","query_distinct_frame",3,True)
 # graph1=graph.load_graph()
 graph =load_graph()
 node_and_image_matching_obj = node_and_image_matching()
-node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
+node_and_image_matching_obj.locate_initial_node(graph.Nodes, query_video_frames1)
 node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
 node_and_image_matching_obj.print_final_path()
 
