@@ -411,7 +411,7 @@ def compare_videos_and_print(frames1, frames2):
                 print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
 
 
-# FRAMES1 = save_distinct_ImgObj("testData/new things/6_2.MP4", "v3", 4, True)
+# FRAMES1 = save_distinct_ImgObj("testData/testing/VID_20190610_190638.webm", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 # FRAMES1 = read_images("v3")

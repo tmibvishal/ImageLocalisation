@@ -325,8 +325,8 @@ class Graph:
 
 
 # @staticmethod
-def load_graph():
-    return general.load_from_memory("graph.pkl")
+def load_graph(graphFileName):
+    return general.load_from_memory(graphFileName)
 
 
 class node_and_image_matching:
@@ -369,8 +369,9 @@ class node_and_image_matching:
                                                              2500, 0.7)
                     if image_fraction_matched > 0.15:
                         print(image_fraction_matched)
-                        print(j)
-                        print(k)
+                        print(node.name)
+                        print("query video frame"+str(j))
+                        print("node image no"+str(k))
                         print()
                         confidence = confidence + 1
             if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
@@ -506,9 +507,9 @@ class node_and_image_matching:
 # graph.save_graph()
 
 
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/MOV_0015.MP4","query_distinct_frame",3,True)
+query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160046.mp4","query_distinct_frame",3,True)
 # graph1=graph.load_graph()
-graph =load_graph()
+graph =load_graph("graph_1.pkl")
 node_and_image_matching_obj = node_and_image_matching()
 node_and_image_matching_obj.locate_initial_node(graph.Nodes, query_video_frames1)
 node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)

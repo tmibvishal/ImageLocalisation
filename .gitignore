@@ -17,6 +17,7 @@ edge_data
 node_data
 query_distinct_frame
 graph.pkl
+graph_1.pkl
 storage
 __pycache__
 v1 old1
@@ -38,5 +39,6 @@ make_edges.py
 make_edges2.py
 making_graph.py
 v2 sushant
-
+v1
+v2
 v3
