@@ -241,19 +241,22 @@ def read_images(folder):
             # exception will occur for files like .DS_Store and jpg directory
             continue
 
-    if distinct_frames.no_of_frames() != 0 :
+    if distinct_frames.no_of_frames() != 0:
         distinct_frames.calculate_time()
 
     return distinct_frames
 
 
-def read_images_jpg(folder, hessian_threshold: int = 2500):
+def read_images_jpg(folder, hessian_threshold: int = 2500, for_nodes=False, folder_to_save:str=None):
     """Reads images of the form "image<int>.jpg" from folder(passed as string containing
     relative path of the specific folder)
 
     Parameters
     ----------
     folder
+    hessian_threshold
+    for_nodes
+    folder_to_save
 
     Returns
     -------
@@ -265,26 +268,43 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
     distinct_frames = DistinctFrames()
     detector = cv2.xfeatures2d_SURF.create(hessian_threshold)
 
-    for file in sorted(sorted(os.listdir(folder)), key=len):  # sorting files on basis of
-        # 1) length and 2) numerical order
-        """
-            Sorting is done 2 times because
-            if files in the folder are
-                1. image100.jpg
-                2. image22.jpg
-                3. image21.jpg
-            firstly sort them to image100.jpg,image21.jpg,image22.jpg then according to length to 
-            image21.jpg,image22.jpg,image100.jpg
-        """
-        try:
-            grey = cv2.imread(folder + "/" + file, 0)
-            time_stamp = int(file.replace('image', '').replace('.jpg', ''), 10)
-            keypoints, descriptors = detector.detectAndCompute(grey, None)
-            img_obj = ImgObj(len(keypoints), descriptors, time_stamp)
-            distinct_frames.add_img_obj(img_obj)
-            print("Reading image .." + str(time_stamp) + " from " + folder)  # for dev phase
-        except:
-            continue
+    if not for_nodes:
+        for file in sorted(sorted(os.listdir(folder)), key=len):  # sorting files on basis of
+            # 1) length and 2) numerical order
+            """
+                Sorting is done 2 times because
+                if files in the folder are
+                    1. image100.jpg
+                    2. image22.jpg
+                    3. image21.jpg
+                firstly sort them to image100.jpg,image21.jpg,image22.jpg then according to length to 
+                image21.jpg,image22.jpg,image100.jpg
+            """
+            try:
+                grey = cv2.imread(folder + "/" + file, 0)
+                time_stamp = int(file.replace('image', '').replace('.jpg', ''), 10)
+                keypoints, descriptors = detector.detectAndCompute(grey, None)
+                img_obj = ImgObj(len(keypoints), descriptors, time_stamp)
+                distinct_frames.add_img_obj(img_obj)
+                print("Reading image .." + str(time_stamp) + " from " + folder)  # for dev phase
+            except:
+                continue
+    else:
+        ensure_path(folder_to_save+'/jpg')
+        i = 0
+        for file in os.listdir(folder):
+            try:
+                gray = cv2.imread(folder + "/" + file, 0)
+                time_stamp = None
+                keypoints, descriptors = detector.detectAndCompute(gray, None)
+                img_obj = ImgObj(len(keypoints), descriptors, time_stamp)
+                save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder_to_save)
+                cv2.imwrite(folder_to_save+'/jpg/image' + str(i) + '.jpg', gray)
+                distinct_frames.add_img_obj(img_obj)
+                print("Reading image .." + str(i) + " from " + folder)  # for dev phase
+                i = i + 1
+            except:
+                continue
 
     return distinct_frames
 
