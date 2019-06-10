@@ -420,7 +420,7 @@ class node_and_image_matching:
 
                 match, maximum_match = None, 0
                 for k in range(int(edge_list[j][2]), edge_list[j][0].distinct_frames.no_of_frames()):
-                    # starting from matched_edges[j][2] till end #edge folder
+                    # iterating over a kth edge in edge list
                     image_fraction_matched = mt.SURF_match_2(
                         edge_list[j][0].distinct_frames.get_object(k).get_elements(),
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
@@ -480,5 +480,34 @@ class node_and_image_matching:
                 raise Exception("Path not right")
 
 
+# graph=Graph()
+# graph.add_floor_map(0, "graph/images/map0.jpg")
+# graph.mark_nodes(0)
+# graph.make_connections(0)
+# graph.read_nodes("testData/Morning_sit/nodes",4)
+# graph.read_edges("testData/Morning_sit/edges",4)
+# graph.print_graph(0)
+# graph.save_graph()
+
+
+# query_video_frames1 = vo2.save_distinct_ImgObj("testData/query videos/20190528_160046.mp4", "query_distinct_frame", 2, True)
+query_video_frames1 = vo2.read_images("query_distinct_frame")
+
+# graph = load_graph()
+# Nd = graph.get_node(2)
+# i = 0
+
 graph = load_graph()
-graph.print_graph(0)
+node_and_image_matching_obj = node_and_image_matching()
+node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
+node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
+node_and_image_matching_obj.print_final_path()
+
+# FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
+# FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
+# FRAMES3 = vo2.read_images_jpg("testData/Photo frames sit 0/6")
+# graph1 = load_graph()
+# graph1._add_edge_images(2, 6, FRAMES1)
+# graph1._add_node_images(3, FRAMES2)
+# graph1._add_node_images(6, FRAMES3)
+# graph1.save_graph()
