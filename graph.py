@@ -71,7 +71,7 @@ class Graph:
 
         minimum, nearest_node = -1, None
         for Nd in self.Nodes:
-            if Nd.z == z:
+            if Nd.coordinates[2] == z:
                 if abs(Nd.coordinates[0] - x) < 50 and abs(Nd.coordinates[1] - y) < 50:
                     if minimum == -1 or distance(Nd) < minimum:
                         nearest_node = Nd
@@ -166,6 +166,12 @@ class Graph:
                 return Nd
         return None
 
+    def get_edges(self, identity: int):
+        for Nd in self.Nodes:
+            if Nd.identity == identity:
+                return Nd.links
+        return None
+
     def print_graph(self, z):
         # Implementation 1 ( building from pure image)
         pure = self._get_floor_img(z, "pure")
@@ -191,10 +197,10 @@ class Graph:
         # Implementation 2 ( directly taking impure image )
         # impure = self._get_floor_img(z, "impure")
         # img = impure
-        return img
-        # cv2.imshow('Node graph for floor ' + str(z), img)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        # return img
+        cv2.imshow('Node graph for floor ' + str(z), img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
     def mark_nodes(self, z):
         window_text = 'Mark Nodes for floor ' + str(z)
@@ -202,7 +208,7 @@ class Graph:
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
                 identity = self.new_node_index
-                if self._nearest_node(x, y) is None:
+                if self._nearest_node(x, y, z) is None:
                     self._create_node('Node-' + str(identity), x, y, z)
                     cv2.circle(img, (x, y), 8, (66, 126, 255), -1)
                     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -338,7 +344,7 @@ class node_and_image_matching:
     def convert_query_video_to_objects(path, destination_folder):
         return vo2.save_distinct_ImgObj(path, destination_folder)
 
-    """ Assume that a person startas frpom a specific node.
+    """ Assume that a person starts from a specific node.
     Query on all nodes.
     Store the nodes with maximum match"""
 
@@ -418,7 +424,7 @@ class node_and_image_matching:
                     image_fraction_matched = mt.SURF_match_2(
                         edge_list[j][0].distinct_frames.get_object(k).get_elements(),
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
-                    print("query frame "+ str(i))
+                    print("query frame " + str(i))
                     print("query frame" + str(k))
                     print(image_fraction_matched)
                     if image_fraction_matched > 0.15:
@@ -474,34 +480,5 @@ class node_and_image_matching:
                 raise Exception("Path not right")
 
 
-# graph=Graph()
-# graph.add_floor_map(0, "graph/images/map0.jpg")
-# graph.mark_nodes(0)
-# graph.make_connections(0)
-# graph.read_nodes("testData/Morning_sit/nodes",4)
-# graph.read_edges("testData/Morning_sit/edges",4)
-# graph.print_graph(0)
-# graph.save_graph()
-
-
-# query_video_frames1 = vo2.save_distinct_ImgObj("testData/query videos/20190528_160046.mp4", "query_distinct_frame", 2, True)
-query_video_frames1 = vo2.read_images("query_distinct_frame")
-
-# graph = load_graph()
-# Nd = graph.get_node(2)
-# i = 0
-
 graph = load_graph()
-node_and_image_matching_obj = node_and_image_matching()
-node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
-node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
-node_and_image_matching_obj.print_final_path()
-
-# FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
-# FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
-# FRAMES3 = vo2.read_images_jpg("testData/Photo frames sit 0/6")
-# graph1 = load_graph()
-# graph1._add_edge_images(2, 6, FRAMES1)
-# graph1._add_node_images(3, FRAMES2)
-# graph1._add_node_images(6, FRAMES3)
-# graph1.save_graph()
+graph.print_graph(0)

@@ -124,7 +124,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     """Saves non redundent and distinct frames of a video in folder
     Parameters
     ----------
-    video_str : is video_str = "webcam" then loadswebcam O.W. loads video at video_str location,
+    video_str : is video_str = "webcam" then loads webcam. O.W. loads video at video_str location,
     folder : folder where non redundant images are to be saved,
     frames_skipped: Number of frames to skip and just not consider,
     check_blurry: If True then only considers non blurry frames but is slow
@@ -169,15 +169,15 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
         ret, frame = cap.read()
         if ret:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            if (i % frames_skipped != 0 and not check_next_frame):
+            if i % frames_skipped != 0 and not check_next_frame:
                 i = i + 1
                 continue
 
             cv2.imshow('frame', gray)
             print(i)
 
-            if (check_blurry):
-                if (is_blurry_grayscale(gray)):
+            if check_blurry:
+                if is_blurry_grayscale(gray):
                     check_next_frame = True
                     i = i + 1
                     continue
