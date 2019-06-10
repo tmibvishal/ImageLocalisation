@@ -352,18 +352,17 @@ class node_and_image_matching:
     def convert_query_video_to_objects(path, destination_folder):
         return vo2.save_distinct_ImgObj(path, destination_folder)
 
-    """ Assume that a person starts from a specific node.
+    """ Assume that a person starts frpom a specific node.
     Query on all nodes.
     Store the nodes with maximum match"""
 
-    def locate_node(self, nodes_list: list, query_video_frames: vo2.DistinctFrames,
-                    no_of_frames_of_query_video_to_be_matched: int = 2):
+    def locate_node(self, nodes_list, query_video_frames, no_of_frames_of_query_video_to_be_matched: int = 2):
         if len(self.matched_nodes) != 0:
             self.matched_nodes = []
         for node in nodes_list:
             confidence = 0
             node_images = node.node_images
-            if node_images is None:
+            if (node_images == None):
                 continue
             no_of_node_images = node_images.no_of_frames()
             for j in range(no_of_frames_of_query_video_to_be_matched):
@@ -382,59 +381,46 @@ class node_and_image_matching:
         for nd in self.matched_nodes:
             print(nd.name)
 
-    def match_next_node(self, nodes_list: list, query_video_frames: vo2.DistinctFrames,
-                        last_frame_object: vo2.ImgObj,
+    def match_next_node(self, nodes_list, query_video_frames, last_frame_object,
                         no_of_frames_of_query_video_to_be_matched: int = 2):
         if len(self.matched_nodes) != 0:
             self.matched_nodes = []
         new_src_node = last_frame_object[1].dest
         for node in nodes_list:
             if node.identity == new_src_node:
-                print("matching new node" + node.name)
                 confidence = 0
                 node_images = node.node_images
                 no_of_node_images = node_images.no_of_frames()
-                for j in range(query_video_frames.no_of_frames()):
+                for j in range(last_frame_object[0], last_frame_object[0] + no_of_frames_of_query_video_to_be_matched):
                     for k in range(no_of_node_images):
                         image_fraction_matched = mt.SURF_match_2(query_video_frames.get_object(j).get_elements(),
                                                                  node_images.get_object(k).get_elements(),
                                                                  2500, 0.7)
-
-                        if image_fraction_matched > 0.10:
+                        if image_fraction_matched > 0.15:
                             confidence = confidence + 1
-                            print("query video frame " + str(j))
-                            print("node frame" + str(k) + " of " + node.name)
-                            print(image_fraction_matched)
                 if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
                     self.matched_nodes.append(node)
                     self.locate_edge(nodes_list, query_video_frames, last_frame_object[0])
                     break
 
-    def locate_edge(self, nodes_list: vo2.DistinctFrames, query_video_frames: vo2.DistinctFrames,
-                    query_video_frames_begin: int = 0, confidence_level: int = 2):
+    def locate_edge(self, nodes_list, query_video_frames, query_video_frames_begin: int = 0, confidence_level: int = 2):
         last_frame_matched_with_edge = None
         for node in self.matched_nodes:
             for edge in node.links:
                 self.matched_edges.append([edge, 0, 0])  # (edge, confidence, frame_position_matched)
                 print("edges added" + str(edge.src) + "_" + str(edge.dest))
                 print()
-
         last_frame_matched_with_edge = query_video_frames_begin
         for i in range(query_video_frames_begin, query_video_frames.no_of_frames()):
             edge_list = self.matched_edges
 
             j = 0
             while j < len(edge_list):
-
                 match, maximum_match = None, 0
-                for k in range(int(edge_list[j][2]), edge_list[j][0].distinct_frames.no_of_frames()):
-                    # iterating over a kth edge in edge list
+                for k in range(int(edge_list[j][2]), edge_list[j][0].distinct_frames.no_of_frames()):  # starting from matched_edges[j][2] till end #edge folder
                     image_fraction_matched = mt.SURF_match_2(
                         edge_list[j][0].distinct_frames.get_object(k).get_elements(),
                         query_video_frames.get_object(i).get_elements(), 2500, 0.7)
-                    print("query frame " + str(i))
-                    print("query frame" + str(k))
-                    print(image_fraction_matched)
                     if image_fraction_matched > 0.15:
                         if image_fraction_matched > maximum_match:
                             last_frame_matched_with_edge = i
@@ -512,7 +498,7 @@ def run(code: int):
 
     # Query video
     if code == 3:
-        query_video_frames1 = vo2.save_distinct_ImgObj("testData/sit-june3/VID_20190603_110640.mp4", "query_distinct_frame", 2, True)
+        query_video_frames1 = vo2.save_distinct_ImgObj("testData/sit-june3/VID_20190603_110640.mp4", "query_distinct_frame", 0, True)
         # query_video_frames1 = vo2.read_images("query_distinct_frame")
         graph = load_graph()
         node_and_image_matching_obj = node_and_image_matching()
