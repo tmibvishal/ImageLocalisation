@@ -8,6 +8,7 @@ Accepts only Mat (The Basic Image Container) format images
 
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 
 def SURF_match_2(key_des_1,key_des_2, hessianThreshold: int = 400, ratio_thresh: float = 0.7, symmetry_match: bool = True):
     """Give fraction match between 2 images descriptors using SURF and FLANN
@@ -100,6 +101,22 @@ def SURF_match(img1, img2, hessianThreshold: int = 400, ratio_thresh: float = 0.
 
     matcher = cv2.DescriptorMatcher_create(cv2.DescriptorMatcher_FLANNBASED)
     knn_matches = matcher.knnMatch(descriptors1, descriptors2, 2)
+    # Need to draw only good matches, so create a mask
+    matchesMask = [[0, 0] for i in xrange(len(knn_matches))]
+
+    # ratio test as per Lowe's paper
+    for i, (m, n) in enumerate(matches):
+        if m.distance < 0.7 * n.distance:
+            matchesMask[i] = [1, 0]
+
+    draw_params = dict(matchColor=(0, 255, 0),
+                       singlePointColor=(255, 0, 0),
+                       matchesMask=matchesMask,
+                       flags=0)
+
+    img3 = cv2.drawMatchesKnn(img1, keypoints1, img2, keypoints2, knn_matches, None, **draw_params)
+
+    plt.imshow(img3, ), plt.show()
     good_matches = []
     for m, n in knn_matches:
         if m.distance < ratio_thresh * n.distance:
