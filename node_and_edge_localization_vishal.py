@@ -3,7 +3,7 @@ import numpy as np
 import os
 import shutil
 import time
-from imutils import paths
+
 import video_operations_2 as vo2
 import matcher as mt
 from graph import Graph, Edge, Node, FloorMap, load_graph
@@ -16,8 +16,7 @@ class NodeEdgeMatching:
     # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended: bool"}
 
     def __init__(self, graph_obj: Graph, query_video_distinct_frames: vo2.DistinctFrames):
-        some_query_img_objects = []
-        some_query_img_objects.append(query_video_distinct_frames.get_object(0))
+        some_query_img_objects = (query_video_distinct_frames.get_objects(0, 10))
         # img_objects_list contains 3 elements
         nodes_matched = self.match_node_with_frames(some_query_img_objects, graph_obj)
         self.find_edge_with_nodes(nodes_matched, query_video_distinct_frames, 0)
@@ -53,12 +52,12 @@ class NodeEdgeMatching:
         print("yo")
         j = possible_edge["last_matched_j"]
         jmax = possible_edge["last_matched_j"] + possible_edge["no_of_frames_to_match"]
-        while j < jmax and j < possible_edge["edge"].distinct_frames.no_of_frames:
+        while j < jmax and j < possible_edge["edge"].distinct_frames.no_of_frames():
             print(j)
             match, maxmatch = None, 0
             edge = possible_edge["edge"]
-            img_obj_from_edge = edge.distinct_frames.get_object(j)
-            image_fraction_matched = mt.SURF_match_2(img_obj_from_edge, query_video_ith_frame, 2500, 0.7)
+            img_obj_from_edge: vo2.ImgObj = edge.distinct_frames.get_object(j)
+            image_fraction_matched = mt.SURF_match_2(img_obj_from_edge.get_elements(), query_video_ith_frame.get_elements(), 2500, 0.7)
             if image_fraction_matched > 0.15:
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
@@ -69,7 +68,7 @@ class NodeEdgeMatching:
         else:
             possible_edge["last_matched_j"] = match
             possible_edge["last_matched_i_with_j"] = i
-        if j == (possible_edge["edge"].distinct_frames.no_of_frames - 1):
+        if j == (possible_edge["edge"].distinct_frames.no_of_frames() - 1):
             possible_edge["edge_ended"] = True
 
     def find_edge_with_nodes(self, nodes_matched: list, query_video_distinct_frames: vo2.DistinctFrames,
@@ -83,11 +82,12 @@ class NodeEdgeMatching:
                         "edge": edge,
                         "confidence": 0,
                         "last_matched_i_with_j": i_at_matched_node - 1,
-                        "last_matched_j": -1,
+                        "last_matched_j": 0,
                         "no_of_frames_to_match": 3,
                         "edge_ended": False
                     })
-        # i_at_matched_node is 0 means that there can be multiple nodes because query video is just started querying for path matching
+        # i_at_matched_node is 0 means that there can be multiple nodes
+        # because query video is just started querying for path matching
         is_edge_found = False
         is_edge_partially_found = False
         found_edge = None
@@ -137,7 +137,11 @@ class NodeEdgeMatching:
             edge: Edge = found_edge["edge"]
             print("edge" + edge.src + "_" + edge.dest)
 
+
 graph_obj: Graph = load_graph()
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/vishal_open_camera_Videos/edge_0_1.mp4", "query_distinct_frame", 2, True)
+#query_video_frames1 = vo2.save_distinct_ImgObj("testData/evening_sit/queryVideos/VID_20190610_203834.webm",
+ #                                              "query_distinct_frame", 2, True)
+
+query_video_frames1 = vo2.read_images("query_distinct_frame")
 node_edge_matching_obj = NodeEdgeMatching(graph_obj, query_video_frames1)
 node_edge_matching_obj.print_path()
