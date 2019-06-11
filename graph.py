@@ -131,7 +131,7 @@ class Graph:
     def _add_edge_data(self, id1: int, id2: int, path_of_video: str, folder_to_save: str = None,
                        frames_skipped: int = 0, check_blurry: bool = True, hessian_threshold: int = 2500):
         distinct_frames = vo2.save_distinct_ImgObj(path_of_video, folder_to_save, frames_skipped, check_blurry,
-                                                   hessian_threshold)
+                                                   hessian_threshold, ensure_min=True)
         self._add_edge_images(id1, id2, distinct_frames)
 
     def _get_floor_img(self, z, params):
@@ -483,36 +483,52 @@ class node_and_image_matching:
                 raise Exception("Path not right")
 
 
-# graph=Graph()
-# graph.add_floor_map(0, "graph/images/map0.jpg")
-# graph.mark_nodes(0)
-# graph.make_connections(0)
-# graph.read_nodes("testData/Morning_sit/nodes",4)
-# graph.read_edges("testData/Morning_sit/edges",4)
-# graph.print_graph(0)
-# graph.save_graph()
+def run(code: int):
+    # Create new graph
+    if code == 0:
+        graph = Graph()
+        graph.add_floor_map(0, "graph/maps/map0.jpg")
+        graph.mark_nodes(0)
+        graph.make_connections(0)
+        graph.print_graph(0)
+        graph.save_graph()
 
-'''
-# query_video_frames1 = vo2.save_distinct_ImgObj("testData/query videos/20190528_160046.mp4", "query_distinct_frame", 2, True)
-query_video_frames1 = vo2.read_images("query_distinct_frame")
+    # Print graph
+    if code == 1:
+        graph = load_graph()
+        graph.print_graph(0)
 
-#graph = load_graph()
-# Nd = graph.get_node(2)
-# i = 0
+    # Add nodes and edges
+    if code == 2:
+        graph = load_graph()
+        #graph.read_nodes("testData/vishal_oc/nodes", 4)
+        graph.read_edges("testData/evening_sit/edges/edges", 4)
+        graph.save_graph()
+
+    # Query video
+    if code == 3:
+        query_video_frames1 = vo2.save_distinct_ImgObj("testData/sit-june3/VID_20190603_110640.mp4", "query_distinct_frame", 0, True)
+        # query_video_frames1 = vo2.read_images("query_distinct_frame")
+        graph = load_graph()
+        node_and_image_matching_obj = node_and_image_matching()
+        node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
+        node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
+        node_and_image_matching_obj.print_final_path()
+
+    # Add specific node/edge data manually
+    if code == 4:
+        FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
+        FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
+        graph1 = load_graph()
+        graph1._add_edge_images(2, 6, FRAMES1)
+        graph1._add_node_images(3, FRAMES2)
+        graph1.save_graph()
+
+    # Add node images
+    if code == 5:
+        graph = load_graph()
+        graph.read_nodes_directly("testData/Node-direct-images")
+        graph.save_graph()
 
 
-graph = load_graph()
-node_and_image_matching_obj = node_and_image_matching()
-node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
-node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
-node_and_image_matching_obj.print_final_path()
-'''
-
-# FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
-# FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
-# FRAMES3 = vo2.read_images_jpg("testData/Photo frames sit 0/6")
-# graph1 = load_graph()
-# graph1._add_edge_images(2, 6, FRAMES1)
-# graph1._add_node_images(3, FRAMES2)
-# graph1._add_node_images(6, FRAMES3)
-# graph1.save_graph()
+run(2)
