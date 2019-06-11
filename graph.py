@@ -329,8 +329,11 @@ class Graph:
     def save_graph(self):
         general.save_to_memory(self, "graph.pkl")
 
+    @staticmethod
+    def load_graph(self):
+        return general.load_from_memory("graph.pkl")
 
-# @staticmethod
+
 def load_graph():
     return general.load_from_memory("graph.pkl")
 
@@ -489,19 +492,21 @@ class node_and_image_matching:
 # graph.print_graph(0)
 # graph.save_graph()
 
-
+'''
 # query_video_frames1 = vo2.save_distinct_ImgObj("testData/query videos/20190528_160046.mp4", "query_distinct_frame", 2, True)
 query_video_frames1 = vo2.read_images("query_distinct_frame")
 
-# graph = load_graph()
+#graph = load_graph()
 # Nd = graph.get_node(2)
 # i = 0
+
 
 graph = load_graph()
 node_and_image_matching_obj = node_and_image_matching()
 node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
 node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
 node_and_image_matching_obj.print_final_path()
+'''
 
 # FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
 # FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")

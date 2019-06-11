@@ -174,7 +174,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
                 continue
 
             cv2.imshow('frame', gray)
-            print(i)
+            # print(i)
 
             if check_blurry:
                 if is_blurry_grayscale(gray):
