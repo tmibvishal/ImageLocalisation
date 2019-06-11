@@ -65,7 +65,7 @@ class DistinctFrames:
     def get_objects(self, start_index=0, end_index=-1):
         if (start_index == 0 and end_index == -1):
             return self.img_objects[start_index:end_index]
-        if (start_index or end_index) not in range(0, self.no_of_frames()):
+        if (start_index not in range(0, self.no_of_frames())) or (end_index not in range(0, self.no_of_frames())):
             raise Exception("Invalid start / end indexes")
         if start_index > end_index:
             raise Exception("Start index should be less than or equal to end index")
@@ -124,7 +124,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     """Saves non redundent and distinct frames of a video in folder
     Parameters
     ----------
-    video_str : is video_str = "webcam" then loadswebcam O.W. loads video at video_str location,
+    video_str : is video_str = "webcam" then loads webcam. O.W. loads video at video_str location,
     folder : folder where non redundant images are to be saved,
     frames_skipped: Number of frames to skip and just not consider,
     check_blurry: If True then only considers non blurry frames but is slow
@@ -169,15 +169,15 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
         ret, frame = cap.read()
         if ret:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            if (i % frames_skipped != 0 and not check_next_frame):
+            if i % frames_skipped != 0 and not check_next_frame:
                 i = i + 1
                 continue
 
             cv2.imshow('frame', gray)
-            print(i)
+            # print(i)
 
-            if (check_blurry):
-                if (is_blurry_grayscale(gray)):
+            if check_blurry:
+                if is_blurry_grayscale(gray):
                     check_next_frame = True
                     i = i + 1
                     continue
@@ -273,7 +273,7 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
                 1. image100.jpg
                 2. image22.jpg
                 3. image21.jpg
-            firstly sort them to image100.jpg,image21.jpg,image22.jpg then according to length to
+            firstly sort them to image100.jpg,image21.jpg,image22.jpg then according to length to 
             image21.jpg,image22.jpg,image100.jpg
         """
         try:
@@ -411,10 +411,9 @@ def compare_videos_and_print(frames1, frames2):
                 print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
 
 
-# FRAMES1 = save_distinct_ImgObj("testData/testing/VID_20190610_190638.webm", "v3", 4, True)
+# FRAMES1 = save_distinct_ImgObj("testData/new things/6_2.MP4", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
-# FRAMES1 = read_images("v3")
 # img_obj = FRAMES1.get_object(0)
 # img_obj.get_time()
 # FRAMES2 = read_images("v2")

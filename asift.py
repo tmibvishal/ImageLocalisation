@@ -123,11 +123,11 @@ def main():
     detector, matcher = init_feature(feature_name)
 
     if img1 is None:
-        print('Failed to load fn1:', fn1)
+        print('Failed to load fn1:', img1)
         sys.exit(1)
 
     if img2 is None:
-        print('Failed to load fn2:', fn2)
+        print('Failed to load fn2:', img2)
         sys.exit(1)
 
     if detector is None:
@@ -156,8 +156,9 @@ def main():
 
         explore_match(win, img1, img2, kp_pairs, None, H)
 
-
-    match_and_draw('affine find_obj')
+    cv.namedWindow('image',cv.WINDOW_NORMAL)
+    cv.resizeWindow('image', 1800, 1800)
+    match_and_draw('image')
     cv.waitKey()
     print('Done')
 

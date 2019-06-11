@@ -71,7 +71,7 @@ class Graph:
 
         minimum, nearest_node = -1, None
         for Nd in self.Nodes:
-            if Nd.z == z:
+            if Nd.coordinates[2] == z:
                 if abs(Nd.coordinates[0] - x) < 50 and abs(Nd.coordinates[1] - y) < 50:
                     if minimum == -1 or distance(Nd) < minimum:
                         nearest_node = Nd
@@ -166,6 +166,12 @@ class Graph:
                 return Nd
         return None
 
+    def get_edges(self, identity: int):
+        for Nd in self.Nodes:
+            if Nd.identity == identity:
+                return Nd.links
+        return None
+
     def print_graph(self, z):
         # Implementation 1 ( building from pure image)
         pure = self._get_floor_img(z, "pure")
@@ -191,10 +197,10 @@ class Graph:
         # Implementation 2 ( directly taking impure image )
         # impure = self._get_floor_img(z, "impure")
         # img = impure
-        return img
-        # cv2.imshow('Node graph for floor ' + str(z), img)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        # return img
+        cv2.imshow('Node graph for floor ' + str(z), img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
     def mark_nodes(self, z):
         window_text = 'Mark Nodes for floor ' + str(z)
@@ -202,7 +208,7 @@ class Graph:
         def click_event(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDOWN:
                 identity = self.new_node_index
-                if self._nearest_node(x, y) is None:
+                if self._nearest_node(x, y, z) is None:
                     self._create_node('Node-' + str(identity), x, y, z)
                     cv2.circle(img, (x, y), 8, (66, 126, 255), -1)
                     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -323,10 +329,13 @@ class Graph:
     def save_graph(self):
         general.save_to_memory(self, "graph.pkl")
 
+    @staticmethod
+    def load_graph(self):
+        return general.load_from_memory("graph.pkl")
 
-# @staticmethod
-def load_graph(graphFileName):
-    return general.load_from_memory(graphFileName)
+
+def load_graph():
+    return general.load_from_memory("graph.pkl")
 
 
 class node_and_image_matching:
@@ -391,6 +400,8 @@ class node_and_image_matching:
                 print("matching new node" + node.name)
                 confidence = 0
                 node_images = node.node_images
+                if node_images is None:
+                    continue
                 no_of_node_images = node_images.no_of_frames()
                 for j in range(query_video_frames.no_of_frames()):
                     for k in range(no_of_node_images):
@@ -507,13 +518,13 @@ class node_and_image_matching:
 # graph.save_graph()
 
 
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160046.mp4","query_distinct_frame",3,True)
-# graph1=graph.load_graph()
-graph =load_graph("graph_1.pkl")
-node_and_image_matching_obj = node_and_image_matching()
-node_and_image_matching_obj.locate_initial_node(graph.Nodes, query_video_frames1)
-node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
-node_and_image_matching_obj.print_final_path()
+# query_video_frames1 = vo2.save_distinct_ImgObj("testData/query_sit0/20190528_160046.mp4","query_distinct_frame",3,True)
+# # graph1=graph.load_graph()
+# graph =load_graph("graph_1.pkl")
+# node_and_image_matching_obj = node_and_image_matching()
+# node_and_image_matching_obj.locate_initial_node(graph.Nodes, query_video_frames1)
+# node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
+# node_and_image_matching_obj.print_final_path()
 
 # FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
 # FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
@@ -523,3 +534,53 @@ node_and_image_matching_obj.print_final_path()
 # graph1._add_node_images(3, FRAMES2)
 # graph1._add_node_images(6, FRAMES3)
 # graph1.save_graph()
+
+def run(code: int):
+    # Create new graph
+    if code == 0:
+        graph = Graph()
+        graph.add_floor_map(0, "graph/images/map0.jpg")
+        graph.mark_nodes(0)
+        graph.make_connections(0)
+        graph.print_graph(0)
+        graph.save_graph()
+
+    # Print graph
+    if code == 1:
+        graph = load_graph()
+        graph.print_graph(0)
+
+    # Add nodes and edges
+    if code == 2:
+        graph = load_graph()
+        graph.read_nodes("testData/Evening Sit/nodes", 4)
+        graph.read_edges("testData/Evening Sit/edges", 4)
+        graph.save_graph()
+
+    # Query video
+    if code == 3:
+        query_video_frames1 = vo2.save_distinct_ImgObj("testData/Evening Sit/VID_20190610_203834.webm",
+                                                       "query_distinct_frame",3, True)
+        # query_video_frames1 = vo2.read_images("query_distinct_frame")
+        graph = load_graph()
+        node_and_image_matching_obj = node_and_image_matching()
+        node_and_image_matching_obj.locate_initial_node(graph.Nodes, query_video_frames1)
+        node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
+        node_and_image_matching_obj.print_final_path()
+
+    # Add specific node/edge data manually
+    if code == 4:
+        FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
+        FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
+        graph1 = load_graph("graph.pkl")
+        graph1._add_edge_images(2, 6, FRAMES1)
+        graph1._add_node_images(3, FRAMES2)
+        graph1.save_graph()
+
+    # Add node images
+    if code == 5:
+        graph = load_graph()
+        graph.read_nodes_directly("testData/Node-direct-images")
+        graph.save_graph()
+
+run(3)
