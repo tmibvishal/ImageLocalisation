@@ -28,8 +28,8 @@ class NodeEdgeMatching:
         search_list = graph_obj.Nodes
         node_confidence = []
         # node_confidence is list of (node.identity:int , confidence:int , total_fraction_matched:float)
-        for img_obj in some_query_img_objects:
-            for node in search_list:
+        for node in search_list:
+            for img_obj in some_query_img_objects:
                 node_images: vo2.DistinctFrames = node.node_images
                 if node_images is not None:
                     for data_obj in node_images.get_objects():
