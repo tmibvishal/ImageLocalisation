@@ -13,14 +13,22 @@ from graph import Graph
 class NodeEdgeMatching:
     matched_path = []
 
-    def __init__(self):
+    # matched is array of dictionary of type { "node: Node", "edge: Edge", "confidence: int",
+    # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended: bool"}
+
+    def __init__(self, graph_obj: Graph, query_video_distinct_frames: vo2.DistinctFrames):
+        some_query_img_objects = query_video_distinct_frames.get_objects(0, 2)
+        # img_objects_list contains 3 elements
+        nodes_matched = self.match_node_with_frames(some_query_img_objects, graph_obj)
+        self.find_edge_with_nodes(nodes_matched, query_video_distinct_frames, 0)
         return
 
-    def match_node_with_frames(self, query_video_frames: list, graphObj: Graph):
-        "returns matched nodes using query_video_frames"
-        search_list = graphObj.Nodes
-        node_confidence=[]
-        for img_obj in query_video_frames:
+    def match_node_with_frames(self, some_query_img_objects: list, graph_obj: Graph):
+        """returns matched nodes using query_video_frames"""
+        search_list = graph_obj.Nodes
+        node_confidence = []
+        # node_confidence is list of (node.identity:int , confidence:int , total_fraction_matched:float)
+        for img_obj in some_query_img_objects:
             for node in search_list:
                 for data_obj in node.node_images.get_objects():
                     image_fraction_matched = mt.SURF_match_2(img_obj.get_elements(), data_obj.get_elements(),
@@ -115,3 +123,13 @@ class NodeEdgeMatching:
             j = found_edge["last_matched_j"]
             last_jth_matched_img_obj = found_edge["edge"].distinct_frames.get_object(j)
             print("This edge is partially found upto " + last_jth_matched_img_obj.time_stamp)
+
+    def print_path(self):
+        for found_edge in self.matched_path:
+            edge: graph.Edge = found_edge["edge"]
+            print("edge" + edge.src + "_" + edge.dest)
+
+graph_obj: graph.Graph = graph.load_graph()
+query_video_frames1 = vo2.save_distinct_ImgObj("...query video...", "query_distinct_frame", 2, True)
+node_edge_matching_obj = NodeEdgeMatching(graph_obj, query_video_frames1)
+node_edge_matching_obj.print_path()
