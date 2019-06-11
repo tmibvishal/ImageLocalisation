@@ -111,12 +111,12 @@ def is_blurry_colorful(image):
     """
     b, _, _ = cv2.split(image)
     a = variance_of_laplacian(b)
-    return (variance_of_laplacian(b) < 100)
+    return (variance_of_laplacian(b) < 80)
 
 
 def is_blurry_grayscale(gray_image):
     a = variance_of_laplacian(gray_image)
-    return (variance_of_laplacian(gray_image) < 100)
+    return (variance_of_laplacian(gray_image) < 80)
 
 
 def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
