@@ -63,7 +63,7 @@ class DistinctFrames:
         return len(self.img_objects)
 
     def get_objects(self, start_index=0, end_index=-1):
-        if (start_index == 0 and end_index == -1):
+        if start_index == 0 and end_index == -1:
             return self.img_objects[start_index:end_index]
         if (start_index not in range(0, self.no_of_frames())) or (end_index not in range(0, self.no_of_frames())):
             raise Exception("Invalid start / end indexes")
