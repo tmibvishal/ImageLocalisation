@@ -16,9 +16,27 @@ class NodeEdgeMatching:
     def __init__(self):
         return
 
-    def match_node_with_frames(self, query_video_frames: list):
+    def match_node_with_frames(self, query_video_frames: list, graphObj: Graph):
         "returns matched nodes using query_video_frames"
-        return
+        search_list = graphObj.Nodes
+        node_confidence=[]
+        for img_obj in query_video_frames:
+            for node in search_list:
+                for data_obj in node.node_images.get_objects():
+                    image_fraction_matched = mt.SURF_match_2(img_obj.get_elements(), data_obj.get_elements(),
+                                                             2500, 0.7)
+                    if image_fraction_matched > 0.2:
+                        if len(node_confidence) > 0 and node_confidence[-1][0] == node.identity:
+                            entry = node_confidence[-1]
+                            node_confidence[-1] = (node.identity, entry[1] + 1, entry[2] + image_fraction_matched)
+                            # print(str(node.identity) + " matched by " + str(image_fraction_matched))
+                        else:
+                            node_confidence.append((node.identity, 1, image_fraction_matched))
+        sorted(node_confidence, key=lambda x: (x[1], x[2]), reverse=True)
+        final_node_list = []
+        for entry in node_confidence:
+            final_node_list.append(entry[0])
+        return final_node_list
 
     def match_edge_with_frame(self, possible_edge, i: int, query_video_ith_frame: vo2.ImgObj):
         # possible edge here is passed as reference
