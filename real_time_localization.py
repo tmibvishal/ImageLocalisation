@@ -4,27 +4,111 @@ import os
 import shutil
 
 import time
-from threading import Thread
+from multiprocessing import Process
 
 import video_operations_2 as vo2
 import matcher as mt
 from graph import Graph, Edge, Node, FloorMap, load_graph
+from video_operations_2 import ensure_path, DistinctFrames, ImgObj, save_to_memory, is_blurry_grayscale
 
 
-class NodeEdgeMatching:
+query_video_distinct_frames = DistinctFrames()
+query_video_ended = False
+
+def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_skipped: int = 0, check_blurry: bool = False,
+                         hessian_threshold: int = 2500, ensure_min=False):
+    ensure_path(folder + "/jpg")
+
+    frames_skipped += 1
+
+    if video_str == "webcam":
+        video_str = 0
+    cap = cv2.VideoCapture(video_str)
+    # cap= cv2.VideoCapture(0)
+    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 200)
+    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 200)
+
+
+    i = 0
+    a = None
+    b = None
+    check_next_frame = False
+    i_prev = 0  # the last i which was stored
+
+    detector = cv2.xfeatures2d_SURF.create(hessian_threshold)
+
+    ret, frame = cap.read()
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    cv2.imshow('frame', gray)
+    keypoints, descriptors = detector.detectAndCompute(gray, None)
+
+    a = (len(keypoints), descriptors)
+    img_obj = ImgObj(a[0], a[1], i)
+    save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
+    cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
+    query_video_distinct_frames.add_img_obj(img_obj)
+
+    while True:
+        ret, frame = cap.read()
+        if ret:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            if i % frames_skipped != 0 and not check_next_frame:
+                i = i + 1
+                continue
+
+            cv2.imshow('frame', gray)
+            # print(i)
+
+            if check_blurry:
+                if is_blurry_grayscale(gray):
+                    check_next_frame = True
+                    i = i + 1
+                    continue
+                check_next_frame = False
+
+            keypoints, descriptors = detector.detectAndCompute(gray, None)
+            b = (len(keypoints), descriptors)
+            image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7, False)
+            if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
+                img_obj2 = ImgObj(b[0], b[1], i)
+                save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
+                cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
+                query_video_distinct_frames.add_img_obj(img_obj2)
+                a = b
+                i_prev = i
+
+            i = i + 1
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        else:
+            break
+
+    print("released")
+    cap.release()
+    cv2.destroyAllWindows()
+    query_video_ended = True
+    query_video_distinct_frames.calculate_time()
+    return query_video_distinct_frames
+
+def doNodeEdgeRealTimeMatching(graph_obj: Graph):
+    print("so")
+
+
+class NodeEdgeRealTimeMatching:
     matched_path = []
 
     # matched is array of dictionary of type { "node: Node", "edge: Edge", "confidence: float",
     # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended: bool"}
 
-    def __init__(self, graph_obj: Graph, query_video_distinct_frames: vo2.DistinctFrames):
-        some_query_img_objects = (query_video_distinct_frames.get_objects(0, 2))
+    def __init__(self, graph_obj: Graph):
+        # some_query_img_objects = (query_video_distinct_frames.get_objects(0, 2))
         # img_objects_list contains 3 elements
-        nodes_matched = self.match_node_with_frames(some_query_img_objects, graph_obj)
-        # nodes_matched = []
-        # nodes_matched.append(graph_obj.get_node(0))
-        # nodes_matched.append(graph_obj.get_node(6))
-        self.find_edge_with_nodes(nodes_matched, query_video_distinct_frames, 0, graph_obj)
+        # nodes_matched = self.match_node_with_frames(some_query_img_objects, graph_obj)
+        print("atleast started")
+        nodes_matched = []
+        nodes_matched.append(graph_obj.get_node(0))
+        nodes_matched.append(graph_obj.get_node(6))
+        self.find_edge_with_nodes(nodes_matched, 0)
         return
 
     def match_node_with_frames(self, some_query_img_objects: list, graph_obj: Graph):
@@ -90,8 +174,7 @@ class NodeEdgeMatching:
         if j == possible_edge["edge"].distinct_frames.no_of_frames():
             possible_edge["edge_ended"] = True
 
-    def find_edge_with_nodes(self, nodes_matched: list, query_video_distinct_frames: vo2.DistinctFrames,
-                             i_at_matched_node: int, graph_obj: Graph):
+    def find_edge_with_nodes(self, nodes_matched: list, i_at_matched_node: int):
         possible_edges = []
         for node in nodes_matched:
             for edge in node.links:
@@ -124,15 +207,19 @@ class NodeEdgeMatching:
                 # print("ho")
                 i = possible_edge["last_matched_i_with_j"] + 1
                 if i >= query_video_distinct_frames.no_of_frames():
-                    is_edge_partially_found = True
-                    found_edge = possible_edge
-                    break
-                if possible_edge["edge_ended"]:
-                    if possible_edge["confidence"] > 0:
-                        # edge is found
-                        is_edge_found = True
+                    if query_video_ended:
+                        is_edge_partially_found = True
                         found_edge = possible_edge
                         break
+                    else:
+                        time.sleep(5)
+                        break
+                if possible_edge["edge_ended"]:
+                    # if possible_edge["confidence"] > 0:
+                    # edge is found
+                    is_edge_found = True
+                    found_edge = possible_edge
+                    break
                 query_video_ith_frame = query_video_distinct_frames.get_object(i)
                 self.match_edge_with_frame(possible_edge, i, query_video_ith_frame)
                 max_confidence = possible_edge["confidence"]
@@ -143,13 +230,15 @@ class NodeEdgeMatching:
             next_node_identity = found_edge["edge"].dest
             next_matched_nodes = []
             next_matched_nodes.append(graph_obj.get_node(next_node_identity))
+            print("edge" + str(found_edge["edge"].src) + "_" + str(found_edge["edge"].dest))
             # next_matched_nodes will only contain one node which is the the nest node
-            self.find_edge_with_nodes(next_matched_nodes, query_video_distinct_frames, i)
+            self.find_edge_with_nodes(next_matched_nodes, i)
             # i = found_edge["last_matched_i_with_j"] + 1
         elif is_edge_partially_found:
             self.matched_path.append(found_edge)
             j = found_edge["last_matched_j"]
             last_jth_matched_img_obj = found_edge["edge"].distinct_frames.get_object(j)
+            print("edge" + str(found_edge["edge"].src) + "_" + str(found_edge["edge"].dest))
             print("This edge is partially found upto " + str(last_jth_matched_img_obj.time_stamp))
 
     def print_path(self):
@@ -158,12 +247,11 @@ class NodeEdgeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-
-'''
-graph_obj: Graph = load_graph()
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/query videos/VID_20190610_204018.webm", "query_distinct_frame", 1, True)
-
-# query_video_frames1 = vo2.read_images("query_distinct_frame")
-node_edge_matching_obj = NodeEdgeMatching(graph_obj, query_video_frames1)
-node_edge_matching_obj.print_path()
-'''
+if __name__ == '__main__':
+    graph_obj: Graph = load_graph()
+    p1 = Process(target=save_distinct_realtime_modified_ImgObj("testData/query videos/VID_20190610_204018.webm", "query_distinct_frame", 14, True, ensure_min=True))
+    p2 = Process(target=NodeEdgeRealTimeMatching(graph_obj))
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
