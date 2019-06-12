@@ -40,6 +40,7 @@ class Graph:
         self.Nodes = []
         self.no_of_floors = 0
         self.Floor_map = []
+        self.path_traversed = []
 
     # private functions
 
@@ -166,6 +167,15 @@ class Graph:
                 return Nd
         return None
 
+    def get_edge(self, src, dest):
+        nd1 = self.get_node(src)
+        nd2 = self.get_node(dest)
+        if nd1 is not None and nd2 is not None:
+            for edge in nd1.links:
+                if edge.dest == dest:
+                    return edge
+        return None
+
     def get_edges(self, identity: int):
         for Nd in self.Nodes:
             if Nd.identity == identity:
@@ -180,7 +190,7 @@ class Graph:
         for Nd in self.Nodes:
             if Nd.coordinates[2] == z:
                 img = cv2.circle(
-                    img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1)
+                    img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1, cv2.LINE_AA)
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 cv2.putText(img, str(Nd.identity), (Nd.coordinates[0] + 10, Nd.coordinates[1] + 10), font, 1,
                             (66, 126, 255), 2, cv2.LINE_AA)
@@ -202,6 +212,26 @@ class Graph:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
+    def print_graph_and_return(self, z):
+        pure = self._get_floor_img(z, "pure")
+        img = copy.deepcopy(pure)
+
+        for Nd in self.Nodes:
+            if Nd.coordinates[2] == z:
+                img = cv2.circle(
+                    img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1, cv2.LINE_AA)
+                for edge in Nd.links:
+                    if edge.is_connected:
+                        for Nd2 in self.Nodes:
+                            if Nd2.identity == edge.dest:
+                                img = cv2.line(img, (Nd.coordinates[0], Nd.coordinates[1]),
+                                               (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1,
+                                               cv2.LINE_AA)
+                    else:
+                        raise Exception("linkId does not exists")
+
+        return img
+
     def mark_nodes(self, z):
         window_text = 'Mark Nodes for floor ' + str(z)
 
@@ -210,7 +240,7 @@ class Graph:
                 identity = self.new_node_index
                 if self._nearest_node(x, y, z) is None:
                     self._create_node('Node-' + str(identity), x, y, z)
-                    cv2.circle(img, (x, y), 8, (66, 126, 255), -1)
+                    cv2.circle(img, (x, y), 8, (66, 126, 255), -1, cv2.LINE_AA)
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     cv2.putText(img, str(identity), (x + 10, y + 10), font, 1, (66, 126, 255), 2, cv2.LINE_AA)
                     cv2.imshow(window_text, img)
@@ -329,8 +359,67 @@ class Graph:
     def save_graph(self):
         general.save_to_memory(self, "graph.pkl")
 
+    def on_node(self, identity):
+        if len(self.path_traversed) > 0:
+            if type(self.path_traversed[-1]) == int:
+                prev_node = self.path_traversed[-1]
+                edge = self.get_edge(identity, prev_node)
+                if edge is not None:
+                    self.path_traversed.append((prev_node, identity, 1))
+        self.path_traversed.append(identity)
+
+    def on_edge(self, src: int, dest: int, fraction_traversed: float = 0.5):
+        if len(self.path_traversed) > 0:
+            prev = self.path_traversed[-1]
+            if type(prev) == tuple:
+                if prev[0] == src and prev[1] == dest:
+                    self.path_traversed[-1] = (src, dest, fraction_traversed)
+                    return
+                else:
+                    self.path_traversed[-1] = (prev[0], prev[1], 1)
+                    self.path_traversed.append(prev[1])
+            if self.path_traversed[-1] != src:
+                self.path_traversed.append(src)
+        else:
+            self.path_traversed.append(src)
+        self.path_traversed.append((src, dest, fraction_traversed))
+
+    def display_path(self, z):
+        img = self.print_graph_and_return(0)
+        for item in self.path_traversed:
+            if type(item) == int:
+                nd = self.get_node(item)
+                img = cv2.circle(img, (nd.coordinates[0], nd.coordinates[1]), 10, (150, 0, 0), -1, cv2.LINE_AA)
+            if type(item) == tuple:
+                src_nd = self.get_node(item[0])
+                dest_nd = self.get_node(item[1])
+                start_coordinates = (src_nd.coordinates[0], src_nd.coordinates[1])
+                end_coordinates = (int(src_nd.coordinates[0] + item[2] * (dest_nd.coordinates[0] -
+                                                                          src_nd.coordinates[0])),
+                                   int(src_nd.coordinates[1] + item[2] * (dest_nd.coordinates[1] -
+                                                                          src_nd.coordinates[1])))
+                img = cv2.line(img, start_coordinates, end_coordinates, (150, 0, 0), 6,
+                               cv2.LINE_AA)
+        if len(self.path_traversed)>0:
+            last = self.path_traversed[-1]
+            if type(last) == int:
+                nd = self.get_node(last)
+                img = cv2.circle(img, (nd.coordinates[0], nd.coordinates[1]), 15, (0, 200, 0), -1, cv2.LINE_AA)
+            if type(last) == tuple:
+                src_nd = self.get_node(last[0])
+                dest_nd = self.get_node(last[1])
+                end_coordinates = (int(src_nd.coordinates[0] + last[2] * (dest_nd.coordinates[0] -
+                                                                          src_nd.coordinates[0])),
+                                   int(src_nd.coordinates[1] + last[2] * (dest_nd.coordinates[1] -
+                                                                          src_nd.coordinates[1])))
+                img = cv2.circle(img, end_coordinates, 15, (0, 200, 0), -1, cv2.LINE_AA)
+
+        cv2.imshow("Current location", img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
     @staticmethod
-    def load_graph(self):
+    def load_graph():
         return general.load_from_memory("graph.pkl")
 
 
@@ -501,13 +590,14 @@ def run(code: int):
     # Add nodes and edges
     if code == 2:
         graph = load_graph()
-        #graph.read_nodes("testData/vishal_oc/nodes", 4)
+        # graph.read_nodes("testData/vishal_oc/nodes", 4)
         graph.read_edges("testData/evening_sit/edges/edges", 4)
         graph.save_graph()
 
     # Query video
     if code == 3:
-        query_video_frames1 = vo2.save_distinct_ImgObj("testData/sit-june3/VID_20190603_110640.mp4", "query_distinct_frame", 0, True)
+        query_video_frames1 = vo2.save_distinct_ImgObj("testData/sit-june3/VID_20190603_110640.mp4",
+                                                       "query_distinct_frame", 0, True)
         # query_video_frames1 = vo2.read_images("query_distinct_frame")
         graph = load_graph()
         node_and_image_matching_obj = node_and_image_matching()
@@ -531,4 +621,4 @@ def run(code: int):
         graph.save_graph()
 
 
-run(2)
+

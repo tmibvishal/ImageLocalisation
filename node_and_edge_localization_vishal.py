@@ -18,9 +18,9 @@ class NodeEdgeMatching:
     def __init__(self, graph_obj: Graph, query_video_distinct_frames: vo2.DistinctFrames):
         some_query_img_objects = (query_video_distinct_frames.get_objects(0, 2))
         # img_objects_list contains 3 elements
-        nodes_matched = self.match_node_with_frames(some_query_img_objects, graph_obj)
-        # nodes_matched = []
-        # nodes_matched.append(graph_obj.get_node(0))
+        # nodes_matched = self.match_node_with_frames(some_query_img_objects, graph_obj)
+        nodes_matched = []
+        nodes_matched.append(graph_obj.get_node(0))
         # nodes_matched.append(graph_obj.get_node(6))
         self.find_edge_with_nodes(nodes_matched, query_video_distinct_frames, 0)
         return
@@ -43,15 +43,16 @@ class NodeEdgeMatching:
                     for data_obj in node_images.get_objects():
                         image_fraction_matched = mt.SURF_match_2(img_obj.get_elements(), data_obj.get_elements(),
                                                                  2500, 0.7)
-                        if image_fraction_matched > 0.2:
-                            print("Match found btw"+str(img_obj.get_time())+" of query video and "+str(data_obj.get_time())+" of node data")
+                        if image_fraction_matched > 0.05:
+                            print("Match found btw" + str(img_obj.get_time()) + " of query video and " + str(
+                                data_obj.get_time()) + " of node data")
                             if len(node_confidence) > 0 and node_confidence[-1][0] == node.identity:
                                 entry = node_confidence[-1]
                                 node_confidence[-1] = (node.identity, entry[1] + 1, entry[2] + image_fraction_matched)
                                 # print(str(node.identity) + " matched by " + str(image_fraction_matched))
                             else:
                                 node_confidence.append((node.identity, 1, image_fraction_matched))
-        sorted(node_confidence, key=lambda x: (x[1], x[2]), reverse=True)
+        node_confidence = sorted(node_confidence, key=lambda x: (x[1], x[2]), reverse=True)
         print(node_confidence)
         final_node_list = []
         for entry in node_confidence:
@@ -68,9 +69,12 @@ class NodeEdgeMatching:
             print(j)
             edge = possible_edge["edge"]
             img_obj_from_edge: vo2.ImgObj = edge.distinct_frames.get_object(j)
-            image_fraction_matched = mt.SURF_match_2(img_obj_from_edge.get_elements(), query_video_ith_frame.get_elements(), 2500, 0.7)
-            print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" + str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
-            if image_fraction_matched > 0.15:
+            image_fraction_matched = mt.SURF_match_2(img_obj_from_edge.get_elements(),
+                                                     query_video_ith_frame.get_elements(), 2500, 0.7)
+            print("query i: ", i,
+                  ", jth frame of " + str(possible_edge["edge"].src) + "to" + str(possible_edge["edge"].dest) + " :", j,
+                  image_fraction_matched)
+            if image_fraction_matched > 0.1:
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
             j = j + 1
@@ -111,8 +115,8 @@ class NodeEdgeMatching:
         i = i_at_matched_node
         max_confidence = 0
         print("po")
-        j=0
-        while True and j<100:
+        j = 0
+        while True and j < 100:
             # print("so" + str(i))
             if is_edge_found or is_edge_partially_found:
                 break
@@ -126,15 +130,15 @@ class NodeEdgeMatching:
                     found_edge = possible_edge
                     break
                 if possible_edge["edge_ended"]:
-                    if possible_edge["confidence"] > 0:
-                        # edge is found
-                        is_edge_found = True
-                        found_edge = possible_edge
-                        break
+                    # if possible_edge["confidence"] > 0:
+                    # edge is found
+                    is_edge_found = True
+                    found_edge = possible_edge
+                    break
                 query_video_ith_frame = query_video_distinct_frames.get_object(i)
                 self.match_edge_with_frame(possible_edge, i, query_video_ith_frame)
                 max_confidence = possible_edge["confidence"]
-            j=j+1
+            j = j + 1
         print("go")
         if is_edge_found:
             self.matched_path.append(found_edge)
@@ -157,7 +161,8 @@ class NodeEdgeMatching:
 
 
 graph_obj: Graph = load_graph()
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/query videos/VID_20190610_204018.webm", "query_distinct_frame", 1, True)
+query_video_frames1 = vo2.save_distinct_ImgObj("testData/sit-june12/query/VID_20190612_160503.webm",
+                                               "query_distinct_frame", 1, True, ensure_min=True)
 
 # query_video_frames1 = vo2.read_images("query_distinct_frame")
 node_edge_matching_obj = NodeEdgeMatching(graph_obj, query_video_frames1)
