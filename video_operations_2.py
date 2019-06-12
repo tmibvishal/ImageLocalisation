@@ -426,7 +426,12 @@ def compare_videos_and_print(frames1, frames2):
 # compare_videos_and_print(FRAMES1, FRAMES2)
 # compare_videos(FRAMES2, FRAMES1)
 
-'''
+# FRAMES1 = cv2.imread("query_distinct_frame/jpg/image0.jpg", 0)
+# FRAMES2 = cv2.imread("edge_data/edge_0_5/jpg/image0.jpg", 0)
+# image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
+# print(image_fraction_matched)
+
+'''v2/image1002.pkl
 fFRAMES1 = cv2.imread("v1/image295.pkl", 0)
 FRAMES2 = cv2.imread("v2/image1002.pkl", 0)
 image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
