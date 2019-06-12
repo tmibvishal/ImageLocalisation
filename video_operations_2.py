@@ -110,10 +110,12 @@ def is_blurry_colorful(image):
         returns True if image is blurry otherwise returns False
     """
     b, _, _ = cv2.split(image)
+    a = variance_of_laplacian(b)
     return (variance_of_laplacian(b) < 80)
 
 
 def is_blurry_grayscale(gray_image):
+    a = variance_of_laplacian(gray_image)
     return (variance_of_laplacian(gray_image) < 80)
 
 
@@ -438,7 +440,6 @@ cv2.imshow("frame", frame)
 print(is_blurry_colorful(frame))
 
 
-
-'''
-frame = cv2.imread("query_distinct_frame/jpg/image689.jpg", 0)
+frame = cv2.imread("v2/jpg/image207.jpg", 0)
 print(is_blurry_grayscale(frame))
+'''
