@@ -156,9 +156,9 @@ class NodeEdgeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-graph_obj: Graph = load_graph()
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/query videos/VID_20190610_204018.webm", "query_distinct_frame", 1, True)
+#graph_obj: Graph = load_graph()
+query_video_frames1 = vo2.save_distinct_ImgObj("testData/sit-june12/VID_20190612_144628.webm", "query_distinct_frame",4, True)
 
 # query_video_frames1 = vo2.read_images("query_distinct_frame")
-node_edge_matching_obj = NodeEdgeMatching(graph_obj, query_video_frames1)
-node_edge_matching_obj.print_path()
+#node_edge_matching_obj = NodeEdgeMatching(graph_obj, query_video_frames1)
+#node_edge_matching_obj.print_path()

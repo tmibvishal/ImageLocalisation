@@ -329,6 +329,8 @@ class Graph:
     def save_graph(self):
         general.save_to_memory(self, "graph.pkl")
 
+    #def trace_path(self, :str, ):
+
     @staticmethod
     def load_graph(self):
         return general.load_from_memory("graph.pkl")
@@ -531,4 +533,4 @@ def run(code: int):
         graph.save_graph()
 
 
-run(2)
+#run(2)
