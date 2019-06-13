@@ -249,9 +249,9 @@ class NodeEdgeRealTimeMatching:
 
 if __name__ == '__main__':
     graph_obj: Graph = load_graph()
-    p1 = Process(target=save_distinct_realtime_modified_ImgObj("testData/query videos/VID_20190610_204018.webm", "query_distinct_frame", 14, True, ensure_min=True))
+    p1 = Process(target=save_distinct_realtime_modified_ImgObj("testData/evening_sit/queryVideos/VID_20190610_203834.webm", "query_distinct_frame", 14, True, ensure_min=True))
     p2 = Process(target=NodeEdgeRealTimeMatching(graph_obj))
-    p1.start()
     p2.start()
-    p1.join()
+    p1.start()
     p2.join()
+    p1.join()
