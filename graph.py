@@ -343,6 +343,7 @@ class node_and_image_matching:
         self.matched_nodes = []
         self.matched_edges = []
         self.final_path = []
+        self.last_frame_matched=0
 
     def convert_query_video_to_objects(path, destination_folder):
         return vo2.save_distinct_ImgObj(path, destination_folder)
@@ -426,7 +427,7 @@ class node_and_image_matching:
 
     def locate_edge(self, nodes_list:list, query_video_frames: vo2.DistinctFrames,
                     query_video_frames_begin: int = 0, confidence_level: int = 1):
-        last_frame_matched_with_edge = None
+        query_video_frames_begin=self.last_frame_matched
         for node in self.matched_nodes:
             for edge in node.links:
                 self.matched_edges.append([edge, 0, 0])  # (edge, confidence, frame_position_matched)
@@ -434,11 +435,13 @@ class node_and_image_matching:
                 print()
 
         last_frame_matched_with_edge = query_video_frames_begin
-        for i in range(query_video_frames_begin, query_video_frames.no_of_frames()):
-            edge_list = self.matched_edges
 
+        for i in range(query_video_frames_begin, query_video_frames.no_of_frames()):
+        edge_list = self.matched_edges
             j = 0
             while j < len(edge_list):
+
+
 
                 match, maximum_match = None, 0
                 for k in range(int(edge_list[j][2]), edge_list[j][0].distinct_frames.no_of_frames()):
