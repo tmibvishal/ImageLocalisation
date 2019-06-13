@@ -23,7 +23,7 @@ class NodeEdgeMatching:
         # nodes_matched = self.match_node_with_frames(some_query_img_objects, graph_obj)
         nodes_matched = []
         nodes_matched.append(graph_obj.get_node(0))
-        # nodes_matched.append(graph_obj.get_node(6))
+        nodes_matched.append(graph_obj.get_node(6))
         self.find_edge_with_nodes(nodes_matched, query_video_distinct_frames, 0, graph_obj)
         return
 
@@ -64,7 +64,7 @@ class NodeEdgeMatching:
     def match_edge_with_frame(self, possible_edge, i: int, query_video_ith_frame: vo2.ImgObj):
         # possible edge here is passed as reference
         print("yo")
-        j = possible_edge["last_matched_j"]
+        j = possible_edge["last_matched_j"] + 1
         jmax = possible_edge["last_matched_j"] + possible_edge["no_of_frames_to_match"]
         match, maxmatch = None, 0
         while j < jmax and j < possible_edge["edge"].distinct_frames.no_of_frames():
@@ -76,7 +76,7 @@ class NodeEdgeMatching:
             print("query i: ", i,
                   ", jth frame of " + str(possible_edge["edge"].src) + "to" + str(possible_edge["edge"].dest) + " :", j,
                   image_fraction_matched)
-            if image_fraction_matched > 0.1:
+            if image_fraction_matched > 0.15:
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
             j = j + 1
@@ -89,7 +89,8 @@ class NodeEdgeMatching:
             possible_edge["last_matched_j"] = match
             possible_edge["last_matched_i_with_j"] = i
             possible_edge["confidence"] = possible_edge["confidence"] + 1
-            possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] - 1
+            if possible_edge["no_of_frames_to_match"] > 2:
+                possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] - 1
 
         if j == possible_edge["edge"].distinct_frames.no_of_frames():
             possible_edge["edge_ended"] = True
@@ -148,7 +149,7 @@ class NodeEdgeMatching:
             next_matched_nodes = []
             next_matched_nodes.append(graph_obj.get_node(next_node_identity))
             # next_matched_nodes will only contain one node which is the the nest node
-            self.find_edge_with_nodes(next_matched_nodes, query_video_distinct_frames, i)
+            self.find_edge_with_nodes(next_matched_nodes, query_video_distinct_frames, i, graph_obj)
             # i = found_edge["last_matched_i_with_j"] + 1
         elif is_edge_partially_found:
             self.matched_path.append(found_edge)
@@ -163,12 +164,10 @@ class NodeEdgeMatching:
 
 
 
-'''
-graph_obj: Graph = load_graph()
-query_video_frames1 = vo2.save_distinct_ImgObj("testData/sit-june12/query/VID_20190612_160503.webm",
-                                               "query_distinct_frame", 1, True, ensure_min=True)
 
-# query_video_frames1 = vo2.read_images("query_distinct_frame")
+graph_obj: Graph = load_graph()
+# query_video_frames1 = vo2.save_distinct_ImgObj("testData/query videos/VID_20190610_203834.webm","query_distinct_frame/case5", 4, True, ensure_min=True)
+
+query_video_frames1 = vo2.read_images("query_distinct_frame/case3")
 node_edge_matching_obj = NodeEdgeMatching(graph_obj, query_video_frames1)
 node_edge_matching_obj.print_path()
-'''

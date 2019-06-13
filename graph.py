@@ -592,9 +592,9 @@ def run(code: int):
 
     # Add nodes and edges
     if code == 2:
-        graph = load_graph()
-        graph.read_nodes("testData/evening_sit/nodes/nodes", 4)
-        graph.read_edges("testData/evening_sit/edges/edges", 4)
+        graph: Graph = load_graph()
+        graph.read_nodes("testData/evening_sit0/nodes", 4)
+        graph.read_edges("testData/evening_sit0/edges", 4)
         graph.save_graph()
 
     # Query video
