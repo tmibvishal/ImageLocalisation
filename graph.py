@@ -374,7 +374,7 @@ class Graph:
         if len(self.path_traversed) > 0:
             prev = self.path_traversed[-1]
             if type(prev) == tuple:
-                if prev[0] == src and prev[1] == dest:
+                if prev[0] == src:
                     self.path_traversed[-1] = (src, dest, fraction_traversed)
                     return
                 else:
@@ -417,8 +417,7 @@ class Graph:
                 img = cv2.circle(img, end_coordinates, 15, (0, 200, 0), -1, cv2.LINE_AA)
 
         cv2.imshow("Current location", img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        cv2.waitKey(1)
 
     @staticmethod
     def load_graph():
@@ -577,12 +576,11 @@ class node_and_image_matching:
 def run(code: int):
     # Create new graph
     if code == 0:
-        graph = load_graph()
-        graph.add_floor_map(1, "graph/maps/map1.jpg")
-        graph.mark_nodes(1)
-        graph.make_connections(1)
+        graph = Graph()
+        graph.add_floor_map(0, "graph/maps/map0.jpg")
+        graph.mark_nodes(0)
+        graph.make_connections(0)
         graph.print_graph(0)
-        graph.print_graph(1)
         graph.save_graph()
 
     # Print graph
@@ -593,8 +591,8 @@ def run(code: int):
     # Add nodes and edges
     if code == 2:
         graph: Graph = load_graph()
-        graph.read_nodes("testData/evening_sit0/nodes", 4)
-        graph.read_edges("testData/evening_sit0/edges", 4)
+        graph.read_nodes("testData/evening_sit/nodes/nodes", 4)
+        graph.read_edges("testData/evening_sit/edges/edges", 4)
         graph.save_graph()
 
     # Query video
@@ -624,16 +622,18 @@ def run(code: int):
         graph.save_graph()
 
 
-image = cv2.imread('graph/maps/map0.jpg')
-image = cv2.resize(image, (0, 0), None, .5, 0.5)
-
-grey = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-grey_3_channel = cv2.cvtColor(grey, cv2.COLOR_GRAY2BGR)
-
-numpy_horizontal = np.hstack((image, grey_3_channel))
-numpy_horizontal_concat = np.concatenate((image, grey_3_channel), axis=1)
-
-cv2.imshow('Numpy Horizontal', numpy_horizontal)
-cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
-
-cv2.waitKey()
+# image = cv2.imread('graph/maps/map0.jpg')
+# image = cv2.resize(image, (0, 0), None, .5, 0.5)
+#
+# grey = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+# grey_3_channel = cv2.cvtColor(grey, cv2.COLOR_GRAY2BGR)
+#
+# numpy_horizontal = np.hstack((image, grey_3_channel))
+# numpy_horizontal_concat = np.concatenate((image, grey_3_channel), axis=1)
+#
+# cv2.imshow('Numpy Horizontal', numpy_horizontal)
+# cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
+#
+# cv2.waitKey()
+# run(1)
+# run(2)

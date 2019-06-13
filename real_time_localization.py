@@ -147,6 +147,15 @@ class NodeEdgeRealTimeMatching:
                     found_edge = possible_edge
                     break
                 print("yo are travelling on" + str(possible_edge["edge"].src) + "to" + str(possible_edge["edge"].dest))
+
+                j = possible_edge["last_matched_j"]
+                last_jth_matched_img_obj = possible_edge["edge"].distinct_frames.get_object(j)
+                time_stamp = last_jth_matched_img_obj.get_time()
+                total_time = possible_edge["edge"].distinct_frames.get_time()
+                fraction = time_stamp / total_time
+                graph_obj.on_edge(possible_edge["edge"].src, possible_edge["edge"].dest, fraction)
+                graph_obj.display_path(0)
+
                 query_video_ith_frame = query_video_distinct_frames.get_object(i)
                 self.match_edge_with_frame(possible_edge, i, query_video_ith_frame)
                 max_confidence = possible_edge["confidence"]
@@ -260,4 +269,4 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
 
 
 if __name__ == '__main__':
-    save_distinct_realtime_modified_ImgObj("testData/query videos/20190528_155931.mp4", "query_distinct_frame/case6", 4, True, ensure_min=True)
+    save_distinct_realtime_modified_ImgObj("testData/evening_sit/queryVideos/VID_20190610_203834.webm", "query_distinct_frame/case6", 4, True, ensure_min=True)
