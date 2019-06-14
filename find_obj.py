@@ -35,7 +35,7 @@ def init_feature(name):
         detector = cv.xfeatures2d.SURF_create(800)
         norm = cv.NORM_L2
     elif chunks[0] == 'orb':
-        detector = cv.ORB_create(400)
+        detector = cv.ORB_create(700) #400
         norm = cv.NORM_HAMMING
     elif chunks[0] == 'akaze':
         detector = cv.AKAZE_create()
@@ -50,9 +50,9 @@ def init_feature(name):
             flann_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
         else:
             flann_params= dict(algorithm = FLANN_INDEX_LSH,
-                               table_number = 6, # 12
-                               key_size = 12,     # 20
-                               multi_probe_level = 1) #2
+                               table_number = 10, # my -6# 12
+                               key_size = 20,  #my-12   # 20
+                               multi_probe_level = 0)#my-1 #2
         matcher = cv.FlannBasedMatcher(flann_params, {})  # bug : need to pass empty dict (#1329)
     else:
         matcher = cv.BFMatcher(norm)
