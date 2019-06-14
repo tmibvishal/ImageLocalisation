@@ -303,7 +303,7 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
             grey = cv2.imread(folder + "/" + file, 0)
             time_stamp = int(file.replace('image', '').replace('.jpg', ''), 10)
             keypoints, descriptors = detector.detectAndCompute(grey, None)
-            img_obj = ImgObj(len(keypoints), descriptors, time_stamp)
+            img_obj = ImgObj(len(keypoints), descriptors, time_stamp, serialize_keypoints(keypoints))
             distinct_frames.add_img_obj(img_obj)
             print("Reading image .." + str(time_stamp) + " from " + folder)  # for dev phase
         except:
@@ -312,126 +312,6 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
     return distinct_frames
 
 
-def edge_from_specific_pt(i_init, j_init, frames1, frames2):
-    """
-    Called when frames1[i_init][1] matches best with frames2[j_init][1]. This function checks
-    subsequent frames of frames1 and frames2 to see if edge is detected.
-
-    Parameters
-    ----------
-    i_init: index of the frame in frames1 list , which matches with the corresponding frame
-            in frame2 list
-    j_init: index of the frame in frames2 list , which matches with the corresponding frame
-            in frame1 list
-    frames1:
-    frames2: are lists containing tuples of the form
-            (time_stamp, frame, len_keypoints, descriptors) along path1 and path2
-
-    Returns
-    -------
-    ( status, i_last_matched, j_last_matched ),
-        status: if edge is found or not (starting from i_init and j_init)
-        i_last_matched: index of last matched frame of frames1
-        j_last_matched: index of last matched frame of frames2
-
-    """
-    confidence = 5
-    """
-    No edge is declared when confidence is zero.
-
-    Confidence is decreased by 1 whenever match is not found for (i)th frame of frame1 among
-    the next 4 frames after j_last_matched(inclusive)
-
-    If match is found for (i)th frame, i_last_matched is changed to i, j_last_matched is changed to
-    the corresponding match; and confidence is restored to initial value(5)
-    """
-    match, maxmatch, i, i_last_matched, j_last_matched = None, 0, i_init + 1, i_init, j_init
-    """
-    INV:
-    i = index of current frame (in frames1) being checked for matches; i_last_matched<i<len(frames1)
-    i_last_matched = index of last frame (in frames1 ) matched; i_init<=i_last_matched<len(frames1)
-    j_last_matched = index of last frame (in frames2 ) matched(with i_last_matched);
-                        j_init<=j_last_matched<len(frames2)
-    match = index of best matched frame (in frames2) with (i)th frame in frames1. j_last_matched<=match<=j
-    maxmatch = fraction matching between (i)th and (match) frames
-    """
-    while True:
-        for j in range(j_last_matched + 1, j_last_matched + 5):
-            if j >= frames2.no_of_frames():
-                break
-            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(),
-                                                     frames2.get_object(j).get_elements(),
-                                                     2500, 0.7)
-            if image_fraction_matched > 0.15:
-                if image_fraction_matched > maxmatch:
-                    match, maxmatch = j, image_fraction_matched
-        if match is None:
-            confidence = confidence - 1
-            if confidence == 0:
-                break
-        else:
-            confidence = 5
-            j_last_matched = match
-            i_last_matched = i
-        i = i + 1
-        if i >= frames1.no_of_frames():
-            break
-        match, maxmatch = None, 0
-
-    if i_last_matched > i_init and j_last_matched > j_init:
-        print("Edge found from :")
-        print(str(frames1.get_object(i_init).get_time()) + "to" + str(
-            frames1.get_object(i_last_matched).get_time()) + "of video 1")
-        print(str(frames2.get_object(j_init).get_time()) + "to" + str(
-            frames2.get_object(j_last_matched).get_time()) + "of video 2")
-        return True, i_last_matched, j_last_matched
-    else:
-        return False, i_init, j_init
-
-
-def compare_videos(frames1: DistinctFrames, frames2: DistinctFrames):
-    """
-    :param frames1:
-    :param frames2: are lists containing tuples of the form (time_stamp, frame) along path1 and path2
-
-    (i)th frame in frames1 is compared with all frames in frames2[lower_j ... (len2)-1].
-    If match is found then edge_from_specific_pt is called from indexes i and match
-    if edge found then i is incremented to i_last_matched (returned from edge_from_specific_pt) and
-    lower_j is incremented to j_last_matched
-    """
-
-    len1, len2 = frames1.no_of_frames(), frames2.no_of_frames()
-    lower_j = 0
-    i = 0
-    while (i < len1):
-        match, maxmatch = None, 0
-        for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(),
-                                                     frames2.get_object(j).get_elements(),
-                                                     2500, 0.7)
-            if image_fraction_matched > 0.15:
-                if image_fraction_matched > maxmatch:
-                    match, maxmatch = j, image_fraction_matched
-        if match is not None:
-            if i >= len1 or lower_j >= len2:
-                break
-            status, i, j = edge_from_specific_pt(i, match, frames1, frames2)
-            lower_j = j
-        i = i + 1
-
-
-def compare_videos_and_print(frames1, frames2):
-    len1, len2 = frames1.no_of_frames(), frames2.no_of_frames()
-    lower_j = 0
-    for i in range(len1):
-        print("")
-        print(str(frames1.get_object(i).get_time()) + "->")
-        for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(),
-                                                     frames2.get_object(j).get_elements(),
-                                                     2500, 0.7)
-            if image_fraction_matched > 0.2:
-                print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
 
 
 # FRAMES1 = save_distinct_ImgObj("testData/new things/6_2.MP4", "v3", 4, True)
