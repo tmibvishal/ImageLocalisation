@@ -12,7 +12,7 @@ from general import *
 
 
 class ImgObj:
-    def __init__(self, no_of_keypoints, serialized_keypoints, descriptors, time_stamp):
+    def __init__(self, no_of_keypoints, descriptors, time_stamp, serialized_keypoints):
         self.no_of_keypoints = no_of_keypoints
         self.descriptors = descriptors
         self.time_stamp = time_stamp
@@ -456,13 +456,13 @@ image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
 print(image_fraction_matched)
 
 
-
 cap = cv2.VideoCapture("testData/sushant_mc/20190518_155931.mp4")
 ret, frame = cap.read()
 cv2.imshow("frame", frame)
 print(is_blurry_colorful(frame))
 
-
 frame = cv2.imread("v2/jpg/image207.jpg", 0)
 print(is_blurry_grayscale(frame))
 '''
+
+frames1 = save_distinct_ImgObj("testData/sit_morning_14_june/edges/0_1.webm", "query_distinct_frame/case7", 14, True, ensure_min=True)
