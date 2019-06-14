@@ -63,7 +63,7 @@ class DistinctFrames:
         return len(self.img_objects)
 
     def get_objects(self, start_index=0, end_index=-1):
-        if (start_index == 0 and end_index == -1):
+        if start_index == 0 and end_index == -1:
             return self.img_objects[start_index:end_index]
         if (start_index not in range(0, self.no_of_frames())) or (end_index not in range(0, self.no_of_frames())):
             raise Exception("Invalid start / end indexes")
@@ -111,16 +111,16 @@ def is_blurry_colorful(image):
     """
     b, _, _ = cv2.split(image)
     a = variance_of_laplacian(b)
-    return (variance_of_laplacian(b) < 100)
+    return (variance_of_laplacian(b) < 80)
 
 
 def is_blurry_grayscale(gray_image):
     a = variance_of_laplacian(gray_image)
-    return (variance_of_laplacian(gray_image) < 100)
+    return (variance_of_laplacian(gray_image) < 80)
 
 
 def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
-                         hessian_threshold: int = 2500):
+                         hessian_threshold: int = 2500, ensure_min=False):
     """Saves non redundent and distinct frames of a video in folder
     Parameters
     ----------
@@ -128,6 +128,9 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     folder : folder where non redundant images are to be saved,
     frames_skipped: Number of frames to skip and just not consider,
     check_blurry: If True then only considers non blurry frames but is slow
+    hessian_threshold
+    ensure_min: whether a minimum no of frames (at least one per 50) is to be kept irrespective of
+        whether they are distinct or not
 
     Returns
     -------
@@ -151,6 +154,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     a = None
     b = None
     check_next_frame = False
+    i_prev = 0  # the last i which was stored
 
     detector = cv2.xfeatures2d_SURF.create(hessian_threshold)
 
@@ -186,12 +190,13 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors)
             image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7, False)
-            if image_fraction_matched < 0.1:
+            if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
                 img_obj2 = ImgObj(b[0], b[1], i)
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
                 distinct_frames.add_img_obj(img_obj2)
                 a = b
+                i_prev = i
 
             i = i + 1
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -199,6 +204,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
         else:
             break
 
+    print("Created distinct frames object")
     cap.release()
     cv2.destroyAllWindows()
     distinct_frames.calculate_time()
@@ -241,7 +247,7 @@ def read_images(folder):
             # exception will occur for files like .DS_Store and jpg directory
             continue
 
-    if distinct_frames.no_of_frames() != 0 :
+    if distinct_frames.no_of_frames() != 0:
         distinct_frames.calculate_time()
 
     return distinct_frames
@@ -421,7 +427,12 @@ def compare_videos_and_print(frames1, frames2):
 # compare_videos_and_print(FRAMES1, FRAMES2)
 # compare_videos(FRAMES2, FRAMES1)
 
-'''
+# FRAMES1 = cv2.imread("query_distinct_frame/jpg/image0.jpg", 0)
+# FRAMES2 = cv2.imread("edge_data/edge_0_5/jpg/image0.jpg", 0)
+# image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
+# print(image_fraction_matched)
+
+'''v2/image1002.pkl
 fFRAMES1 = cv2.imread("v1/image295.pkl", 0)
 FRAMES2 = cv2.imread("v2/image1002.pkl", 0)
 image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
