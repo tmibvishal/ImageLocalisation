@@ -17,6 +17,7 @@ class NodeEdgeRealTimeMatching:
     matched_path: list = []
     nodes_matched: list = []
     i_at_matched_node: int = 0
+    possible_edges = []
 
     # matched is array of dictionary of type { "node: Node", "edge: Edge", "confidence: float",
     # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended: bool"}
@@ -99,11 +100,10 @@ class NodeEdgeRealTimeMatching:
             possible_edge["edge_ended"] = True
 
     def find_edge_with_nodes(self):
-        possible_edges = []
         for node in self.nodes_matched:
             for edge in node.links:
                 if edge.distinct_frames is not None:
-                    possible_edges.append({
+                    self.possible_edges.append({
                         "node": node,
                         "edge": edge,
                         "confidence": 0,
@@ -125,7 +125,7 @@ class NodeEdgeRealTimeMatching:
             # print("so" + str(i))
             if is_edge_found or is_edge_partially_found:
                 break
-            for possible_edge in possible_edges:
+            for possible_edge in self.possible_edges:
                 if possible_edge["confidence"] < max_confidence:
                     continue
                 # print("ho")
@@ -144,12 +144,12 @@ class NodeEdgeRealTimeMatching:
                     found_edge = possible_edge
                     break
                 print("yo are travelling on" + str(possible_edge["edge"].src) + "to" + str(possible_edge["edge"].dest))
-
                 j = possible_edge["last_matched_j"]
+                print("i:", i, "j:", j);
                 last_jth_matched_img_obj = possible_edge["edge"].distinct_frames.get_object(j)
                 time_stamp = last_jth_matched_img_obj.get_time()
                 total_time = possible_edge["edge"].distinct_frames.get_time()
-                fraction = time_stamp / total_time
+                fraction = time_stamp / total_time if total_time != 0 else 0
                 graph_obj.on_edge(possible_edge["edge"].src, possible_edge["edge"].dest, fraction)
                 graph_obj.display_path(0)
 
@@ -166,6 +166,7 @@ class NodeEdgeRealTimeMatching:
             self.nodes_matched = next_matched_nodes
             print("confirmed: you crossed edge" + str(found_edge["edge"].src) + "_" + str(found_edge["edge"].dest))
             # next_matched_nodes will only contain one node which is the the nest node
+            self.possible_edges = []
             self.i_at_matched_node = i
             self.find_edge_with_nodes()
             # i = found_edge["last_matched_i_with_j"] + 1

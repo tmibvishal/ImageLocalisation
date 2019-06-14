@@ -450,4 +450,4 @@ frame = cv2.imread("v2/jpg/image207.jpg", 0)
 print(is_blurry_grayscale(frame))
 '''
 
-frames1 = save_distinct_ImgObj("testData/sit_morning_14_june/edges/0_1.webm", "query_distinct_frame", 14, True, ensure_min=True)
+# frames1 = save_distinct_ImgObj("testData/sit_morning_14_june/edges/0_1.webm", "query_distinct_frame", 14, True, ensure_min=True)

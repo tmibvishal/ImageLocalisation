@@ -227,7 +227,6 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     distinct_frames.calculate_time()
     return distinct_frames
 
-
 def read_images(folder):
     """Reads images of the form "image<int>.pkl" from folder(passed as string containing
     relative path of the specific folder)
