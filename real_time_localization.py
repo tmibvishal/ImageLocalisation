@@ -3,9 +3,6 @@ import numpy as np
 import os
 import shutil
 
-import time
-from multiprocessing import Process
-
 import video_operations_2 as vo2
 import matcher as mt
 from graph import Graph, Edge, Node, FloorMap, load_graph
@@ -53,7 +50,7 @@ class NodeEdgeRealTimeMatching:
                     for data_obj in node_images.get_objects():
                         image_fraction_matched = mt.SURF_match_2(img_obj.get_elements(), data_obj.get_elements(),
                                                                  2500, 0.7)
-                        if image_fraction_matched > 0.2:
+                        if image_fraction_matched > 0.05:
                             print("Match found btw" + str(img_obj.get_time()) + " of query video and " + str(
                                 data_obj.get_time()) + " of node data")
                             if len(node_confidence) > 0 and node_confidence[-1][0] == node.identity:
@@ -62,7 +59,7 @@ class NodeEdgeRealTimeMatching:
                                 # print(str(node.identity) + " matched by " + str(image_fraction_matched))
                             else:
                                 node_confidence.append((node.identity, 1, image_fraction_matched))
-        sorted(node_confidence, key=lambda x: (x[1], x[2]), reverse=True)
+        node_confidence = sorted(node_confidence, key=lambda x: (x[1], x[2]), reverse=True)
         print(node_confidence)
         final_node_list = []
         for entry in node_confidence:
