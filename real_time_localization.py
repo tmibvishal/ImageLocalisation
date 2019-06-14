@@ -27,8 +27,8 @@ class NodeEdgeRealTimeMatching:
         # nodes_matched = self.match_node_with_frames(some_query_img_objects, graph_obj)
         print("atleast started")
         # nodes_matched = []
+        self.nodes_matched.append(graph_obj.get_node(2))
         self.nodes_matched.append(graph_obj.get_node(0))
-        self.nodes_matched.append(graph_obj.get_node(6))
         # self.find_edge_with_nodes(0)
         return
 
@@ -266,4 +266,4 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
 
 
 if __name__ == '__main__':
-    save_distinct_realtime_modified_ImgObj("testData/evening_sit/queryVideos/VID_20190610_203834.webm", "query_distinct_frame/case6", 4, True, ensure_min=True)
+    save_distinct_realtime_modified_ImgObj("testData/sit_morning_14_june/queryvideos/VID_20190614_104018.webm", "query_distinct_frame/case6", 4, True, ensure_min=True)

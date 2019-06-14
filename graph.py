@@ -37,7 +37,7 @@ class Graph:
 
     def __init__(self):
         self.new_node_index = 0
-        self.Nodes = []
+        self.Nodes = [] # list of list of nodes Nodes[0] will be list of all nodes of floor0
         self.no_of_floors = 0
         self.Floor_map = []
         self.path_traversed = []
@@ -591,8 +591,8 @@ def run(code: int):
     # Add nodes and edges
     if code == 2:
         graph: Graph = load_graph()
-        graph.read_nodes("testData/evening_sit/nodes/nodes", 4)
-        graph.read_edges("testData/evening_sit/edges/edges", 4)
+        graph.read_nodes("testData/sit_morning_14_june/nodes", 4)
+        graph.read_edges("testData/sit_morning_14_june/edges", 4)
         graph.save_graph()
 
     # Query video
@@ -636,4 +636,5 @@ def run(code: int):
 #
 # cv2.waitKey()
 # run(1)
+# run(0)
 # run(2)
