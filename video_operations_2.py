@@ -204,6 +204,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
         else:
             break
 
+    print("Created distinct frames object")
     cap.release()
     cv2.destroyAllWindows()
     distinct_frames.calculate_time()

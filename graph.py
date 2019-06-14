@@ -6,6 +6,7 @@ import copy
 import matcher as mt
 import shutil
 import time
+import numpy as np
 
 
 class Node:
@@ -19,7 +20,6 @@ class Node:
 
 class Edge:
     def __init__(self, is_connected: bool, src: int, dest: int, distinct_frames=None, video_length: int = None):
-        self.is_connected = is_connected
         self.src = src
         self.dest = dest
         self.distinct_frames = distinct_frames
@@ -43,6 +43,32 @@ class Graph:
         self.path_traversed = []
 
     # private functions
+    def get_node(self, identity, z=None):
+        if z is not None:
+            for Nd in self.Nodes[z]:
+                if identity == Nd.identity:
+                    return Nd
+        else:
+            for floor_nodes in self.Nodes:
+                for Nd in floor_nodes:
+                    if identity == Nd.identity:
+                        return Nd
+        return None
+
+    def get_edge(self, src, dest, z_src=None, z_dest=None):
+        nd1 = self.get_node(src, z_src)
+        nd2 = self.get_node(dest, z_dest)
+        if nd1 is not None and nd2 is not None:
+            for edge in nd1.links:
+                if edge.dest == dest:
+                    return edge
+        return None
+
+    def get_edges(self, identity: int, z=None):
+        Nd = self.get_node(identity, z)
+        if Nd is not None:
+            return Nd.links
+        return None
 
     def _create_node(self, name, x, y, z):
         identity = self.new_node_index
@@ -50,12 +76,15 @@ class Graph:
         self._add_node(Nd)
 
     def _add_node(self, Nd):
+        z = Nd.coordinates[2]
+        if len(self.Nodes) <= z:
+            for i in range(0, z + 1 - len(self.Nodes)):
+                self.Nodes.append([])
         if isinstance(Nd, Node):
-            if Nd not in self.Nodes:
-                # Check if Nd has the format of Node , and if it is already present
+            if Nd not in self.Nodes[z]:
                 if isinstance(Nd.links, list):
                     if len(Nd.links) == 0 or isinstance(Nd.links[0], Edge):
-                        self.Nodes.append(Nd)
+                        self.Nodes[z].append(Nd)
                         self.new_node_index = self.new_node_index + 1
                 else:
                     raise Exception("Nd.links is not a list of Edge")
@@ -71,12 +100,11 @@ class Graph:
             return delx ** 2 + dely ** 2
 
         minimum, nearest_node = -1, None
-        for Nd in self.Nodes:
-            if Nd.coordinates[2] == z:
-                if abs(Nd.coordinates[0] - x) < 50 and abs(Nd.coordinates[1] - y) < 50:
-                    if minimum == -1 or distance(Nd) < minimum:
-                        nearest_node = Nd
-                        minimum = distance(Nd)
+        for Nd in self.Nodes[z]:
+            if abs(Nd.coordinates[0] - x) < 50 and abs(Nd.coordinates[1] - y) < 50:
+                if minimum == -1 or distance(Nd) < minimum:
+                    nearest_node = Nd
+                    minimum = distance(Nd)
         return nearest_node
 
     def _connect(self, nd1, nd2):
@@ -89,51 +117,53 @@ class Graph:
         else:
             raise Exception("Nd format is not of Node, or is already present")
 
-    def _delete_node(self, nd):
-        if nd in self.Nodes:
-            self.Nodes.remove(nd)
-            for nd2 in self.Nodes:
-                for edge in nd2.links:
-                    if nd.identity == edge.dest:
-                        nd2.links.remove(edge)
+    def _delete_node(self, nd: Node):
+        z = nd.coordinates[2]
+        if nd in self.Nodes[z]:
+            self.Nodes[z].remove(nd)
+            for floor_nodes in self.Nodes:
+                for nd2 in floor_nodes:
+                    for edge in nd2.links:
+                        if nd.identity == edge.dest:
+                            nd2.links.remove(edge)
         else:
             raise Exception("Nd does not exists in Nodes")
 
-    def _add_edge_images(self, id1: int, id2: int, distinct_frames: vo2.DistinctFrames):
+    def _add_edge_images(self, id1: int, id2: int, distinct_frames: vo2.DistinctFrames, z1=None, z2=None):
         if id1 > self.new_node_index or id2 > self.new_node_index:
             raise Exception("Wrong id's passed")
         if not isinstance(distinct_frames, vo2.DistinctFrames):
             raise Exception("Invalid param for distinct_frames")
-        for Nd in self.Nodes:
-            if Nd.identity == id1:
-                for edge in Nd.links:
-                    if edge.dest == id2:
-                        edge.distinct_frames = distinct_frames
-                        edge.video_length = distinct_frames.get_time()
-                        return
+        edge = self.get_edge(id1, id2, z1, z2)
+        if edge is not None:
+            edge.distinct_frames = distinct_frames
+            edge.video_length = distinct_frames.get_time()
+            return
         raise Exception("Edge from " + str(id1) + " to " + str(id2) + " not found")
 
-    def _add_node_images(self, identity, node_images):
+    def _add_node_images(self, identity, node_images, z=None):
         if not isinstance(node_images, vo2.DistinctFrames):
             raise Exception("node_images is not DistinctFrames object")
 
-        for Nd in self.Nodes:
-            if Nd.identity == identity:
-                Nd.node_images = node_images
-                return
+        Nd = self.get_node(identity, z)
+        if Nd is not None:
+            Nd.node_images = node_images
+            return
         raise Exception("Node " + str(identity) + " not found!")
 
     def _add_node_data(self, identity: int, path_of_video: str, folder_to_save: str = None,
-                       frames_skipped: int = 0, check_blurry: bool = True, hessian_threshold: int = 2500):
+                       frames_skipped: int = 0, check_blurry: bool = True, hessian_threshold: int = 2500,
+                       z_node=None):
         distinct_frames = vo2.save_distinct_ImgObj(path_of_video, folder_to_save, frames_skipped, check_blurry,
                                                    hessian_threshold)
-        self._add_node_images(identity, distinct_frames)
+        self._add_node_images(identity, distinct_frames, z_node)
 
     def _add_edge_data(self, id1: int, id2: int, path_of_video: str, folder_to_save: str = None,
-                       frames_skipped: int = 0, check_blurry: bool = True, hessian_threshold: int = 2500):
+                       frames_skipped: int = 0, check_blurry: bool = True, hessian_threshold: int = 2500,
+                       z1=None, z2=None):
         distinct_frames = vo2.save_distinct_ImgObj(path_of_video, folder_to_save, frames_skipped, check_blurry,
                                                    hessian_threshold, ensure_min=True)
-        self._add_edge_images(id1, id2, distinct_frames)
+        self._add_edge_images(id1, id2, distinct_frames, z1, z2)
 
     def _get_floor_img(self, z, params):
         for floor in self.Floor_map:
@@ -161,53 +191,29 @@ class Graph:
 
     # public functions
 
-    def get_node(self, identity):
-        for Nd in self.Nodes:
-            if identity == Nd.identity:
-                return Nd
-        return None
-
-    def get_edge(self, src, dest):
-        nd1 = self.get_node(src)
-        nd2 = self.get_node(dest)
-        if nd1 is not None and nd2 is not None:
-            for edge in nd1.links:
-                if edge.dest == dest:
-                    return edge
-        return None
-
-    def get_edges(self, identity: int):
-        for Nd in self.Nodes:
-            if Nd.identity == identity:
-                return Nd.links
-        return None
-
     def print_graph(self, z):
         # Implementation 1 ( building from pure image)
         pure = self._get_floor_img(z, "pure")
         img = copy.deepcopy(pure)
 
-        for Nd in self.Nodes:
-            if Nd.coordinates[2] == z:
-                img = cv2.circle(
-                    img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1, cv2.LINE_AA)
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                cv2.putText(img, str(Nd.identity), (Nd.coordinates[0] + 10, Nd.coordinates[1] + 10), font, 1,
-                            (66, 126, 255), 2, cv2.LINE_AA)
-                for edge in Nd.links:
-                    if edge.is_connected:
-                        for Nd2 in self.Nodes:
-                            if Nd2.identity == edge.dest:
-                                img = cv2.arrowedLine(img, (Nd.coordinates[0], Nd.coordinates[1]),
-                                                      (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1,
-                                                      cv2.LINE_AA)
-                    else:
-                        raise Exception("linkId does not exists")
+        for Nd in self.Nodes[z]:
+            img = cv2.circle(
+                img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1, cv2.LINE_AA)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cv2.putText(img, str(Nd.identity), (Nd.coordinates[0] + 10, Nd.coordinates[1] + 10), font, 1,
+                        (66, 126, 255), 2, cv2.LINE_AA)
+            for edge in Nd.links:
+                Nd2 = self.get_node(edge.dest, z)
+                if Nd2 is not None:
+                    img = cv2.arrowedLine(img, (Nd.coordinates[0], Nd.coordinates[1]),
+                                          (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1,
+                                          cv2.LINE_AA)
+                else:
+                    raise Exception("linkId does not exists")
 
         # Implementation 2 ( directly taking impure image )
         # impure = self._get_floor_img(z, "impure")
         # img = impure
-        # return img
         cv2.imshow('Node graph for floor ' + str(z), img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -216,23 +222,23 @@ class Graph:
         pure = self._get_floor_img(z, "pure")
         img = copy.deepcopy(pure)
 
-        for Nd in self.Nodes:
-            if Nd.coordinates[2] == z:
-                img = cv2.circle(
-                    img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1, cv2.LINE_AA)
-                for edge in Nd.links:
-                    if edge.is_connected:
-                        for Nd2 in self.Nodes:
-                            if Nd2.identity == edge.dest:
-                                img = cv2.line(img, (Nd.coordinates[0], Nd.coordinates[1]),
-                                               (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1,
-                                               cv2.LINE_AA)
-                    else:
-                        raise Exception("linkId does not exists")
-
+        for Nd in self.Nodes[z]:
+            img = cv2.circle(
+                img, (Nd.coordinates[0], Nd.coordinates[1]), 8, (66, 126, 255), -1, cv2.LINE_AA)
+            for edge in Nd.links:
+                Nd2 = self.get_node(edge.dest, z)
+                if Nd2 is not None:
+                    img = cv2.line(img, (Nd.coordinates[0], Nd.coordinates[1]),
+                                   (Nd2.coordinates[0], Nd2.coordinates[1]), (66, 126, 255), 1,
+                                   cv2.LINE_AA)
+                else:
+                    raise Exception("linkId does not exists")
         return img
 
     def mark_nodes(self, z):
+        if len(self.Nodes) <= z:
+            for i in range(z + 1 - len(self.Nodes)):
+                self.Nodes.append([])
         window_text = 'Mark Nodes for floor ' + str(z)
 
         def click_event(event, x, y, flags, param):
@@ -290,11 +296,11 @@ class Graph:
                 if self._nearest_node(x, y, z) is not None:
                     nd = self._nearest_node(x, y, z)
                     self._delete_node(nd)
-                    img = self.print_graph(z)
+                    img = self.print_graph_and_return(z)
                     cv2.imshow(window_text, img)
 
-        impure = self._get_floor_img(z, "impure")
-        img = impure
+        # impure = self._get_floor_img(z, "impure")
+        img = self.print_graph_and_return(z)
         cv2.imshow(window_text, img)
         cv2.setMouseCallback(window_text, click_event)
         cv2.waitKey(0)
@@ -316,16 +322,12 @@ class Graph:
                     for edge in ndcur.links:
                         if edge.dest == nd.identity:
                             ndcur.links.remove(edge)
-                    img = self.print_graph(z)
+                    img = self.print_graph_and_return(z)
                     cv2.imshow('Delete connections', img)
 
-        img = cv2.imread('nodegraph.jpg')
-        if img is None:  # No nodes present
-            return
+        img = self.print_graph_and_return(z)
         cv2.imshow('Delete connections', img)
-
         cv2.setMouseCallback('Delete connections', click_event)
-
         cv2.waitKey(0)
         cv2.imwrite('nodegraph.jpg', img)
         cv2.destroyAllWindows()
@@ -372,7 +374,7 @@ class Graph:
         if len(self.path_traversed) > 0:
             prev = self.path_traversed[-1]
             if type(prev) == tuple:
-                if prev[0] == src and prev[1] == dest:
+                if prev[0] == src:
                     self.path_traversed[-1] = (src, dest, fraction_traversed)
                     return
                 else:
@@ -400,7 +402,7 @@ class Graph:
                                                                           src_nd.coordinates[1])))
                 img = cv2.line(img, start_coordinates, end_coordinates, (150, 0, 0), 6,
                                cv2.LINE_AA)
-        if len(self.path_traversed)>0:
+        if len(self.path_traversed) > 0:
             last = self.path_traversed[-1]
             if type(last) == int:
                 nd = self.get_node(last)
@@ -415,8 +417,7 @@ class Graph:
                 img = cv2.circle(img, end_coordinates, 15, (0, 200, 0), -1, cv2.LINE_AA)
 
         cv2.imshow("Current location", img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        cv2.waitKey(1)
 
     @staticmethod
     def load_graph():
@@ -590,8 +591,8 @@ def run(code: int):
     # Add nodes and edges
     if code == 2:
         graph: Graph = load_graph()
-        graph.read_nodes("testData/evening_sit0/nodes", 4)
-        graph.read_edges("testData/evening_sit0/edges", 4)
+        graph.read_nodes("testData/evening_sit/nodes/nodes", 4)
+        graph.read_edges("testData/evening_sit/edges/edges", 4)
         graph.save_graph()
 
     # Query video
@@ -621,6 +622,18 @@ def run(code: int):
         graph.save_graph()
 
 
-
+# image = cv2.imread('graph/maps/map0.jpg')
+# image = cv2.resize(image, (0, 0), None, .5, 0.5)
+#
+# grey = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+# grey_3_channel = cv2.cvtColor(grey, cv2.COLOR_GRAY2BGR)
+#
+# numpy_horizontal = np.hstack((image, grey_3_channel))
+# numpy_horizontal_concat = np.concatenate((image, grey_3_channel), axis=1)
+#
+# cv2.imshow('Numpy Horizontal', numpy_horizontal)
+# cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
+#
+# cv2.waitKey()
+# run(1)
 # run(2)
-
