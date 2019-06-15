@@ -88,7 +88,16 @@ class NodeEdgeRealTimeMatching:
         if match is None:
             possible_edge["last_matched_i_with_j"] = i
             possible_edge["confidence"] = possible_edge["confidence"] - 0.5
-            possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] + 1
+            possible_edge["no_of_continuous_no_match"] = possible_edge["no_of_continuous_no_match"] + 1
+            if possible_edge["no_of_frames_to_match"] < 5:
+                possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] + 1
+            if possible_edge["no_of_continuous_no_match"] == 3:
+                # handling the query if a query frame is just not matching
+                possible_edge["last_matched_i_with_j"] = possible_edge["last_matched_i_with_j"] + 1
+                # restoring some confidence
+                possible_edge["confidence"] = possible_edge["confidence"] + 1
+                # also little restoration in no_of_frames_to_match
+                possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] - 1
         else:
             # print("popo query i: ", i, ", jth frame", match, maxmatch)
             possible_edge["last_matched_j"] = match
@@ -96,6 +105,7 @@ class NodeEdgeRealTimeMatching:
             possible_edge["confidence"] = possible_edge["confidence"] + 1
             if possible_edge["no_of_frames_to_match"] > 2:
                 possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] - 1
+            possible_edge["no_of_continuous_no_match"] = 0
 
         if j == possible_edge["edge"].distinct_frames.no_of_frames():
             possible_edge["edge_ended"] = True
@@ -111,6 +121,7 @@ class NodeEdgeRealTimeMatching:
                         "last_matched_i_with_j": self.i_at_matched_node - 1,
                         "last_matched_j": 0,
                         "no_of_frames_to_match": 3,
+                        "no_of_continuous_no_match": 0,
                         "edge_ended": False
                     })
         # i_at_matched_node is 0 means that there can be multiple nodes
@@ -221,10 +232,10 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     #save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
     #cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
     query_video_distinct_frames.add_img_obj(img_obj)
-    node_and_edge_real_time_matching.find_edge_with_nodes()
+    # node_and_edge_real_time_matching.find_edge_with_nodes()
     while True:
-        if livestream:
-            cap = cv2.VideoCapture(video_str)
+        # if livestream:
+        #    cap = cv2.VideoCapture(video_str)
         ret, frame = cap.read()
         if ret:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -249,7 +260,7 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
                 #save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 #cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
                 query_video_distinct_frames.add_img_obj(img_obj2)
-                node_and_edge_real_time_matching.find_edge_with_nodes()
+                # node_and_edge_real_time_matching.find_edge_with_nodes()
                 #a = b
                 #i_prev = i
 
