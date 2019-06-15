@@ -8,6 +8,21 @@ Accepts only Mat (The Basic Image Container) format images
 
 import cv2
 import numpy as np
+import scipy
+
+
+def cos_cdist(self, des1, des2):
+    # getting cosine distance between search image and images database
+    v = des1.reshape(1, -1)
+    return scipy.spatial.distance.cdist(np.array([des2]), v, 'cosine').reshape(-1)
+
+def KAZE_match(des1, des2):
+    # reference: https://medium.com/machine-learning-world/feature-extraction-and-similar-image-search-with-opencv-for-newbies-3c59796bf774
+    img_distances = cos_cdist(des1, des2)
+    not_match = img_distances[0]
+    print('Match', (1 - not_match))
+    return 1 - not_match
+
 
 def SURF_match_2(key_des_1,key_des_2, hessianThreshold: int = 400, ratio_thresh: float = 0.7, symmetry_match: bool = True):
     """Give fraction match between 2 images descriptors using SURF and FLANN

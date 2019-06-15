@@ -211,6 +211,109 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     return distinct_frames
 
 
+def save_KAZE_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
+                              vector_size: int = 32, ensure_min=False):
+    """Saves non redundent and distinct frames of a video in folder
+    Parameters
+    ----------
+    video_str : is video_str = "webcam" then loads webcam. O.W. loads video at video_str location,
+    folder : folder where non redundant images are to be saved,
+    frames_skipped: Number of frames to skip and just not consider,
+    check_blurry: If True then only considers non blurry frames but is slow
+    vector_size
+    ensure_min: whether a minimum no of frames (at least one per 50) is to be kept irrespective of
+        whether they are distinct or not
+
+    Returns
+    -------
+    array,
+        returns array contaning non redundant frames(mat format)
+    """
+
+    ensure_path(folder + "/jpg")
+
+    frames_skipped += 1
+
+    if video_str == "webcam":
+        video_str = 0
+    cap = cv2.VideoCapture(video_str)
+    # cap= cv2.VideoCapture(0)
+    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 200)
+    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 200)
+
+    distinct_frames = DistinctFrames()
+    i = 0
+    a = None
+    b = None
+    check_next_frame = False
+    i_prev = 0  # the last i which was stored
+
+    detector = cv2.KAZE_create()
+
+    ret, frame = cap.read()
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    cv2.imshow('frame', gray)
+    keypoints = detector.detect(gray)
+    # Getting first best 32 of them.
+    keypoints = sorted(keypoints, key=lambda x: -x.response)[:vector_size]
+    # computing descriptors vector
+    keypoints, descriptors = detector.compute(gray)
+    # Flatten all of them in one big vector - our feature vector
+    descriptors = descriptors.flatten()
+
+    a = (vector_size, descriptors)
+    img_obj = ImgObj(a[0], a[1], i)
+    save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
+    cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
+    distinct_frames.add_img_obj(img_obj)
+
+    while True:
+        ret, frame = cap.read()
+        if ret:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            if i % frames_skipped != 0 and not check_next_frame:
+                i = i + 1
+                continue
+
+            cv2.imshow('frame', gray)
+            # print(i)
+
+            if check_blurry:
+                if is_blurry_grayscale(gray):
+                    check_next_frame = True
+                    i = i + 1
+                    continue
+                check_next_frame = False
+
+            keypoints = detector.detect(gray)
+            keypoints = sorted(keypoints, key=lambda x: -x.response)[:vector_size]
+            keypoints, descriptors = detector.compute(gray)
+            descriptors = descriptors.flatten()
+
+            b = (vector_size, descriptors)
+            image_fraction_matched = mt.KAZE_match(a[1], b[1])
+            if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
+                img_obj2 = ImgObj(b[0], b[1], i)
+                save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
+                cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
+                distinct_frames.add_img_obj(img_obj2)
+                a = b
+                i_prev = i
+
+            i = i + 1
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        else:
+            break
+
+    print("Created distinct frames object")
+    cap.release()
+    cv2.destroyAllWindows()
+    distinct_frames.calculate_time()
+    return distinct_frames
+
+
+
 def read_images(folder):
     """Reads images of the form "image<int>.pkl" from folder(passed as string containing 
     relative path of the specific folder)
