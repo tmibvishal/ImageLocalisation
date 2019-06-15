@@ -37,7 +37,7 @@ class Graph:
 
     def __init__(self):
         self.new_node_index = 0
-        self.Nodes = [] # list of list of nodes Nodes[0] will be list of all nodes of floor0
+        self.Nodes = []  # list of list of nodes Nodes[0] will be list of all nodes of floor0
         self.no_of_floors = 0
         self.Floor_map = []
         self.path_traversed = []
@@ -621,7 +621,6 @@ def run(code: int):
         graph.read_nodes_directly("testData/Node-direct-images")
         graph.save_graph()
 
-
 # image = cv2.imread('graph/maps/map0.jpg')
 # image = cv2.resize(image, (0, 0), None, .5, 0.5)
 #
@@ -636,5 +635,5 @@ def run(code: int):
 #
 # cv2.waitKey()
 # run(1)
-# run(0)
+run(0)
 # run(2)

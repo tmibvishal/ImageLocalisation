@@ -417,6 +417,23 @@ def compare_videos_and_print(frames1, frames2):
                 print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
 
 
+def fetch_from_server():
+    url = "http://192.168.43.1:8080/shot.jpg"
+    i = 0
+    while True:
+        cap = cv2.VideoCapture(url)
+        ret, frame = cap.read()
+        if ret:
+            cv2.imshow('Frame!', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        else:
+            print("Frame Not found")
+            break
+        i = i + 1
+
+
+
 # FRAMES1 = save_distinct_ImgObj("testData/new things/6_2.MP4", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
