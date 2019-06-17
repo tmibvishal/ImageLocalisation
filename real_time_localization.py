@@ -92,7 +92,7 @@ class NodeEdgeRealTimeMatching:
             if possible_edge["no_of_frames_to_match"] < 5:
                 possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] + 1
             if possible_edge["no_of_continuous_no_match"] == 3:
-                # handling the query if a query frame is just not matching
+                # handling the case if the query frame is just not matching
                 possible_edge["last_matched_i_with_j"] = possible_edge["last_matched_i_with_j"] + 1
                 # restoring some confidence
                 possible_edge["confidence"] = possible_edge["confidence"] + 1
