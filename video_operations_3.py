@@ -12,13 +12,14 @@ from general import *
 
 
 class ImgObj:
-    def __init__(self, no_of_keypoints, descriptors, time_stamp):
+    def __init__(self, no_of_keypoints, descriptors, time_stamp, serialized_keypoints):
         self.no_of_keypoints = no_of_keypoints
         self.descriptors = descriptors
         self.time_stamp = time_stamp
+        self.serialized_keypoints = serialized_keypoints
 
     def get_elements(self):
-        return (self.no_of_keypoints, self.descriptors)
+        return self.keypoints, self.descriptors
 
     def get_time(self):
         return self.time_stamp
@@ -119,6 +120,22 @@ def is_blurry_grayscale(gray_image):
     return (variance_of_laplacian(gray_image) < 80)
 
 
+def serialize_keypoints(keypoints):
+    index = []
+    for point in keypoints:
+        temp = (point.pt, point.size, point.angle, point.response, point.octave, point.class_id)
+        index.append(temp)
+    return index
+
+def deserialize_keypoints(index):
+    kp = []
+    for point in index:
+        temp = cv2.KeyPoint(x=point[0][0], y=point[0][1], _size=point[1], _angle=point[2], _response=point[3],
+                            _octave=point[4], _class_id=point[5])
+        kp.append(temp)
+    return kp
+
+
 def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
                          hessian_threshold: int = 2500, ensure_min=False):
     """Saves non redundent and distinct frames of a video in folder
@@ -163,8 +180,8 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     cv2.imshow('frame', gray)
     keypoints, descriptors = detector.detectAndCompute(gray, None)
 
-    a = (len(keypoints), descriptors)
-    img_obj = ImgObj(a[0], a[1], i)
+    a = (len(keypoints), descriptors, serialize_keypoints(keypoints))
+    img_obj = ImgObj(a[0], a[1], i, a[2])
     save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
     cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
     distinct_frames.add_img_obj(img_obj)
@@ -188,10 +205,10 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
                 check_next_frame = False
 
             keypoints, descriptors = detector.detectAndCompute(gray, None)
-            b = (len(keypoints), descriptors)
+            b = (len(keypoints), descriptors, serialize_keypoints(keypoints))
             image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7, False)
             if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
-                img_obj2 = ImgObj(b[0], b[1], i)
+                img_obj2 = ImgObj(b[0], b[1], i, b[2])
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
                 distinct_frames.add_img_obj(img_obj2)
@@ -209,110 +226,6 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     cv2.destroyAllWindows()
     distinct_frames.calculate_time()
     return distinct_frames
-
-
-def save_KAZE_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
-                              vector_size: int = 32, ensure_min=False):
-    """Saves non redundent and distinct frames of a video in folder
-    Parameters
-    ----------
-    video_str : is video_str = "webcam" then loads webcam. O.W. loads video at video_str location,
-    folder : folder where non redundant images are to be saved,
-    frames_skipped: Number of frames to skip and just not consider,
-    check_blurry: If True then only considers non blurry frames but is slow
-    vector_size
-    ensure_min: whether a minimum no of frames (at least one per 50) is to be kept irrespective of
-        whether they are distinct or not
-
-    Returns
-    -------
-    array,
-        returns array contaning non redundant frames(mat format)
-    """
-
-    ensure_path(folder + "/jpg")
-
-    frames_skipped += 1
-
-    if video_str == "webcam":
-        video_str = 0
-    cap = cv2.VideoCapture(video_str)
-    # cap= cv2.VideoCapture(0)
-    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 200)
-    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 200)
-
-    distinct_frames = DistinctFrames()
-    i = 0
-    a = None
-    b = None
-    check_next_frame = False
-    i_prev = 0  # the last i which was stored
-
-    detector = cv2.KAZE_create()
-
-    ret, frame = cap.read()
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    cv2.imshow('frame', gray)
-    keypoints = detector.detect(gray)
-    # Getting first best 32 of them.
-    keypoints = sorted(keypoints, key=lambda x: -x.response)[:vector_size]
-    # computing descriptors vector
-    keypoints, descriptors = detector.compute(gray)
-    # Flatten all of them in one big vector - our feature vector
-    descriptors = descriptors.flatten()
-
-    a = (vector_size, descriptors)
-    img_obj = ImgObj(a[0], a[1], i)
-    save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
-    cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
-    distinct_frames.add_img_obj(img_obj)
-
-    while True:
-        ret, frame = cap.read()
-        if ret:
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            if i % frames_skipped != 0 and not check_next_frame:
-                i = i + 1
-                continue
-
-            cv2.imshow('frame', gray)
-            # print(i)
-
-            if check_blurry:
-                if is_blurry_grayscale(gray):
-                    check_next_frame = True
-                    i = i + 1
-                    continue
-                check_next_frame = False
-
-            keypoints = detector.detect(gray)
-            keypoints = sorted(keypoints, key=lambda x: -x.response)[:vector_size]
-            keypoints, descriptors = detector.compute(gray)
-            descriptors = descriptors.flatten()
-
-            b = (vector_size, descriptors)
-            image_fraction_matched = mt.KAZE_match(a[1], b[1])
-            if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
-                img_obj2 = ImgObj(b[0], b[1], i)
-                save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
-                cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
-                distinct_frames.add_img_obj(img_obj2)
-                a = b
-                i_prev = i
-
-            i = i + 1
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        else:
-            break
-
-    print("Created distinct frames object")
-    cap.release()
-    cv2.destroyAllWindows()
-    distinct_frames.calculate_time()
-    return distinct_frames
-
-
 
 def read_images(folder):
     """Reads images of the form "image<int>.pkl" from folder(passed as string containing
@@ -389,7 +302,7 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
             grey = cv2.imread(folder + "/" + file, 0)
             time_stamp = int(file.replace('image', '').replace('.jpg', ''), 10)
             keypoints, descriptors = detector.detectAndCompute(grey, None)
-            img_obj = ImgObj(len(keypoints), descriptors, time_stamp)
+            img_obj = ImgObj(len(keypoints), descriptors, time_stamp, serialize_keypoints(keypoints))
             distinct_frames.add_img_obj(img_obj)
             print("Reading image .." + str(time_stamp) + " from " + folder)  # for dev phase
         except:
@@ -397,143 +310,6 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
 
     return distinct_frames
 
-
-def edge_from_specific_pt(i_init, j_init, frames1, frames2):
-    """
-    Called when frames1[i_init][1] matches best with frames2[j_init][1]. This function checks
-    subsequent frames of frames1 and frames2 to see if edge is detected.
-
-    Parameters
-    ----------
-    i_init: index of the frame in frames1 list , which matches with the corresponding frame
-            in frame2 list
-    j_init: index of the frame in frames2 list , which matches with the corresponding frame
-            in frame1 list
-    frames1:
-    frames2: are lists containing tuples of the form
-            (time_stamp, frame, len_keypoints, descriptors) along path1 and path2
-
-    Returns
-    -------
-    ( status, i_last_matched, j_last_matched ),
-        status: if edge is found or not (starting from i_init and j_init)
-        i_last_matched: index of last matched frame of frames1
-        j_last_matched: index of last matched frame of frames2
-
-    """
-    confidence = 5
-    """
-    No edge is declared when confidence is zero.
-
-    Confidence is decreased by 1 whenever match is not found for (i)th frame of frame1 among
-    the next 4 frames after j_last_matched(inclusive)
-
-    If match is found for (i)th frame, i_last_matched is changed to i, j_last_matched is changed to
-    the corresponding match; and confidence is restored to initial value(5)
-    """
-    match, maxmatch, i, i_last_matched, j_last_matched = None, 0, i_init + 1, i_init, j_init
-    """
-    INV:
-    i = index of current frame (in frames1) being checked for matches; i_last_matched<i<len(frames1)
-    i_last_matched = index of last frame (in frames1 ) matched; i_init<=i_last_matched<len(frames1)
-    j_last_matched = index of last frame (in frames2 ) matched(with i_last_matched);
-                        j_init<=j_last_matched<len(frames2)
-    match = index of best matched frame (in frames2) with (i)th frame in frames1. j_last_matched<=match<=j
-    maxmatch = fraction matching between (i)th and (match) frames
-    """
-    while True:
-        for j in range(j_last_matched + 1, j_last_matched + 5):
-            if j >= frames2.no_of_frames():
-                break
-            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(),
-                                                     frames2.get_object(j).get_elements(),
-                                                     2500, 0.7)
-            if image_fraction_matched > 0.15:
-                if image_fraction_matched > maxmatch:
-                    match, maxmatch = j, image_fraction_matched
-        if match is None:
-            confidence = confidence - 1
-            if confidence == 0:
-                break
-        else:
-            confidence = 5
-            j_last_matched = match
-            i_last_matched = i
-        i = i + 1
-        if i >= frames1.no_of_frames():
-            break
-        match, maxmatch = None, 0
-
-    if i_last_matched > i_init and j_last_matched > j_init:
-        print("Edge found from :")
-        print(str(frames1.get_object(i_init).get_time()) + "to" + str(
-            frames1.get_object(i_last_matched).get_time()) + "of video 1")
-        print(str(frames2.get_object(j_init).get_time()) + "to" + str(
-            frames2.get_object(j_last_matched).get_time()) + "of video 2")
-        return True, i_last_matched, j_last_matched
-    else:
-        return False, i_init, j_init
-
-
-def compare_videos(frames1: DistinctFrames, frames2: DistinctFrames):
-    """
-    :param frames1:
-    :param frames2: are lists containing tuples of the form (time_stamp, frame) along path1 and path2
-
-    (i)th frame in frames1 is compared with all frames in frames2[lower_j ... (len2)-1].
-    If match is found then edge_from_specific_pt is called from indexes i and match
-    if edge found then i is incremented to i_last_matched (returned from edge_from_specific_pt) and
-    lower_j is incremented to j_last_matched
-    """
-
-    len1, len2 = frames1.no_of_frames(), frames2.no_of_frames()
-    lower_j = 0
-    i = 0
-    while (i < len1):
-        match, maxmatch = None, 0
-        for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(),
-                                                     frames2.get_object(j).get_elements(),
-                                                     2500, 0.7)
-            if image_fraction_matched > 0.15:
-                if image_fraction_matched > maxmatch:
-                    match, maxmatch = j, image_fraction_matched
-        if match is not None:
-            if i >= len1 or lower_j >= len2:
-                break
-            status, i, j = edge_from_specific_pt(i, match, frames1, frames2)
-            lower_j = j
-        i = i + 1
-
-
-def compare_videos_and_print(frames1, frames2):
-    len1, len2 = frames1.no_of_frames(), frames2.no_of_frames()
-    lower_j = 0
-    for i in range(len1):
-        print("")
-        print(str(frames1.get_object(i).get_time()) + "->")
-        for j in range(lower_j, len2):
-            image_fraction_matched = mt.SURF_match_2(frames1.get_object(i).get_elements(),
-                                                     frames2.get_object(j).get_elements(),
-                                                     2500, 0.7)
-            if image_fraction_matched > 0.2:
-                print(str(frames2.get_object(j).get_time()) + " : confidence is " + str(image_fraction_matched))
-
-
-def fetch_from_server():
-    url = "http://192.168.43.1:8080/shot.jpg"
-    i = 0
-    while True:
-        cap = cv2.VideoCapture(url)
-        ret, frame = cap.read()
-        if ret:
-            cv2.imshow('Frame!', frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        else:
-            print("Frame Not found")
-            break
-        i = i + 1
 
 
 
@@ -559,15 +335,13 @@ image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
 print(image_fraction_matched)
 
 
-
 cap = cv2.VideoCapture("testData/sushant_mc/20190518_155931.mp4")
 ret, frame = cap.read()
 cv2.imshow("frame", frame)
 print(is_blurry_colorful(frame))
 
-
 frame = cv2.imread("v2/jpg/image207.jpg", 0)
 print(is_blurry_grayscale(frame))
 '''
 
-# frames1 = save_distinct_ImgObj("testData/sit_morning_14_june/edges/0_1.webm", "query_distinct_frame", 14, True, ensure_min=True)
+frames1 = save_distinct_ImgObj("testData/sit_morning_14_june/edges/0_1.webm", "query_distinct_frame/case7", 14, True, ensure_min=True)
