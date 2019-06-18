@@ -37,9 +37,7 @@ class NodeEdgeRealTimeMatching:
         """
         :param some_query_img_objects:
         :param graph_obj:
-
         :return:
-        final_node_list = a list containing matched nodes in descending order of probability
         """
         search_list = graph_obj.Nodes
         node_confidence = []
@@ -69,10 +67,18 @@ class NodeEdgeRealTimeMatching:
 
     @staticmethod
     def match_edge_with_frame(possible_edge, i: int, query_video_ith_frame: vo2.ImgObj):
-        # possible edge here is passed as reference
-        # print("yo")
-        j = possible_edge["last_matched_j"] + 1
-        jmax = possible_edge["last_matched_j"] + possible_edge["no_of_frames_to_match"]
+        """Match a possible edge object with query_video_ith_frame
+
+                possible edge here is passed as reference.
+
+                Parameters
+                ----------
+                possible_edge : possible edge object,
+                i: ,
+                query_video_ith_frame: ith frame of query video distinct frames,
+        """
+        j = possible_edge["last_matched_j"] + 1  # if last_matched_j is 3rd frame, now I will start matching from 4th frame, gave better and more real time results
+        jmax = possible_edge["last_matched_j"] + possible_edge["no_of_frames_to_match"]  # j should iterate upto this value
         match, maxmatch = None, 0
         while j < jmax and j < possible_edge["edge"].distinct_frames.no_of_frames():
             # print(j)
@@ -86,8 +92,9 @@ class NodeEdgeRealTimeMatching:
                     match, maxmatch = j, image_fraction_matched
             j = j + 1
         if match is None:
+            # no match is found in the j to jmax interval
             possible_edge["last_matched_i_with_j"] = i
-            possible_edge["confidence"] = possible_edge["confidence"] - 0.5
+            possible_edge["confidence"] = possible_edge["confidence"] - 0.5  # decreasing confidence
             possible_edge["no_of_continuous_no_match"] = possible_edge["no_of_continuous_no_match"] + 1
             if possible_edge["no_of_frames_to_match"] < 5:
                 possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] + 1
