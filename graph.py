@@ -7,6 +7,7 @@ import matcher as mt
 import shutil
 import time
 import numpy as np
+import math
 
 
 class Node:
@@ -129,6 +130,29 @@ class Graph:
         else:
             raise Exception("Nd does not exists in Nodes")
 
+    def _get_edge_slope(self, edge: Edge, floor:int=0):
+        src= edge.src
+        dest= edge.dest
+        src_node = None
+        dest_node = None
+        for nd in self.Nodes[floor]:
+            if nd.identity == src:
+                src_node = nd
+            if nd.identity == dest:
+                dest_node = nd
+        if (dest_node.coordinates[0]-src_node.coordinates[0])==0:
+            slope_in_degree=90
+        else:
+            slope = (-1)*(dest_node.coordinates[1]-src_node.coordinates[1])/(dest_node.coordinates[0]-src_node.coordinates[0])
+            slope_in_degree= math.degrees(math.atan(slope))
+        return slope_in_degree
+
+    def _get_angle_between_two_edges(self, edge1:Edge, edge2: Edge, floor:int=0):
+        slope1= self._get_edge_slope(edge1, floor)
+        slope2= self._get_edge_slope(edge2, floor)
+        return slope2-slope1
+
+
     def _add_edge_images(self, id1: int, id2: int, distinct_frames: vo2.DistinctFrames, z1=None, z2=None):
         if id1 > self.new_node_index or id2 > self.new_node_index:
             raise Exception("Wrong id's passed")
@@ -214,6 +238,8 @@ class Graph:
         # Implementation 2 ( directly taking impure image )
         # impure = self._get_floor_img(z, "impure")
         # img = impure
+        cv2.namedWindow('Node graph for floor ' + str(z),cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Node graph for floor ' + str(z), 1600, 1600)
         cv2.imshow('Node graph for floor ' + str(z), img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -249,10 +275,14 @@ class Graph:
                     cv2.circle(img, (x, y), 8, (66, 126, 255), -1, cv2.LINE_AA)
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     cv2.putText(img, str(identity), (x + 10, y + 10), font, 1, (66, 126, 255), 2, cv2.LINE_AA)
+                    cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow(window_text, 1600, 1600)
                     cv2.imshow(window_text, img)
 
         impure = self._get_floor_img(z, "impure")
         img = impure
+        cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(window_text, 1600, 1600)
         cv2.imshow(window_text, img)
         cv2.setMouseCallback(window_text, click_event)
         cv2.waitKey(0)
@@ -277,12 +307,16 @@ class Graph:
                     meany = (nd.coordinates[1] + ndcur.coordinates[1]) // 2
                     cv2.putText(img, str(nd.identity) + "_" + str(ndcur.identity), (meanx + 5, meany + 5), font, 0.5,
                                 (100, 126, 255), 2, cv2.LINE_AA)
+                    cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow(window_text, 1600, 1600)
                     cv2.imshow(window_text, img)
 
         impure = self._get_floor_img(z, "impure")
         img = impure
         if img is None:
             return
+        cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(window_text, 1600, 1600)
         cv2.imshow(window_text, img)
         cv2.setMouseCallback(window_text, click_event)
         cv2.waitKey(0)
@@ -297,10 +331,14 @@ class Graph:
                     nd = self._nearest_node(x, y, z)
                     self._delete_node(nd)
                     img = self.print_graph_and_return(z)
+                    cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow(window_text, 1600, 1600)
                     cv2.imshow(window_text, img)
 
         # impure = self._get_floor_img(z, "impure")
         img = self.print_graph_and_return(z)
+        cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(window_text, 1600, 1600)
         cv2.imshow(window_text, img)
         cv2.setMouseCallback(window_text, click_event)
         cv2.waitKey(0)
@@ -323,9 +361,13 @@ class Graph:
                         if edge.dest == nd.identity:
                             ndcur.links.remove(edge)
                     img = self.print_graph_and_return(z)
+                    cv2.namedWindow('Delete connections', cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow('Delete connections', 1600, 1600)
                     cv2.imshow('Delete connections', img)
 
         img = self.print_graph_and_return(z)
+        cv2.namedWindow('Delete connections', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Delete connections', 1600, 1600)
         cv2.imshow('Delete connections', img)
         cv2.setMouseCallback('Delete connections', click_event)
         cv2.waitKey(0)
@@ -416,16 +458,18 @@ class Graph:
                                                                           src_nd.coordinates[1])))
                 img = cv2.circle(img, end_coordinates, 15, (0, 200, 0), -1, cv2.LINE_AA)
 
+        cv2.namedWindow("Current location", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("Current location", 1600, 1600)
         cv2.imshow("Current location", img)
         cv2.waitKey(1)
 
     @staticmethod
-    def load_graph():
-        return general.load_from_memory("graph.pkl")
+    def load_graph(graph_path):
+        return general.load_from_memory(graph_path)
 
 
-def load_graph():
-    return general.load_from_memory("graph.pkl")
+def load_graph(graph_path):
+    return general.load_from_memory(graph_path)
 
 
 class node_and_image_matching:
@@ -433,7 +477,6 @@ class node_and_image_matching:
         self.matched_nodes = []
         self.matched_edges = []
         self.final_path = []
-        self.last_frame_matched=0
 
     def convert_query_video_to_objects(path, destination_folder):
         return vo2.save_distinct_ImgObj(path, destination_folder)
@@ -442,18 +485,8 @@ class node_and_image_matching:
     Query on all nodes.
     Store the nodes with maximum match"""
 
-    def locate_initial_node(self, nodes_list: list, query_video_frames: vo2.DistinctFrames,
+    def locate_node(self, nodes_list: vo2.DistinctFrames, query_video_frames: vo2.DistinctFrames,
                     no_of_frames_of_query_video_to_be_matched: int = 2):
-        """
-
-        :param nodes_list: consist of array of nodes stored in graph
-        :param query_video_frames: distinct image frames of query video
-        :param no_of_frames_of_query_video_to_be_matched: the initial no of frames that has to be matched with each node to locate the starting node
-        :return: the array which consist of object "Node" that have matched with query video
-
-        a node is considered matched if the ratio of the number of frames that of node that match with query video frame to the number of frames of query video queriec
-        is greater than 0.32 or 32%
-        """
         if len(self.matched_nodes) != 0:
             self.matched_nodes = []
         for node in nodes_list:
@@ -469,16 +502,14 @@ class node_and_image_matching:
                                                              2500, 0.7)
                     if image_fraction_matched > 0.15:
                         print(image_fraction_matched)
-                        print(node.name)
-                        print("query video frame"+str(j))
-                        print("node image no"+str(k))
+                        print(j)
+                        print(k)
                         print()
                         confidence = confidence + 1
             if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
                 self.matched_nodes.append(node)
         for nd in self.matched_nodes:
             print(nd.name)
-        return self.matched_nodes
 
     def match_next_node(self, nodes_list: list, query_video_frames: vo2.DistinctFrames,
                         last_frame_object: vo2.ImgObj,
@@ -491,8 +522,6 @@ class node_and_image_matching:
                 print("matching new node" + node.name)
                 confidence = 0
                 node_images = node.node_images
-                if node_images is None:
-                    continue
                 no_of_node_images = node_images.no_of_frames()
                 for j in range(query_video_frames.no_of_frames()):
                     for k in range(no_of_node_images):
@@ -507,17 +536,12 @@ class node_and_image_matching:
                             print(image_fraction_matched)
                 if confidence / no_of_frames_of_query_video_to_be_matched > 0.32:
                     self.matched_nodes.append(node)
-                    self.locate_edge(nodes_list, query_video_frames)
-                    break
-                else:
-                    print("not high confidence but still brute force")
-                    self.matched_nodes.append(node)
-                    self.locate_edge(nodes_list, query_video_frames)
+                    self.locate_edge(nodes_list, query_video_frames, last_frame_object[0])
                     break
 
-    def locate_edge(self, nodes_list:list, query_video_frames: vo2.DistinctFrames,
-                    query_video_frames_begin: int = 0, confidence_level: int = 1):
-        query_video_frames_begin=self.last_frame_matched
+    def locate_edge(self, nodes_list: vo2.DistinctFrames, query_video_frames: vo2.DistinctFrames,
+                    query_video_frames_begin: int = 0, confidence_level: int = 2):
+        last_frame_matched_with_edge = None
         for node in self.matched_nodes:
             for edge in node.links:
                 self.matched_edges.append([edge, 0, 0])  # (edge, confidence, frame_position_matched)
@@ -525,13 +549,11 @@ class node_and_image_matching:
                 print()
 
         last_frame_matched_with_edge = query_video_frames_begin
-
         for i in range(query_video_frames_begin, query_video_frames.no_of_frames()):
-        edge_list = self.matched_edges
+            edge_list = self.matched_edges
+
             j = 0
             while j < len(edge_list):
-
-
 
                 match, maximum_match = None, 0
                 for k in range(int(edge_list[j][2]), edge_list[j][0].distinct_frames.no_of_frames()):
@@ -556,20 +578,14 @@ class node_and_image_matching:
                     print(str(edge_list[j][0].src) + "_" + str(
                         edge_list[j][0].dest) + " has increased confidence = " + str(edge_list[j][1]))
                 else:
-                    # edge_list[j][1] = edge_list[j][1] - 1
+                    edge_list[j][1] = edge_list[j][1] - 1
                     print(str(edge_list[j][0].src) + "_" + str(
-                        edge_list[j][0].dest) + " has no change in confidence = " + str(edge_list[j][1]))
-                # if edge_list[j][1] < (-1) * confidence_level:
-                #     print(str(edge_list[j][0].src) + "_" + str(edge_list[j][0].dest) + "deleted")
-                #     del edge_list[j]
-                # elif edge_list[j][1] > confidence_level or len(edge_list) == 1:
-                #     print("edge found")
-                #     break
-                if edge_list[j][1]>= confidence_level:
+                        edge_list[j][0].dest) + " has decreased confidence = " + str(edge_list[j][1]))
+                if edge_list[j][1] < (-1) * confidence_level:
+                    print(str(edge_list[j][0].src) + "_" + str(edge_list[j][0].dest) + "deleted")
+                    del edge_list[j]
+                elif edge_list[j][1] > confidence_level or len(edge_list) == 1:
                     print("edge found")
-                    found_edge= edge_list[j]
-                    edge_list=[]
-                    edge_list.append(found_edge)
                     break
                 else:
                     j += 1
@@ -605,7 +621,7 @@ def run(code: int):
     # Create new graph
     if code == 0:
         graph = Graph()
-        graph.add_floor_map(0, "graph/maps/map0.jpg")
+        graph.add_floor_map(0, "map0.jpg")
         graph.mark_nodes(0)
         graph.make_connections(0)
         graph.print_graph(0)
@@ -625,10 +641,10 @@ def run(code: int):
 
     # Query video
     if code == 3:
-        query_video_frames1 = vo2.save_distinct_ImgObj("testData/sit-june3/VID_20190603_110640.mp4",
+        query_video_frames1 = vo2.save_distinct_ImgObj("testData/afternoon_sit0 15june/queryVideos/queryVideos/VID_20190615_180407.webm",
                                                        "query_distinct_frame", 0, True)
         # query_video_frames1 = vo2.read_images("query_distinct_frame")
-        graph = load_graph()
+        graph = load_graph("testData/afternoon_sit0 15june/graph.pkl")
         node_and_image_matching_obj = node_and_image_matching()
         node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
         node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
@@ -664,4 +680,12 @@ def run(code: int):
 # cv2.waitKey()
 # run(1)
 # run(0)
-# run(2)
+#
+
+graph = load_graph("graph.pkl")
+graph.print_graph(0)
+print(graph.Nodes[0][0].links[0].dest)
+print(graph.Nodes[0][1].links[0].dest)
+print(graph._get_edge_slope(graph.Nodes[0][0].links[0]))
+print(graph._get_edge_slope(graph.Nodes[0][1].links[0]))
+print(graph._get_angle_between_two_edges(graph.Nodes[0][0].links[0],graph.Nodes[0][1].links[0]))
