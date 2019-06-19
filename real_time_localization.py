@@ -3,10 +3,10 @@ import numpy as np
 import os
 import shutil
 
-import video_operations_2 as vo2
+import video_operations_3 as vo2
 import matcher as mt
 from graph import Graph, Edge, Node, FloorMap, load_graph
-from video_operations_2 import ensure_path, DistinctFrames, ImgObj, save_to_memory, is_blurry_grayscale
+from video_operations_3 import ensure_path, DistinctFrames, ImgObj, save_to_memory, is_blurry_grayscale
 
 query_video_distinct_frames = DistinctFrames()
 query_video_ended = False
@@ -28,7 +28,7 @@ class NodeEdgeRealTimeMatching:
         print("atleast started")
         # nodes_matched = []
         # self.nodes_matched.append(graph_obj.get_node(2))
-        self.nodes_matched.append(graph_obj.get_node(0))
+        self.nodes_matched.append(graph_obj.get_node(3))
         # self.find_edge_with_nodes(0)
         return
 
@@ -77,17 +77,22 @@ class NodeEdgeRealTimeMatching:
                 i: ,
                 query_video_ith_frame: ith frame of query video distinct frames,
         """
-        j = possible_edge["last_matched_j"] + 1  # if last_matched_j is 3rd frame, now I will start matching from 4th frame, gave better and more real time results
-        jmax = possible_edge["last_matched_j"] + possible_edge["no_of_frames_to_match"]  # j should iterate upto this value
+        j = possible_edge[
+                "last_matched_j"] + 1
+        # if last_matched_j is 3rd frame, now I will start matching from 4th frame,
+        # gave better and more real time results
+        jmax = possible_edge["last_matched_j"] + possible_edge[
+            "no_of_frames_to_match"]  # j should iterate upto this value
         match, maxmatch = None, 0
         while j < jmax and j < possible_edge["edge"].distinct_frames.no_of_frames():
             # print(j)
             edge = possible_edge["edge"]
             img_obj_from_edge: vo2.ImgObj = edge.distinct_frames.get_object(j)
-            image_fraction_matched = mt.SURF_match_2(img_obj_from_edge.get_elements(),
+            image_fraction_matched = mt.SURF_returns(img_obj_from_edge.get_elements(),
                                                      query_video_ith_frame.get_elements(), 2500, 0.7)
-            # print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" + str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
-            if image_fraction_matched > 0.15:
+            # print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" +
+            # str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
+            if image_fraction_matched > 0.1:
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
             j = j + 1
@@ -164,7 +169,7 @@ class NodeEdgeRealTimeMatching:
                     break
                 print("yo are travelling on" + str(possible_edge["edge"].src) + "to" + str(possible_edge["edge"].dest))
                 j = possible_edge["last_matched_j"]
-                print("i:", i, "j:", j);
+                print("i:", i, "j:", j)
                 last_jth_matched_img_obj = possible_edge["edge"].distinct_frames.get_object(j)
                 time_stamp = last_jth_matched_img_obj.get_time()
                 total_time = possible_edge["edge"].distinct_frames.get_time()
@@ -234,16 +239,17 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     cv2.imshow('frame', gray)
     keypoints, descriptors = detector.detectAndCompute(gray, None)
 
-    a = (len(keypoints), descriptors)
-    img_obj = ImgObj(a[0], a[1], i)
-    #save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
-    #cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
+    a = (len(keypoints), descriptors, vo2.serialize_keypoints(keypoints), gray.shape)
+    img_obj = ImgObj(a[0], a[1], i, a[2], a[3])
+    save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
+    cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
     query_video_distinct_frames.add_img_obj(img_obj)
-    # node_and_edge_real_time_matching.find_edge_with_nodes()
+    node_and_edge_real_time_matching.find_edge_with_nodes()
     while True:
-        # if livestream:
-        #    cap = cv2.VideoCapture(video_str)
-        ret, frame = cap.read()
+        if livestream:
+            cap = cv2.VideoCapture(video_str)
+        else:
+            ret, frame = cap.read()
         if ret:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             if i % frames_skipped != 0 and not check_next_frame:
@@ -259,17 +265,16 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
                     continue
                 check_next_frame = False
             keypoints, descriptors = detector.detectAndCompute(gray, None)
-            b = (len(keypoints), descriptors)
-            # image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7, False)
-            # if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
-            if True:
-                img_obj2 = ImgObj(b[0], b[1], i)
-                #save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
-                #cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
+            b = (len(keypoints), descriptors, vo2.serialize_keypoints(keypoints), gray.shape)
+            image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, False)
+            if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
+                img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
+                save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
+                cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
                 query_video_distinct_frames.add_img_obj(img_obj2)
-                # node_and_edge_real_time_matching.find_edge_with_nodes()
-                #a = b
-                #i_prev = i
+                node_and_edge_real_time_matching.find_edge_with_nodes()
+                a = b
+                i_prev = i
 
             i = i + 1
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -287,5 +292,6 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
 
 if __name__ == '__main__':
     url = "http://192.168.43.1:8080/shot.jpg"
-    save_distinct_realtime_modified_ImgObj(url, "query_distinct_frame/caseLive", 4,
-                                           check_blurry=False, ensure_min=True, livestream=True)
+    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202957.webm",
+                                           "query_distinct_frame/night", 4,
+                                           check_blurry=False, ensure_min=True, livestream=False)

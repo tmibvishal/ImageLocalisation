@@ -4,7 +4,6 @@ Contains functions that operate on video or stream of images
 
 import cv2
 import numpy as np
-import matcher as mt
 import os
 import time
 import pickle
@@ -12,14 +11,15 @@ from general import *
 
 
 class ImgObj:
-    def __init__(self, no_of_keypoints, descriptors, time_stamp, serialized_keypoints):
+    def __init__(self, no_of_keypoints, descriptors, time_stamp, serialized_keypoints, shape):
         self.no_of_keypoints = no_of_keypoints
         self.descriptors = descriptors
         self.time_stamp = time_stamp
         self.serialized_keypoints = serialized_keypoints
+        self.shape = shape
 
     def get_elements(self):
-        return self.keypoints, self.descriptors
+        return self.no_of_keypoints, self.descriptors, self.serialized_keypoints, self.shape
 
     def get_time(self):
         return self.time_stamp
@@ -70,7 +70,7 @@ class DistinctFrames:
             raise Exception("Invalid start / end indexes")
         if start_index > end_index:
             raise Exception("Start index should be less than or equal to end index")
-        return self.img_objects[start_index:end_index]
+        return self.imSURF_retg_objects[start_index:end_index]
 
     def get_object(self, index):
         if index not in range(0, self.no_of_frames()):
@@ -180,8 +180,8 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     cv2.imshow('frame', gray)
     keypoints, descriptors = detector.detectAndCompute(gray, None)
 
-    a = (len(keypoints), descriptors, serialize_keypoints(keypoints))
-    img_obj = ImgObj(a[0], a[1], i, a[2])
+    a = (len(keypoints), descriptors, serialize_keypoints(keypoints), gray.shape)
+    img_obj = ImgObj(a[0], a[1], i, a[2], a[3])
     save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
     cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
     distinct_frames.add_img_obj(img_obj)
@@ -205,10 +205,11 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
                 check_next_frame = False
 
             keypoints, descriptors = detector.detectAndCompute(gray, None)
-            b = (len(keypoints), descriptors, serialize_keypoints(keypoints))
-            image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7, False)
+            b = (len(keypoints), descriptors, serialize_keypoints(keypoints), gray.shape)
+            import matcher as mt
+            image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, False)
             if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
-                img_obj2 = ImgObj(b[0], b[1], i, b[2])
+                img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
                 distinct_frames.add_img_obj(img_obj2)
@@ -344,4 +345,4 @@ frame = cv2.imread("v2/jpg/image207.jpg", 0)
 print(is_blurry_grayscale(frame))
 '''
 
-frames1 = save_distinct_ImgObj("testData/sit_morning_14_june/edges/0_1.webm", "query_distinct_frame/case7", 14, True, ensure_min=True)
+# frames1 = save_distinct_ImgObj("testData/sit_morning_14_june/edges/0_1.webm", "query_distinct_frame/case7", 14, True, ensure_min=True)

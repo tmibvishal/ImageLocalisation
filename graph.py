@@ -1,5 +1,5 @@
 import cv2
-import video_operations_2 as vo2
+import video_operations_3 as vo2
 import os
 import general
 import copy
@@ -576,9 +576,9 @@ class node_and_image_matching:
 def run(code: int):
     # Create new graph
     if code == 0:
-        graph = Graph()
-        graph.add_floor_map(0, "graph/maps/map0.jpg")
-        graph.mark_nodes(0)
+        graph = load_graph()
+        #graph.add_floor_map(0, "graph/maps/map0.jpg")
+        #graph.mark_nodes(0)
         graph.make_connections(0)
         graph.print_graph(0)
         graph.save_graph()
@@ -591,8 +591,8 @@ def run(code: int):
     # Add nodes and edges
     if code == 2:
         graph: Graph = load_graph()
-        graph.read_nodes("testData/sit_morning_14_june/nodes", 4)
-        graph.read_edges("testData/sit_morning_14_june/edges", 4)
+        #graph.read_nodes("testData/night sit 0 june 18/node data", 4)
+        graph.read_edges("testData/night sit 0 june 18/edge data", 4)
         graph.save_graph()
 
     # Query video
@@ -635,5 +635,5 @@ def run(code: int):
 #
 # cv2.waitKey()
 # run(1)
-# run(0)
+#run(2)
 # run(2)
