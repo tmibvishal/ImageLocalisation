@@ -136,8 +136,8 @@ def deserialize_keypoints(index):
     return kp
 
 
-def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
-                         hessian_threshold: int = 2500, ensure_min=False):
+def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = True,
+                         hessian_threshold: int = 2500, ensure_min=True):
     """Saves non redundent and distinct frames of a video in folder
     Parameters
     ----------
@@ -207,8 +207,8 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors, serialize_keypoints(keypoints), gray.shape)
             import matcher as mt
-            image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, False)
-            if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
+            image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, True)
+            if image_fraction_matched < 0.09 or (ensure_min and i - i_prev > 50):
                 img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)

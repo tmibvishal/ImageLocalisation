@@ -227,12 +227,18 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
     #     raise Exception("ratio_thresh not between 0 to 1")
     #
     # detector = cv2.xfeatures2d_SURF.create(hessianThreshold)
-    # kp1, descriptors1 = detector.detectAndCompute(img1, None)
-    # kp2, descriptors2 = detector.detectAndCompute(img2, None)
-
+    # keypoints1, descriptors1,  = detector.detectAndCompute(img1, None)
+    # keypoints2, descriptors2 = detector.detectAndCompute(img2, None)
+    #
     # import video_operations_3 as vo3
     # kp1 = vo3.serialize_keypoints(keypoints1)
     # kp2 = vo3.serialize_keypoints(keypoints2)
+    #
+    # shape1 = img1.shape
+    # shape2 = img2.shape
+    #
+    # a1 = len(kp1)
+    # b1 = len(kp2)
 
     a1, descriptors1, kp1, shape1 = kp_des_1
     b1, descriptors2, kp2, shape2 = kp_des_2
@@ -328,13 +334,13 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
         return fraction
 
     if c1 > b1:
-        print("c1 greater than b1, so returning zero")
+        print("******\nc1 greater than b1, so returning zero\n*********")
         return 0
     fraction = (2.0 * c1) / (a1 + b1)
     return fraction
 
-# img1 = cv2.imread("node_data/node_0/jpg/image165.jpg")
-# img2 = cv2.imread("query_distinct_frame/case1/jpg/image5.jpg")
+# img1 = cv2.imread("edge_data/edge_6_7/jpg/image0.jpg")
+# img2 = cv2.imread("query_distinct_frame/night/jpg/image160.jpg")
 # b = SURF_match(img1, img2)
 # a = SURF_returns(img1, img2)
 # print(a)

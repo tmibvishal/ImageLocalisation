@@ -17,7 +17,8 @@ class NodeEdgeRealTimeMatching:
     nodes_matched: list = []
     i_at_matched_node: int = 0
     possible_edges = []
-
+    previous_i: int = 0
+    continuously_no_matches_for_i: int = 0
     # matched is array of dictionary of type { "node: Node", "edge: Edge", "confidence: float",
     # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended: bool"}
 
@@ -28,7 +29,7 @@ class NodeEdgeRealTimeMatching:
         print("atleast started")
         # nodes_matched = []
         # self.nodes_matched.append(graph_obj.get_node(2))
-        self.nodes_matched.append(graph_obj.get_node(3))
+        self.nodes_matched.append(graph_obj.get_node(0))
         # self.find_edge_with_nodes(0)
         return
 
@@ -47,7 +48,7 @@ class NodeEdgeRealTimeMatching:
                 node_images: vo2.DistinctFrames = node.node_images
                 if node_images is not None:
                     for data_obj in node_images.get_objects():
-                        image_fraction_matched = mt.SURF_match_2(img_obj.get_elements(), data_obj.get_elements(),
+                        image_fraction_matched = mt.SURF_returns(img_obj.get_elements(), data_obj.get_elements(),
                                                                  2500, 0.7)
                         if image_fraction_matched > 0.05:
                             print("Match found btw" + str(img_obj.get_time()) + " of query video and " + str(
@@ -92,7 +93,9 @@ class NodeEdgeRealTimeMatching:
                                                      query_video_ith_frame.get_elements(), 2500, 0.7)
             # print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" +
             # str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
-            if image_fraction_matched > 0.1:
+            if image_fraction_matched > 0.09:
+                # print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" +
+                 #   str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
             j = j + 1
@@ -111,7 +114,8 @@ class NodeEdgeRealTimeMatching:
                 # also little restoration in no_of_frames_to_match
                 possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] - 1
         else:
-            # print("popo query i: ", i, ", jth frame", match, maxmatch)
+            img_obj_from_edge: vo2.ImgObj = edge.distinct_frames.get_object(match)
+            print("popo query i: ", i, ", jth frame", match, img_obj_from_edge.time_stamp, maxmatch)
             possible_edge["last_matched_j"] = match
             possible_edge["last_matched_i_with_j"] = i
             possible_edge["confidence"] = possible_edge["confidence"] + 1
@@ -154,6 +158,17 @@ class NodeEdgeRealTimeMatching:
                     continue
                 # print("ho")
                 i = possible_edge["last_matched_i_with_j"] + 1
+                if self.previous_i == i :
+                    self.continuously_no_matches_for_i += 1
+
+                else:
+                    self.continuously_no_matches_for_i = 0
+                    self.previous_i = i
+
+                if self.continuously_no_matches_for_i >= 3:
+                    i += 1
+                    self.previous_i = i
+
                 if i >= query_video_distinct_frames.no_of_frames():
                     if query_video_ended:
                         is_edge_partially_found = True
@@ -212,8 +227,8 @@ node_and_edge_real_time_matching = NodeEdgeRealTimeMatching(graph_obj)
 
 
 def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_skipped: int = 0,
-                                           check_blurry: bool = False,
-                                           hessian_threshold: int = 2500, ensure_min=False,
+                                           check_blurry: bool = True,
+                                           hessian_threshold: int = 2500, ensure_min=True,
                                            livestream=False):
     ensure_path(folder + "/jpg")
 
@@ -266,8 +281,8 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
                 check_next_frame = False
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors, vo2.serialize_keypoints(keypoints), gray.shape)
-            image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, False)
-            if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
+            image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, True)
+            if image_fraction_matched < 0.09 or (ensure_min and i - i_prev > 50):
                 img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
@@ -292,6 +307,6 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
 
 if __name__ == '__main__':
     url = "http://192.168.43.1:8080/shot.jpg"
-    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202957.webm",
+    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_203044.webm",
                                            "query_distinct_frame/night", 4,
-                                           check_blurry=False, ensure_min=True, livestream=False)
+                                           check_blurry=True, ensure_min=True, livestream=False)
