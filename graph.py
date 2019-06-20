@@ -25,7 +25,7 @@ class Edge:
         self.dest = dest
         self.distinct_frames = distinct_frames
         self.video_length = video_length
-
+        self.name = str(src)+"_"+ str(dest)
 
 class FloorMap:
     def __init__(self, floor_no: int = None, img=None):
