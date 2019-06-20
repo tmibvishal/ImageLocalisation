@@ -5,7 +5,7 @@ import shutil
 
 import video_operations_3 as vo2
 import matcher as mt
-from graph import Graph, Edge, Node, FloorMap, load_graph
+from graph2 import Graph, Edge, Node, FloorMap, load_graph
 from video_operations_3 import ensure_path, DistinctFrames, ImgObj, save_to_memory, is_blurry_grayscale
 
 query_video_distinct_frames = DistinctFrames()
@@ -29,7 +29,7 @@ class NodeEdgeRealTimeMatching:
         print("atleast started")
         # nodes_matched = []
         # self.nodes_matched.append(graph_obj.get_node(2))
-        self.nodes_matched.append(graph_obj.get_node(2))
+        self.nodes_matched.append(graph_obj.get_node(0))
         # self.find_edge_with_nodes(0)
         return
 
@@ -198,16 +198,16 @@ class NodeEdgeRealTimeMatching:
             j = j + 1
         print("go")
         if is_edge_found:
-            if found_edge["confidence"] < 1:
-                for possible_edge in self.possible_edges:
-                    if found_edge["edge"].src == possible_edge["edge"].src:
-                        if found_edge["edge"].dest == possible_edge["edge"].dest:
-                            # i am restting this possible_edge
-                            possible_edge["last_matched_j"] = 0
-                            possible_edge["no_of_frames_to_match"] = 3
-                            possible_edge["no_of_continuous_no_match"] = 0
-                            possible_edge["edge_ended"] = False
-            else:
+            # if found_edge["confidence"] < 1:
+            #     for possible_edge in self.possible_edges:
+            #         if found_edge["edge"].src == possible_edge["edge"].src:
+            #             if found_edge["edge"].dest == possible_edge["edge"].dest:
+            #                 # i am restting this possible_edge
+            #                 possible_edge["last_matched_j"] = 0
+            #                 possible_edge["no_of_frames_to_match"] = 3
+            #                 possible_edge["no_of_continuous_no_match"] = 0
+            #                 possible_edge["edge_ended"] = False
+            # else:
                 self.matched_path.append(found_edge)
                 next_node_identity = found_edge["edge"].dest
                 next_matched_nodes = []
