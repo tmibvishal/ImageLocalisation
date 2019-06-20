@@ -3,6 +3,18 @@ import numpy as np
 import os
 import shutil
 
+import socket
+import sys
+
+IP = "10.194.35.37"
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    s.bind((IP, 1234))
+except socket.error as err:
+    print("Bind failed, Error Code" + str(err.args[0]) + ", message: " + err.args[1])
+    sys.exit()
+s.listen(5)
+
 import video_operations_3 as vo2
 import matcher as mt
 from graph import Graph, Edge, Node, FloorMap, load_graph
@@ -198,27 +210,33 @@ class NodeEdgeRealTimeMatching:
             j = j + 1
         print("go")
         if is_edge_found:
+            clientsocket, address = s.accept()
+            print(f"Connection from {address} has been extablished")
+            angle = clientsocket.recv(64)
+            print(int(angle))
+            '''
             if found_edge["confidence"] < 1:
                 for possible_edge in self.possible_edges:
                     if found_edge["edge"].src == possible_edge["edge"].src:
                         if found_edge["edge"].dest == possible_edge["edge"].dest:
-                            # i am restting this possible_edge
+                            # i am resetting this possible_edge
                             possible_edge["last_matched_j"] = 0
                             possible_edge["no_of_frames_to_match"] = 3
                             possible_edge["no_of_continuous_no_match"] = 0
                             possible_edge["edge_ended"] = False
             else:
-                self.matched_path.append(found_edge)
-                next_node_identity = found_edge["edge"].dest
-                next_matched_nodes = []
-                next_matched_nodes.append(graph_obj.get_node(next_node_identity))
-                self.nodes_matched = next_matched_nodes
-                print("confirmed: you crossed edge" + str(found_edge["edge"].src) + "_" + str(found_edge["edge"].dest))
-                # next_matched_nodes will only contain one node which is the the nest node
-                self.possible_edges = []
-                self.i_at_matched_node = i
-                self.find_edge_with_nodes()
-                # i = found_edge["last_matched_i_with_j"] + 1
+            '''
+            self.matched_path.append(found_edge)
+            next_node_identity = found_edge["edge"].dest
+            next_matched_nodes = []
+            next_matched_nodes.append(graph_obj.get_node(next_node_identity))
+            self.nodes_matched = next_matched_nodes
+            print("confirmed: you crossed edge" + str(found_edge["edge"].src) + "_" + str(found_edge["edge"].dest))
+            # next_matched_nodes will only contain one node which is the the nest node
+            self.possible_edges = []
+            self.i_at_matched_node = i
+            self.find_edge_with_nodes()
+            # i = found_edge["last_matched_i_with_j"] + 1
         elif is_edge_partially_found:
             self.matched_path.append(found_edge)
             j = found_edge["last_matched_j"]
