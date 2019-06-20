@@ -1,5 +1,5 @@
 import cv2
-import video_operations_2 as vo2
+import video_operations_3 as vo2
 import os
 import general
 import copy
@@ -635,8 +635,8 @@ def run(code: int):
     # Add nodes and edges
     if code == 2:
         graph: Graph = load_graph()
-        graph.read_nodes("testData/sit_morning_14_june/nodes", 4)
-        graph.read_edges("testData/sit_morning_14_june/edges", 4)
+        #graph.read_nodes("testData/night sit 0 june 18/node data", 4)
+        graph.read_edges("testData/night sit 0 june 18/edge data", 4)
         graph.save_graph()
 
     # Query video

@@ -35,11 +35,13 @@ matches = matcher.knnMatch(des1, des2, k=2)
 good_matches = []
 ratio_thresh= 0.90
 for m,n in matches:
-    if m.distance < ratio_thresh * n.distance:
+    if m.distance < 0.5 * n.distance:
         good_matches.append(m)
 print(ratio_thresh)
 print(len(good_matches))
 
+cv2.namedWindow("Image", cv2.WINDOW_NORMAL)
+cv2.resizeWindow("Image", 1500, 500)
 matchingresult = cv2.drawMatches(img1, kp1, img2, kp2, good_matches, None, flags=2)
 
 # img = cv2.drawKeypoints(img1, kp1, None)
