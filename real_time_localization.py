@@ -29,7 +29,7 @@ class NodeEdgeRealTimeMatching:
         print("atleast started")
         # nodes_matched = []
         # self.nodes_matched.append(graph_obj.get_node(2))
-        self.nodes_matched.append(graph_obj.get_node(0))
+        self.nodes_matched.append(graph_obj.get_node(2))
         # self.find_edge_with_nodes(0)
         return
 
@@ -198,17 +198,27 @@ class NodeEdgeRealTimeMatching:
             j = j + 1
         print("go")
         if is_edge_found:
-            self.matched_path.append(found_edge)
-            next_node_identity = found_edge["edge"].dest
-            next_matched_nodes = []
-            next_matched_nodes.append(graph_obj.get_node(next_node_identity))
-            self.nodes_matched = next_matched_nodes
-            print("confirmed: you crossed edge" + str(found_edge["edge"].src) + "_" + str(found_edge["edge"].dest))
-            # next_matched_nodes will only contain one node which is the the nest node
-            self.possible_edges = []
-            self.i_at_matched_node = i
-            self.find_edge_with_nodes()
-            # i = found_edge["last_matched_i_with_j"] + 1
+            if found_edge["confidence"] < 1:
+                for possible_edge in self.possible_edges:
+                    if found_edge["edge"].src == possible_edge["edge"].src:
+                        if found_edge["edge"].dest == possible_edge["edge"].dest:
+                            # i am restting this possible_edge
+                            possible_edge["last_matched_j"] = 0
+                            possible_edge["no_of_frames_to_match"] = 3
+                            possible_edge["no_of_continuous_no_match"] = 0
+                            possible_edge["edge_ended"] = False
+            else:
+                self.matched_path.append(found_edge)
+                next_node_identity = found_edge["edge"].dest
+                next_matched_nodes = []
+                next_matched_nodes.append(graph_obj.get_node(next_node_identity))
+                self.nodes_matched = next_matched_nodes
+                print("confirmed: you crossed edge" + str(found_edge["edge"].src) + "_" + str(found_edge["edge"].dest))
+                # next_matched_nodes will only contain one node which is the the nest node
+                self.possible_edges = []
+                self.i_at_matched_node = i
+                self.find_edge_with_nodes()
+                # i = found_edge["last_matched_i_with_j"] + 1
         elif is_edge_partially_found:
             self.matched_path.append(found_edge)
             j = found_edge["last_matched_j"]
@@ -307,6 +317,6 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
 
 if __name__ == '__main__':
     url = "http://192.168.43.1:8080/shot.jpg"
-    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_203044.webm",
+    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202916.webm",
                                            "query_distinct_frame/night", 4,
                                            check_blurry=True, ensure_min=True, livestream=False)

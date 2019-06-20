@@ -327,7 +327,7 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
         #     cv2.destroyAllWindows()
 
         if check_c1_c2:
-            if c2 == 0 or not 0.5 <= c1 / c2 <= 1.5:
+            if c2 == 0 or not 0.5 <= c1 / c2 <= 2:
                 print("Diff btw c1 and c2, so returning 0")
                 return 0
         fraction = (c1 + c2) / (a1 + b1)
