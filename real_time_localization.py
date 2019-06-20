@@ -273,8 +273,7 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     while True:
         if livestream:
             cap = cv2.VideoCapture(video_str)
-        else:
-            ret, frame = cap.read()
+        ret, frame = cap.read()
         if ret:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             if i % frames_skipped != 0 and not check_next_frame:
@@ -316,7 +315,7 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
 
 
 if __name__ == '__main__':
-    url = "http://192.168.43.1:8080/shot.jpg"
-    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202916.webm",
-                                           "query_distinct_frame/night", 4,
-                                           check_blurry=True, ensure_min=True, livestream=False)
+    url = "http://10.194.36.234:8080/shot.jpg"
+    save_distinct_realtime_modified_ImgObj(url,
+                                           "query_distinct_frame/night", 0,
+                                           check_blurry=True, ensure_min=True, livestream=True)
