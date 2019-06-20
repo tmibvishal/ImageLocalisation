@@ -236,10 +236,10 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
 
     a = (len(keypoints), descriptors)
     img_obj = ImgObj(a[0], a[1], i)
-    #save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
-    #cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
+    save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
+    cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
     query_video_distinct_frames.add_img_obj(img_obj)
-    # node_and_edge_real_time_matching.find_edge_with_nodes()
+    node_and_edge_real_time_matching.find_edge_with_nodes()
     while True:
         # if livestream:
         #    cap = cv2.VideoCapture(video_str)
@@ -260,16 +260,16 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
                 check_next_frame = False
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors)
-            # image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7, False)
-            # if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
-            if True:
+            image_fraction_matched = mt.SURF_match_2((a[0], a[1]), (b[0], b[1]), 2500, 0.7, False)
+            if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
+            # if True:
                 img_obj2 = ImgObj(b[0], b[1], i)
-                #save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
-                #cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
+                save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
+                cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
                 query_video_distinct_frames.add_img_obj(img_obj2)
-                # node_and_edge_real_time_matching.find_edge_with_nodes()
-                #a = b
-                #i_prev = i
+                node_and_edge_real_time_matching.find_edge_with_nodes()
+                a = b
+                i_prev = i
 
             i = i + 1
             if cv2.waitKey(1) & 0xFF == ord('q'):
