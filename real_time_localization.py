@@ -304,6 +304,21 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     query_video_distinct_frames.calculate_time()
     return query_video_distinct_frames
 
+def locate_new_edge_using_angle(initial_edge:Edge, angle_turned,allowed_angle_error:int=20, graph_obj: Graph):
+    located_edge= None
+    for new_edge in initial_edge.angles:
+        if angle_turned<new_edge[1]+allowed_angle_error and angle_turned> new_edge[1]-allowed_angle_error:
+            print("new edge located is "+ new_edge[0] +" as stored angle is "+ str(new_edge[1]) +" and query angle is "+str(angle_turned))
+            located_edge=new_edge[0]
+            locations= located_edge.split("_")
+            located_edge_obj= graph_obj.get_edge(locations[0], locations[1])
+            return located_edge_obj
+        else:
+            print(new_edge[0]+" is not matched as stored angle is "+ str(new_edge[1]) +" and query angle is "+str(angle_turned))
+
+    return "no edge found"
+
+
 
 if __name__ == '__main__':
     url = "http://192.168.43.1:8080/shot.jpg"
