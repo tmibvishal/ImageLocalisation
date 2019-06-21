@@ -206,6 +206,10 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
 
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors, serialize_keypoints(keypoints), gray.shape)
+
+            if len(keypoints)<50:
+                continue
+            print(str(len(keypoints)) + " in image " + str(i))
             import matcher as mt
             image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, True)
             if image_fraction_matched < 0.09 or (ensure_min and i - i_prev > 50):
@@ -314,7 +318,7 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
 
 
 
-# FRAMES1 = save_distinct_ImgObj("testData/new things/6_2.MP4", "v3", 4, True)
+FRAMES1 = save_distinct_ImgObj("testData/afternoon_sit0 15june/NodeData/7.mp4", "v2", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 # img_obj = FRAMES1.get_object(0)
