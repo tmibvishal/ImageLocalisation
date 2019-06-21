@@ -17,7 +17,7 @@ s.listen(5)
 
 import video_operations_3 as vo2
 import matcher as mt
-from graph import Graph, Edge, Node, FloorMap, load_graph
+from graph2 import Graph, Edge, Node, FloorMap, load_graph
 from video_operations_3 import ensure_path, DistinctFrames, ImgObj, save_to_memory, is_blurry_grayscale
 
 query_video_distinct_frames = DistinctFrames()
@@ -54,7 +54,7 @@ class NodeEdgeRealTimeMatching:
         print("atleast started")
         # nodes_matched = []
         # self.nodes_matched.append(graph_obj.get_node(2))
-        self.nodes_matched.append(graph_obj.get_node(2))
+        self.nodes_matched.append(graph_obj.get_node(0))
         # self.find_edge_with_nodes(0)
         return
 

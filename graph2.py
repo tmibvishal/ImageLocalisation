@@ -179,7 +179,10 @@ class Graph:
         cur_edge.angles = []
         nd = self.get_node(cur_edge.dest)
         for next_edge in nd.links:
-            ang = self._get_angle_between_two_edges(cur_edge, next_edge)
+            if next_edge.dest == cur_edge.src:
+                ang = 180
+            else:
+                ang = self._get_angle_between_two_edges(cur_edge, next_edge)
             cur_edge.angles.append((next_edge.name, ang))
         print(cur_edge.name)
         print(cur_edge.angles)
