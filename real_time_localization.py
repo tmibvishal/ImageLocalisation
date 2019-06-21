@@ -3,9 +3,21 @@ import numpy as np
 import os
 import shutil
 
+import socket
+import sys
+
+IP = "10.194.35.37"
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    s.bind((IP, 1234))
+except socket.error as err:
+    print("Bind failed, Error Code" + str(err.args[0]) + ", message: " + err.args[1])
+    sys.exit()
+s.listen(5)
+
 import video_operations_3 as vo2
 import matcher as mt
-from graph import Graph, Edge, Node, FloorMap, load_graph
+from graph2 import Graph, Edge, Node, FloorMap, load_graph
 from video_operations_3 import ensure_path, DistinctFrames, ImgObj, save_to_memory, is_blurry_grayscale
 
 query_video_distinct_frames = DistinctFrames()
@@ -198,6 +210,22 @@ class NodeEdgeRealTimeMatching:
             j = j + 1
         print("go")
         if is_edge_found:
+            clientsocket, address = s.accept()
+            print(f"Connection from {address} has been extablished")
+            angle = clientsocket.recv(64)
+            print(int(angle))
+            '''
+            if found_edge["confidence"] < 1:
+                for possible_edge in self.possible_edges:
+                    if found_edge["edge"].src == possible_edge["edge"].src:
+                        if found_edge["edge"].dest == possible_edge["edge"].dest:
+                            # i am resetting this possible_edge
+                            possible_edge["last_matched_j"] = 0
+                            possible_edge["no_of_frames_to_match"] = 3
+                            possible_edge["no_of_continuous_no_match"] = 0
+                            possible_edge["edge_ended"] = False
+            else:
+            '''
             self.matched_path.append(found_edge)
             next_node_identity = found_edge["edge"].dest
             next_matched_nodes = []
@@ -263,8 +291,7 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     while True:
         if livestream:
             cap = cv2.VideoCapture(video_str)
-        else:
-            ret, frame = cap.read()
+        ret, frame = cap.read()
         if ret:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             if i % frames_skipped != 0 and not check_next_frame:
@@ -321,7 +348,7 @@ def locate_new_edge_using_angle(initial_edge:Edge, angle_turned,allowed_angle_er
 
 
 if __name__ == '__main__':
-    url = "http://192.168.43.1:8080/shot.jpg"
-    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_203044.webm",
-                                           "query_distinct_frame/night", 4,
-                                           check_blurry=True, ensure_min=True, livestream=False)
+    url = "http://10.194.36.234:8080/shot.jpg"
+    save_distinct_realtime_modified_ImgObj(url,
+                                           "query_distinct_frame/night", 0,
+                                           check_blurry=True, ensure_min=True, livestream=True)
