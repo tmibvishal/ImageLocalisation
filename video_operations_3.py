@@ -185,7 +185,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
     cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
     distinct_frames.add_img_obj(img_obj)
-
+    i_of_a=0
     while True:
         ret, frame = cap.read()
         if ret:
@@ -200,24 +200,31 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
             if check_blurry:
                 if is_blurry_grayscale(gray):
                     check_next_frame = True
+                    print("frame " + str(i) + " skipped as blurry")
                     i = i + 1
                     continue
                 check_next_frame = False
 
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors, serialize_keypoints(keypoints), gray.shape)
-
             if len(keypoints)<50:
+                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <50")
+                i = i+1
                 continue
-            print(str(len(keypoints)) + " in image " + str(i))
             import matcher as mt
             image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, True)
-            if image_fraction_matched < 0.09 or (ensure_min and i - i_prev > 50):
+            if image_fraction_matched is None:
+                i=i+1
+                continue
+            check_next_frame = False
+            if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
                 img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
+                print(str(image_fraction_matched)+ " fraction match between "+str(i_of_a)+" and "+ str(i))
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
                 distinct_frames.add_img_obj(img_obj2)
                 a = b
+                i_of_a=i
                 i_prev = i
 
             i = i + 1

@@ -332,12 +332,21 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
             if check_blurry:
                 if is_blurry_grayscale(gray):
                     check_next_frame = True
+                    print("frame " + str(i) + " skipped as blurry")
                     i = i + 1
                     continue
                 check_next_frame = False
             keypoints, descriptors = detector.detectAndCompute(gray, None)
+            if len(keypoints)<50:
+                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <50")
+                i = i+1
+                continue
             b = (len(keypoints), descriptors, vo2.serialize_keypoints(keypoints), gray.shape)
             image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, True)
+            if image_fraction_matched is None:
+                i=i+1
+                continue
+            check_next_frame = False
             if image_fraction_matched < 0.09 or (ensure_min and i - i_prev > 50):
                 img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
