@@ -25,14 +25,27 @@ query_video_ended = False
 
 
 class NodeEdgeRealTimeMatching:
-    matched_path: list = []
+    matched_path: list = []  # This will contain the list of confirmed paths
     nodes_matched: list = []
+    # This will contain the list of nodes matched, at initial node at may have many nodes
+    # but after confirming one edge it has the destination of that edge
     i_at_matched_node: int = 0
+    # This is to have a record of i in query video - this i will contain i at matched node (nodes_matched[0])
+    # Initial value is 0 when there can be multiple nodes_matched
     possible_edges = []
+    # possible_edges contains all the possible edges that originate from nodes in nodes_matched
+    # possible_edges is array of dictionary of type { "node: Node", "edge: Edge", "confidence: float",
+    # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended: bool"}
+
+    # ----- A bit useless feature - but added after Sushant request -----
     previous_i: int = 0
     continuously_no_matches_for_i: int = 0
-    # matched is array of dictionary of type { "node: Node", "edge: Edge", "confidence: float",
-    # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended: bool"}
+    # If for a current value of i, suppose same i is being queried again and again in different possible edges,
+    # thus we use continuously_no_matches_for_i to limit the same value of i to 3
+    # although i will eventually increase for a particular possible_edge no_of_continuous_no_match reaches 3
+    # note i is different moved for different possible_edge
+    # ---------- @ this feature was added after Sushant request ----------
+
 
     def __init__(self, graph_obj: Graph):
         # some_query_img_objects = (query_video_distinct_frames.get_objects(0, 2))
@@ -47,11 +60,6 @@ class NodeEdgeRealTimeMatching:
 
     @staticmethod
     def match_node_with_frames(some_query_img_objects: list, graph_obj: Graph):
-        """
-        :param some_query_img_objects:
-        :param graph_obj:
-        :return:
-        """
         search_list = graph_obj.Nodes
         node_confidence = []
         # node_confidence is list of (node.identity:int , confidence:int , total_fraction_matched:float)
@@ -80,22 +88,20 @@ class NodeEdgeRealTimeMatching:
 
     @staticmethod
     def match_edge_with_frame(possible_edge, i: int, query_video_ith_frame: vo2.ImgObj):
-        """Match a possible edge object with query_video_ith_frame
+        # Match a possible edge object with query_video_ith_frame
+        # possible edge here is passed as reference.
 
-                possible edge here is passed as reference.
 
-                Parameters
-                ----------
-                possible_edge : possible edge object,
-                i: ,
-                query_video_ith_frame: ith frame of query video distinct frames,
-        """
-        j = possible_edge[
-                "last_matched_j"] + 1
-        # if last_matched_j is 3rd frame, now I will start matching from 4th frame,
+        j = possible_edge["last_matched_j"] + 1
+        # if last_matched_j is 3rd frame, now j will start matching from 4th frame,
         # gave better and more real time results
-        jmax = possible_edge["last_matched_j"] + possible_edge[
-            "no_of_frames_to_match"]  # j should iterate upto this value
+
+        # max value upto which j should be iterated
+        jmax = possible_edge["last_matched_j"] + possible_edge["no_of_frames_to_match"]
+
+        # let pe = possible_edge["edge"]
+        # query_video_ith_frame will be matched with pe[j...max(jmax, maximum elements in pe)]
+        # frame in pe[j...max(jmax, maximum elements in pe)] with maxmatch will be stored in case of multiple matches
         match, maxmatch = None, 0
         while j < jmax and j < possible_edge["edge"].distinct_frames.no_of_frames():
             # print(j)
@@ -107,7 +113,7 @@ class NodeEdgeRealTimeMatching:
             # str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
             if image_fraction_matched > 0.09:
                 # print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" +
-                 #   str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
+                #   str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
                 if image_fraction_matched > maxmatch:
                     match, maxmatch = j, image_fraction_matched
             j = j + 1
@@ -126,6 +132,7 @@ class NodeEdgeRealTimeMatching:
                 # also little restoration in no_of_frames_to_match
                 possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] - 1
         else:
+            # match is found in the j to jmax interval
             img_obj_from_edge: vo2.ImgObj = edge.distinct_frames.get_object(match)
             print("popo query i: ", i, ", jth frame", match, img_obj_from_edge.time_stamp, maxmatch)
             possible_edge["last_matched_j"] = match
@@ -136,9 +143,13 @@ class NodeEdgeRealTimeMatching:
             possible_edge["no_of_continuous_no_match"] = 0
 
         if j == possible_edge["edge"].distinct_frames.no_of_frames():
+            # in this case the edge is being ended
+            # ---- improvement required in this, for possible_edge with low no of distinct frames
+            # j will end up reaching the end and without any match there will be a edge_ended ----
             possible_edge["edge_ended"] = True
 
     def find_edge_with_nodes(self):
+        # for a nodes_matched, appending all the originating nodes in possible_edges
         for node in self.nodes_matched:
             for edge in node.links:
                 if edge.distinct_frames is not None:
@@ -152,41 +163,57 @@ class NodeEdgeRealTimeMatching:
                         "no_of_continuous_no_match": 0,
                         "edge_ended": False
                     })
-        # i_at_matched_node is 0 means that there can be multiple nodes
-        # because query video is just started querying for path matching
-        is_edge_found = False
-        is_edge_partially_found = False
-        found_edge = None
+
+        is_edge_found = False  # in the beginning is_edge_found is False
+        is_edge_partially_found = False  # in the beginning is_edge_partially_found is False
+        found_edge = None  # in the beginning found_edge is None
         i = self.i_at_matched_node
+        # i_at_matched_node is 0 in the beginning in case of multiple nodes in nodes_matched
+        # after one edge match it is i_at_matched_node as the name suggest
+
         max_confidence = 0
-        # print("po")
+        # max_confidence keeps the track of the max_confidence of the current possible_edges
         j = 0
         while True and j < 100:
-            # print("so" + str(i))
             if is_edge_found or is_edge_partially_found:
+                # if is_edge_found or is_edge_partially_found then break the loop
                 break
             for possible_edge in self.possible_edges:
+                # if running for each possible_edge in possible_edges
                 if possible_edge["confidence"] < max_confidence:
+                    # breaking the loop if possible_edge["confidence"] is less than the max_confidence
                     continue
-                # print("ho")
+                # changing i for a particular possible_edge
                 i = possible_edge["last_matched_i_with_j"] + 1
-                if self.previous_i == i :
+
+                # ----------------- A bit useless feature - but added after Sushant request -----------------
+                if self.previous_i == i:
+                    # if last queried i was same then inc continuously_no_matches_for_i
                     self.continuously_no_matches_for_i += 1
 
                 else:
+                    # else set continuously_no_matches_for_i to 0
                     self.continuously_no_matches_for_i = 0
                     self.previous_i = i
 
                 if self.continuously_no_matches_for_i >= 3:
+                    # if continuously_no_matches_for_i becomes large then move forward in a particular case
+                    # so that same i is not queried a lot of times
                     i += 1
                     self.previous_i = i
+                # - @ this feature is same as above in the class definition was added after Sushant request --
 
                 if i >= query_video_distinct_frames.no_of_frames():
+                    # if i for a query_video_distinct_frames has reached an end
                     if query_video_ended:
+                        # it means query_video_ended has ended first, it must be is_edge_partially_found
+                        # or it can also be full edge_ended but in that case
+                        # also i am showing is_edge_partially_found with the last frame matched
                         is_edge_partially_found = True
                         found_edge = possible_edge
                         break
                     else:
+                        # no of frames have reached an end needs more frames thus again ends and gets back to save_distinct_realtime_modified_ImgObj
                         return
                 if possible_edge["edge_ended"]:
                     # if possible_edge["confidence"] > 0:
@@ -210,6 +237,7 @@ class NodeEdgeRealTimeMatching:
             j = j + 1
         print("go")
         if is_edge_found:
+            # gaining the last pushed compass value
             clientsocket, address = s.accept()
             print(f"Connection from {address} has been extablished")
             angle = clientsocket.recv(64)
@@ -226,19 +254,20 @@ class NodeEdgeRealTimeMatching:
                             possible_edge["edge_ended"] = False
             else:
             '''
-            self.matched_path.append(found_edge)
+            self.matched_path.append(found_edge)  # appending the found_edge to self.matched_path
             next_node_identity = found_edge["edge"].dest
             next_matched_nodes = []
             next_matched_nodes.append(graph_obj.get_node(next_node_identity))
-            self.nodes_matched = next_matched_nodes
+            self.nodes_matched = next_matched_nodes  # setting self.nodes_matched
             print("confirmed: you crossed edge" + str(found_edge["edge"].src) + "_" + str(found_edge["edge"].dest))
             # next_matched_nodes will only contain one node which is the the nest node
-            self.possible_edges = []
-            self.i_at_matched_node = i
-            self.find_edge_with_nodes()
+            self.possible_edges = []  # setting self.possible_edges to empty list for next possible_edges query
+            self.i_at_matched_node = i  # setting self.i_at_matched_node to i
+            self.find_edge_with_nodes()  # recursively calling the function
             # i = found_edge["last_matched_i_with_j"] + 1
         elif is_edge_partially_found:
-            self.matched_path.append(found_edge)
+            # if is_edge_partially_found
+            self.matched_path.append(found_edge)  # appending the found_edge to self.matched_path
             j = found_edge["last_matched_j"]
             last_jth_matched_img_obj = found_edge["edge"].distinct_frames.get_object(j)
             print("edge" + str(found_edge["edge"].src) + "_" + str(found_edge["edge"].dest))
