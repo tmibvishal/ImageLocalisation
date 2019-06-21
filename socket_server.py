@@ -6,7 +6,9 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # IP = "192.168.43.33"
 
-IP = "10.194.35.37"
+# vishal lappy ip IP = "10.194.35.37"
+# bindal lappy ip
+IP = "10.194.55.238"
 
 try:
     s.bind((IP, 1234))

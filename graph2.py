@@ -678,9 +678,9 @@ def run(code: int):
 
     # Add nodes and edges
     if code == 2:
-        graph: Graph = load_graph()
-        #graph.read_nodes("testData/night sit 0 june 18/node data", 4)
-        graph.read_edges("testData/night sit 0 june 18/edge data", 4)
+        graph: Graph = load_graph("new_objects/graph.pkl")
+        graph.read_nodes("testData/night sit 0 june 18/node data", 3)
+        graph.read_edges("testData/night sit 0 june 18/edge data", 3)
         graph.save_graph()
 
     # Query video
@@ -722,9 +722,7 @@ def run(code: int):
 # cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
 #
 # cv2.waitKey()
-# run(1)pass
-run(0)
-#
+# run(1
 
 # graph = load_graph("graph.pkl")
 # graph.print_graph(0)

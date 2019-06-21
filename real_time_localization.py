@@ -6,7 +6,9 @@ import shutil
 import socket
 import sys
 
-IP = "10.194.35.37"
+# vishal ip IP = "10.194.35.37"
+# binal lappy ip
+IP = "10.194.55.238"
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
     s.bind((IP, 1234))
@@ -25,6 +27,7 @@ query_video_ended = False
 
 
 class NodeEdgeRealTimeMatching:
+    new_possible_edge_through_angle = None
     matched_path: list = []
     nodes_matched: list = []
     i_at_matched_node: int = 0
@@ -152,6 +155,14 @@ class NodeEdgeRealTimeMatching:
                         "no_of_continuous_no_match": 0,
                         "edge_ended": False
                     })
+
+        if self.new_possible_edge_through_angle is not None:
+            for possible_edge in self.possible_edges:
+                if self.new_possible_edge_through_angle["edge"].src == possible_edge["edge"].src:
+                    if self.new_possible_edge_through_angle["edge"].dest == possible_edge["edge"].dest:
+                        possible_edge["confidence"] = possible_edge["confidence"] + 1
+
+
         # i_at_matched_node is 0 means that there can be multiple nodes
         # because query video is just started querying for path matching
         is_edge_found = False
@@ -210,10 +221,12 @@ class NodeEdgeRealTimeMatching:
             j = j + 1
         print("go")
         if is_edge_found:
-            clientsocket, address = s.accept()
+            '''clientsocket, address = s.accept()
             print(f"Connection from {address} has been extablished")
-            angle = clientsocket.recv(64)
-            print(int(angle))
+            angle = -1 * int(clientsocket.recv(64))
+
+            self.new_possible_edge_through_angle: Edge = locate_new_edge_using_angle(found_edge, angle, allowed_angle_error=20, graph_obj=graph_obj)
+'''
             '''
             if found_edge["confidence"] < 1:
                 for possible_edge in self.possible_edges:
@@ -250,7 +263,7 @@ class NodeEdgeRealTimeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-graph_obj: Graph = load_graph()
+graph_obj: Graph = load_graph("new_objects/graph.pkl")
 node_and_edge_real_time_matching = NodeEdgeRealTimeMatching(graph_obj)
 
 
@@ -331,6 +344,22 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     query_video_distinct_frames.calculate_time()
     return query_video_distinct_frames
 
+def locate_new_edge_using_angle(initial_edge: Edge, angle_turned, allowed_angle_error: int = 20, graph_obj: Graph = None):
+    located_edge = None
+    for new_edge in initial_edge.angles:
+        if angle_turned < new_edge[1] + allowed_angle_error and angle_turned > new_edge[1] - allowed_angle_error:
+            print("new edge located is " + new_edge[0] + " as stored angle is " + str(
+                new_edge[1]) + " and query angle is " + str(angle_turned))
+            located_edge = new_edge[0]
+            locations = located_edge.split("_")
+            located_edge_obj = graph_obj.get_edge(locations[0], locations[1])
+            return located_edge_obj
+        else:
+            print(new_edge[0] + " is not matched as stored angle is " + str(
+                new_edge[1]) + " and query angle is " + str(angle_turned))
+
+    print("no edge found")
+    return None
 
 if __name__ == '__main__':
     url = "http://10.194.36.234:8080/shot.jpg"
