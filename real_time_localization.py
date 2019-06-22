@@ -37,6 +37,7 @@ class NodeEdgeRealTimeMatching:
     # possible_edges is array of dictionary of type { "node: Node", "edge: Edge", "confidence: float",
     # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended: bool"}
 
+    '''
     # ----- A bit useless feature - but added after Sushant request -----
     previous_i: int = 0
     continuously_no_matches_for_i: int = 0
@@ -45,7 +46,7 @@ class NodeEdgeRealTimeMatching:
     # although i will eventually increase for a particular possible_edge no_of_continuous_no_match reaches 3
     # note i is different moved for different possible_edge
     # ---------- @ this feature was added after Sushant request ----------
-
+    '''
 
     def __init__(self, graph_obj: Graph):
         # some_query_img_objects = (query_video_distinct_frames.get_objects(0, 2))
@@ -186,6 +187,7 @@ class NodeEdgeRealTimeMatching:
                 # changing i for a particular possible_edge
                 i = possible_edge["last_matched_i_with_j"] + 1
 
+                '''
                 # ----------------- A bit useless feature - but added after Sushant request -----------------
                 if self.previous_i == i:
                     # if last queried i was same then inc continuously_no_matches_for_i
@@ -202,6 +204,7 @@ class NodeEdgeRealTimeMatching:
                     i += 1
                     self.previous_i = i
                 # - @ this feature is same as above in the class definition was added after Sushant request --
+                '''
 
                 if i >= query_video_distinct_frames.no_of_frames():
                     # if i for a query_video_distinct_frames has reached an end
@@ -369,7 +372,7 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     query_video_distinct_frames.calculate_time()
     return query_video_distinct_frames
 
-def locate_new_edge_using_angle(initial_edge:Edge, angle_turned,allowed_angle_error:int=20, graph_obj: Graph):
+def locate_new_edge_using_angle(initial_edge:Edge, angle_turned,allowed_angle_error:int=20, graph_obj: Graph = None):
     located_edge= None
     for new_edge in initial_edge.angles:
         if angle_turned<new_edge[1]+allowed_angle_error and angle_turned> new_edge[1]-allowed_angle_error:
