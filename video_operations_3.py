@@ -326,7 +326,7 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
 
 
 
-FRAMES1 = save_distinct_ImgObj("testData/afternoon_sit0 15june/NodeData/7.mp4", "v2", 4, True)
+# FRAMES1 = save_distinct_ImgObj("testData/afternoon_sit0 15june/NodeData/7.mp4", "v2", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 # img_obj = FRAMES1.get_object(0)

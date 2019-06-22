@@ -6,14 +6,14 @@ import shutil
 import socket
 import sys
 
-IP = "10.194.35.37"
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-try:
-    s.bind((IP, 1234))
-except socket.error as err:
-    print("Bind failed, Error Code" + str(err.args[0]) + ", message: " + err.args[1])
-    sys.exit()
-s.listen(5)
+# IP = "10.194.35.37"
+# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# try:
+#     s.bind((IP, 1234))
+# except socket.error as err:
+#     print("Bind failed, Error Code" + str(err.args[0]) + ", message: " + err.args[1])
+#     sys.exit()
+# s.listen(5)
 
 import video_operations_3 as vo2
 import matcher as mt
@@ -240,10 +240,10 @@ class NodeEdgeRealTimeMatching:
         print("go")
         if is_edge_found:
             # gaining the last pushed compass value
-            clientsocket, address = s.accept()
-            print(f"Connection from {address} has been extablished")
-            angle = clientsocket.recv(64)
-            print(int(angle))
+            # clientsocket, address = s.accept()
+            # print(f"Connection from {address} has been extablished")
+            # angle = clientsocket.recv(64)
+            # print(int(angle))
             '''
             if found_edge["confidence"] < 1:
                 for possible_edge in self.possible_edges:
@@ -281,7 +281,7 @@ class NodeEdgeRealTimeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-graph_obj: Graph = load_graph("testData/afternoon_sit0 15june/graph.pkl")
+graph_obj: Graph = load_graph("testData/night sit 0 june 18/graph.pkl")
 node_and_edge_real_time_matching = NodeEdgeRealTimeMatching(graph_obj)
 
 
@@ -372,7 +372,7 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     query_video_distinct_frames.calculate_time()
     return query_video_distinct_frames
 
-def locate_new_edge_using_angle(initial_edge:Edge, angle_turned,allowed_angle_error:int=20, graph_obj: Graph):
+def locate_new_edge_using_angle(initial_edge:Edge, graph_obj: Graph, angle_turned,allowed_angle_error:int=20):
     located_edge= None
     for new_edge in initial_edge.angles:
         if angle_turned<new_edge[1]+allowed_angle_error and angle_turned> new_edge[1]-allowed_angle_error:
@@ -389,7 +389,9 @@ def locate_new_edge_using_angle(initial_edge:Edge, angle_turned,allowed_angle_er
 
 
 if __name__ == '__main__':
-    url = "http://10.194.36.234:8080/shot.jpg"
-    save_distinct_realtime_modified_ImgObj(url,
-                                           "query_distinct_frame/night", 0,
-                                           check_blurry=True, ensure_min=True, livestream=True)
+    # url = "http://10.194.36.234:8080/shot.jpg"
+    # save_distinct_realtime_modified_ImgObj(url,
+    #                                        "query_distinct_frame/night", 0,
+    #                                        check_blurry=True, ensure_min=True, livestream=True)
+    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202826.webm","query_distinct_frame", 3,
+                                           check_blurry=True, ensure_min=True, livestream=False)
