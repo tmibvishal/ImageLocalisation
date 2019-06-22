@@ -92,8 +92,8 @@ class NodeEdgeRealTimeMatching:
         # Match a possible edge object with query_video_ith_frame
         # possible edge here is passed as reference.
 
-
-        j = possible_edge["last_matched_j"] + 1
+        possible_edge["last_matched_j"] = possible_edge["last_matched_j"] + 1
+        j = possible_edge["last_matched_j"]
         # if last_matched_j is 3rd frame, now j will start matching from 4th frame,
         # gave better and more real time results
 
@@ -188,6 +188,7 @@ class NodeEdgeRealTimeMatching:
                 # changing i for a particular possible_edge
                 i = possible_edge["last_matched_i_with_j"] + 1
 
+                '''
                 # ----------------- A bit useless feature - but added after Sushant request -----------------
                 if self.previous_i == i:
                     # if last queried i was same then inc continuously_no_matches_for_i
@@ -204,6 +205,7 @@ class NodeEdgeRealTimeMatching:
                     i += 1
                     self.previous_i = i
                 # - @ this feature is same as above in the class definition was added after Sushant request --
+                '''
 
                 if i >= query_video_distinct_frames.no_of_frames():
                     # if i for a query_video_distinct_frames has reached an end
@@ -281,7 +283,7 @@ class NodeEdgeRealTimeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-graph_obj: Graph = load_graph("testData/night sit 0 june 18/graph.pkl")
+graph_obj: Graph = load_graph("new_objects/graph.pkl")
 node_and_edge_real_time_matching = NodeEdgeRealTimeMatching(graph_obj)
 
 
@@ -393,5 +395,5 @@ if __name__ == '__main__':
     # save_distinct_realtime_modified_ImgObj(url,
     #                                        "query_distinct_frame/night", 0,
     #                                        check_blurry=True, ensure_min=True, livestream=True)
-    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202826.webm","query_distinct_frame", 3,
+    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202826.webm","query_distinct_frame", 2,
                                            check_blurry=True, ensure_min=True, livestream=False)
