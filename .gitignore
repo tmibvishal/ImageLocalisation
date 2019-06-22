@@ -9,7 +9,12 @@ graph/edge_data
 edge_data
 node_data
 query_distinct_frame
+query distinct frame
+map0.jpg
 graph.pkl
+graph_1.pkl
+graph_original.pkl
+storage
 __pycache__
 v1 old1
 v2 old1
@@ -30,3 +35,5 @@ v1
 v2
 v3
 graph_1.pkl
+sample.py
+

@@ -279,7 +279,7 @@ class NodeEdgeRealTimeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-graph_obj: Graph = load_graph()
+graph_obj: Graph = load_graph("testData/afternoon_sit0 15june/graph.pkl")
 node_and_edge_real_time_matching = NodeEdgeRealTimeMatching(graph_obj)
 
 
@@ -332,12 +332,21 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
             if check_blurry:
                 if is_blurry_grayscale(gray):
                     check_next_frame = True
+                    print("frame " + str(i) + " skipped as blurry")
                     i = i + 1
                     continue
                 check_next_frame = False
             keypoints, descriptors = detector.detectAndCompute(gray, None)
+            if len(keypoints)<50:
+                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <50")
+                i = i+1
+                continue
             b = (len(keypoints), descriptors, vo2.serialize_keypoints(keypoints), gray.shape)
             image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, True)
+            if image_fraction_matched is None:
+                i=i+1
+                continue
+            check_next_frame = False
             if image_fraction_matched < 0.09 or (ensure_min and i - i_prev > 50):
                 img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
@@ -359,6 +368,21 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     query_video_ended = True
     query_video_distinct_frames.calculate_time()
     return query_video_distinct_frames
+
+def locate_new_edge_using_angle(initial_edge:Edge, angle_turned,allowed_angle_error:int=20, graph_obj: Graph):
+    located_edge= None
+    for new_edge in initial_edge.angles:
+        if angle_turned<new_edge[1]+allowed_angle_error and angle_turned> new_edge[1]-allowed_angle_error:
+            print("new edge located is "+ new_edge[0] +" as stored angle is "+ str(new_edge[1]) +" and query angle is "+str(angle_turned))
+            located_edge=new_edge[0]
+            locations= located_edge.split("_")
+            located_edge_obj= graph_obj.get_edge(locations[0], locations[1])
+            return located_edge_obj
+        else:
+            print(new_edge[0]+" is not matched as stored angle is "+ str(new_edge[1]) +" and query angle is "+str(angle_turned))
+
+    return "no edge found"
+
 
 
 if __name__ == '__main__':

@@ -75,12 +75,12 @@ def SURF_match_2(key_des_1, key_des_2, hessianThreshold: int = 400, ratio_thresh
                 good_matches.append(m)
         c2 = len(good_matches)
         fraction = (c1 + c2) / (a1 + b1)
-        return fraction
+        return fraction,(c1+c2)/2
 
     fraction = (2.0 * c1) / (a1 + b1)
     if (fraction > 1): fraction = 1
     # fraction can be greater than one in blur images because we are multiplying fraction with 2
-    return fraction
+    return fraction, c1
 
 
 def SURF_match(img1, img2, hessianThreshold: int = 400, ratio_thresh: float = 0.7, symmetry_match: bool = True):
@@ -336,7 +336,7 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
 
     if c1 > b1:
         print("******\nc1 greater than b1, so returning zero\n*********")
-        return 0
+        return None
     fraction = (2.0 * c1) / (a1 + b1)
     return fraction
 
