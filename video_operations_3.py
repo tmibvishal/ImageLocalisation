@@ -212,12 +212,13 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
                 i = i+1
                 continue
             import matcher as mt
-            image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, True)
-            if image_fraction_matched is None:
+            image_fraction_matched, min_good_matches = mt.SURF_returns(a, b, 2500, 0.7, True)
+            if image_fraction_matched == -1:
+                check_next_frame = True
                 i=i+1
                 continue
             check_next_frame = False
-            if image_fraction_matched < 0.1 or (ensure_min and i - i_prev > 50):
+            if 0< image_fraction_matched < 0.1 or min_good_matches<50 or (ensure_min and i - i_prev > 50):
                 img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
                 print(str(image_fraction_matched)+ " fraction match between "+str(i_of_a)+" and "+ str(i))
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
