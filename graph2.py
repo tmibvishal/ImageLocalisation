@@ -442,10 +442,10 @@ class Graph:
         else:
             raise Exception("Cannot read image path")
 
-    def save_graph(self, path):
-        general.ensure_path(path)
+    def save_graph(self, folder, filename):
+        general.ensure_path(folder)
         # new_path = os.path.join(path)
-        general.save_to_memory(self, path)
+        general.save_to_memory(self, filename, folder)
 
     def on_node(self, identity):
         if len(self.path_traversed) > 0:
@@ -669,7 +669,7 @@ def run(code: int):
         graph.mark_nodes(0)
         graph.make_connections(0)
         graph.print_graph(0)
-        graph.save_graph("new_objects/graph.pkl")
+        graph.save_graph("new_objects", "graph.pkl")
 
     # Print graph
     if code == 1:
@@ -680,8 +680,8 @@ def run(code: int):
     if code == 2:
         graph: Graph = load_graph("new_objects/graph.pkl")
         graph.read_nodes("testData/night sit 0 june 18/node data", 4)
-        # graph.read_edges("testData/night sit 0 june 18/edge data", 4)
-        graph.save_graph("new_objects/graph.pkl")
+        graph.read_edges("testData/night sit 0 june 18/edge data", 4)
+        graph.save_graph("new_objects", "graph.pkl")
 
     # Query video
     if code == 3:
@@ -701,13 +701,13 @@ def run(code: int):
         graph1 = load_graph()
         graph1._add_edge_images(2, 6, FRAMES1)
         graph1._add_node_images(3, FRAMES2)
-        graph1.save_graph("new_objects/graph.pkl")
+        graph.save_graph("new_objects", "graph.pkl")
 
     # Add node images
     if code == 5:
         graph = load_graph()
         graph.read_nodes_directly("testData/Node-direct-images")
-        graph.save_graph("new_objects/graph.pkl")
+        graph.save_graph("new_objects", "graph.pkl")
 
 # image = cv2.imread('graph/maps/map0.jpg')
 # image = cv2.resize(image, (0, 0), None, .5, 0.5)
@@ -724,7 +724,7 @@ def run(code: int):
 # cv2.waitKey()
 # run(1)pass
 # run(2)
-# run(1)
+# run(0)
 
 # graph = load_graph("graph.pkl")
 # graph.print_graph(0)
