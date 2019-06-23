@@ -682,10 +682,10 @@ def run(code: int):
 # run(0)
 #
 
-graph = load_graph("graph.pkl")
-graph.print_graph(0)
-print(graph.Nodes[0][0].links[0].dest)
-print(graph.Nodes[0][1].links[0].dest)
-print(graph._get_edge_slope(graph.Nodes[0][0].links[0]))
-print(graph._get_edge_slope(graph.Nodes[0][1].links[0]))
-print(graph._get_angle_between_two_edges(graph.Nodes[0][0].links[0],graph.Nodes[0][1].links[0]))
+# graph = load_graph("graph.pkl")
+# graph.print_graph(0)
+# print(graph.Nodes[0][0].links[0].dest)
+# print(graph.Nodes[0][1].links[0].dest)
+# print(graph._get_edge_slope(graph.Nodes[0][0].links[0]))
+# print(graph._get_edge_slope(graph.Nodes[0][1].links[0]))
+# print(graph._get_angle_between_two_edges(graph.Nodes[0][0].links[0],graph.Nodes[0][1].links[0]))
