@@ -9,7 +9,8 @@ Accepts only Mat (The Basic Image Container) format images
 import cv2
 import numpy as np
 import scipy
-
+import general
+import time
 
 def cos_cdist(self, des1, des2):
     # getting cosine distance between search image and images database
@@ -247,11 +248,11 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
         return 0
 
     matcher = cv2.DescriptorMatcher_create(cv2.DescriptorMatcher_FLANNBASED)
+    # matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
     knn_matches = matcher.knnMatch(descriptors1, descriptors2, 2)
-    good_matches = []
-
+    good_matches=[]
     for m, n in knn_matches:
-        if m.distance < ratio_thresh * n.distance:
+        if  m.distance < ratio_thresh * n.distance:
 
             # Calculation of slope
             img2_idx = m.trainIdx
@@ -283,20 +284,21 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
             #     cv2.destroyAllWindows()
 
     c1 = len(good_matches)
+    #print("no of matches ", c1)
 
-    # Testing ( all matches )
-    # img3 = np.empty((max(img1.shape[0], img2.shape[0]), img1.shape[1] + img2.shape[1], 3), dtype=np.uint8)
-    # cv2.drawMatches(
-    #     img1, keypoints1, img2, keypoints2, good_matches, outImg=img3, matchColor=None, flags=2)
-    # if img3 is not None:
-    #     cv2.imshow("matches", img3)
-    #     cv2.waitKey(0)
-    #     cv2.destroyAllWindows()
+   # Testing ( all matches )
+   #  img3 = np.empty((max(img1.shape[0], img2.shape[0]), img1.shape[1] + img2.shape[1], 3), dtype=np.uint8)
+   #  cv2.drawMatches(
+   #      img1, keypoints1, img2, keypoints2, good_matches, outImg=img3, matchColor=None, flags=2)
+   #  if img3 is not None:
+   #      cv2.imshow("matches", img3)
+   #      cv2.waitKey(0)
+   #      cv2.destroyAllWindows()
 
     if symmetry_match:
-        knn_matches = matcher.knnMatch(descriptors2, descriptors1, 2)
+        knn_matches = matcher.knnMatch(descriptors2, descriptors1,2)
         good_matches = []
-        for m, n in knn_matches:
+        for m,n in knn_matches:
             if m.distance < ratio_thresh * n.distance:
                 # Calculation of slope
                 img1_idx = m.trainIdx
@@ -317,7 +319,8 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
                 good_matches.append(m)
 
         c2 = len(good_matches)
-
+        # print("no of matches ",c2)
+        #
         # img3 = np.empty((max(img1.shape[0], img2.shape[0]), img1.shape[1] + img2.shape[1], 3), dtype=np.uint8)
         # cv2.drawMatches(
         #     img2, keypoints2, img1, keypoints1, good_matches, outImg=img3, matchColor=None, flags=2)
@@ -330,9 +333,9 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
             if c2 == 0 or not 0.5 <= c1 / c2 <= 2:
                 print("******\nDiff btw c1 and c2!\n******")
                 fraction = 2*min(c1, c2)/(a1+b1)
-                return fraction
+                return fraction, min(c1, c2)
         fraction = (c1 + c2) / (a1 + b1)
-        return fraction
+        return fraction, min(c1, c2)
 
     if c1 > b1:
         print("******\nc1 greater than b1, so returning zero\n*********")
@@ -340,9 +343,23 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
     fraction = (2.0 * c1) / (a1 + b1)
     return fraction
 
-# img1 = cv2.imread("edge_data/edge_6_7/jpg/image0.jpg")
-# img2 = cv2.imread("query_distinct_frame/night/jpg/image160.jpg")
+# img1 = cv2.imread("edge_data/edge_0_5/jpg/image0.jpg")
+# img2 = cv2.imread("edge_data/edge_1_2/jpg/image104.jpg")
 # b = SURF_match(img1, img2)
 # a = SURF_returns(img1, img2)
 # print(a)
 # print(b)
+imgobj1 = general.load_from_memory("node_data/node_0/image52.pkl")
+imgobj2 = general.load_from_memory("edge_data/edge_0_1/image52.pkl")
+param1 = imgobj1.get_elements()
+param2 = imgobj2.get_elements()
+start = time.time()
+i=0
+while True:
+    fraction = SURF_returns(param1, param2)
+    elapsed = time.time() - start
+    i = i+1
+    if elapsed >= 1:
+        break
+print("Matched: "+str(i))
+print(elapsed)
