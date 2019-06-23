@@ -4,22 +4,27 @@ Contains functions that operate on video or stream of images
 
 import cv2
 import numpy as np
+import matcher as mt
 import os
 import time
 import pickle
 from general import *
+import matcher_asift as asift
+from find_obj import init_feature, filter_matches
+# built-in modules
+import itertools as it
+from multiprocessing.pool import ThreadPool
 
 
 class ImgObj:
-    def __init__(self, no_of_keypoints, descriptors, time_stamp, serialized_keypoints, shape):
+    def __init__(self, no_of_keypoints, descriptors, time_stamp, serialized_keypoints):
         self.no_of_keypoints = no_of_keypoints
         self.descriptors = descriptors
         self.time_stamp = time_stamp
         self.serialized_keypoints = serialized_keypoints
-        self.shape = shape
 
     def get_elements(self):
-        return self.no_of_keypoints, self.descriptors, self.serialized_keypoints, self.shape
+        return self.keypoints, self.descriptors
 
     def get_time(self):
         return self.time_stamp
@@ -70,7 +75,7 @@ class DistinctFrames:
             raise Exception("Invalid start / end indexes")
         if start_index > end_index:
             raise Exception("Start index should be less than or equal to end index")
-        return self.imSURF_retg_objects[start_index:end_index]
+        return self.img_objects[start_index:end_index]
 
     def get_object(self, index):
         if index not in range(0, self.no_of_frames()):
@@ -81,16 +86,13 @@ class DistinctFrames:
 def variance_of_laplacian(image):
     """Compute the Laplacian of the image and then return the focus measure,
     which is simply the variance of the Laplacian
-
     Parameters
     ----------
     image : image object (mat)
-
     Returns
     -------
     int,
         returns higher value if image is not blurry otherwise returns lower value
-
     Referenece
     -------
     https://www.pyimagesearch.com/2015/09/07/blur-detection-with-opencv/
@@ -100,11 +102,9 @@ def variance_of_laplacian(image):
 
 def is_blurry_colorful(image):
     """Check if the image passed is blurry or not
-
     Parameters
     ----------
     image : image object (mat)
-
     Returns
     -------
     bool,
@@ -136,8 +136,8 @@ def deserialize_keypoints(index):
     return kp
 
 
-def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = True,
-                         hessian_threshold: int = 2500, ensure_min=True):
+def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurry: bool = False,
+                         feature_name= "surf-flann", ensure_min=False):
     """Saves non redundent and distinct frames of a video in folder
     Parameters
     ----------
@@ -173,19 +173,27 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     check_next_frame = False
     i_prev = 0  # the last i which was stored
 
-    detector = cv2.xfeatures2d_SURF.create(hessian_threshold)
+    detector, matcher = init_feature(feature_name)
+
+    if detector is None:
+        print('unknown feature:', feature_name)
+        return -1
+
+    print('using', feature_name)
 
     ret, frame = cap.read()
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     cv2.imshow('frame', gray)
-    keypoints, descriptors = detector.detectAndCompute(gray, None)
+    pool = ThreadPool(processes=cv2.getNumberOfCPUs())
+    keypoints, descriptors = asift.affine_detect(detector, gray, pool=pool)
+    # keypoints, descriptors = detector.detectAndCompute(gray, None)
 
-    a = (len(keypoints), descriptors, serialize_keypoints(keypoints), gray.shape)
-    img_obj = ImgObj(a[0], a[1], i, a[2], a[3])
+    a = (len(keypoints), descriptors, serialize_keypoints(keypoints))
+    img_obj = ImgObj(a[0], a[1], i, a[2])
     save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
     cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
     distinct_frames.add_img_obj(img_obj)
-    i_of_a=0
+
     while True:
         ret, frame = cap.read()
         if ret:
@@ -200,32 +208,20 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
             if check_blurry:
                 if is_blurry_grayscale(gray):
                     check_next_frame = True
-                    print("frame " + str(i) + " skipped as blurry")
                     i = i + 1
                     continue
                 check_next_frame = False
 
-            keypoints, descriptors = detector.detectAndCompute(gray, None)
-            b = (len(keypoints), descriptors, serialize_keypoints(keypoints), gray.shape)
-            if len(keypoints)<50:
-                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <50")
-                i = i+1
-                continue
-            import matcher as mt
-            image_fraction_matched, min_good_matches = mt.SURF_returns(a, b, 2500, 0.7, True)
-            if image_fraction_matched == -1:
-                check_next_frame = True
-                i=i+1
-                continue
-            check_next_frame = False
-            if 0< image_fraction_matched < 0.1 or min_good_matches<50 or (ensure_min and i - i_prev > 50):
-                img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
-                print(str(image_fraction_matched)+ " fraction match between "+str(i_of_a)+" and "+ str(i))
+            keypoints, descriptors = asift.affine_detect(detector, gray, pool=pool)
+            b = (len(keypoints), descriptors, serialize_keypoints(keypoints))
+            image_fraction_matched = asift.matcher_2((a[0], a[1], deserialize_keypoints(a[2])), (b[0], b[1], deserialize_keypoints(b[2])), feature_name, True)
+            print(image_fraction_matched)
+            if image_fraction_matched < 0.60 or (ensure_min and i - i_prev > 50):
+                img_obj2 = ImgObj(b[0], b[1], i, b[2])
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
                 distinct_frames.add_img_obj(img_obj2)
                 a = b
-                i_of_a=i
                 i_prev = i
 
             i = i + 1
@@ -239,6 +235,7 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
     cv2.destroyAllWindows()
     distinct_frames.calculate_time()
     return distinct_frames
+
 
 def read_images(folder):
     """Reads images of the form "image<int>.pkl" from folder(passed as string containing
@@ -315,7 +312,7 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
             grey = cv2.imread(folder + "/" + file, 0)
             time_stamp = int(file.replace('image', '').replace('.jpg', ''), 10)
             keypoints, descriptors = detector.detectAndCompute(grey, None)
-            img_obj = ImgObj(len(keypoints), descriptors, time_stamp, serialize_keypoints(keypoints))
+            img_obj = ImgObj(len(keypoints), descriptors, time_stamp)
             distinct_frames.add_img_obj(img_obj)
             print("Reading image .." + str(time_stamp) + " from " + folder)  # for dev phase
         except:
@@ -325,8 +322,7 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
 
 
 
-
-# FRAMES1 = save_distinct_ImgObj("testData/afternoon_sit0 15june/NodeData/7.mp4", "v2", 4, True)
+FRAMES1 = save_distinct_ImgObj("testData/Evening Sit/nodes/0.webm", "v3", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 # img_obj = FRAMES1.get_object(0)
@@ -348,13 +344,13 @@ image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
 print(image_fraction_matched)
 
 
+
 cap = cv2.VideoCapture("testData/sushant_mc/20190518_155931.mp4")
 ret, frame = cap.read()
 cv2.imshow("frame", frame)
 print(is_blurry_colorful(frame))
 
+
 frame = cv2.imread("v2/jpg/image207.jpg", 0)
 print(is_blurry_grayscale(frame))
 '''
-
-# frames1 = save_distinct_ImgObj("testData/sit_morning_14_june/edges/0_1.webm", "query_distinct_frame/case7", 14, True, ensure_min=True)

@@ -3,8 +3,8 @@ import numpy as np
 
 
 
-img1 = cv2.imread("edge_data/edge_0_1/jpg/image0.jpg", cv2.IMREAD_COLOR)
-img2 = cv2.imread("query_distinct_frame/case1/jpg/image0.jpg", cv2.IMREAD_COLOR)
+img1 = cv2.imread("query_distinct_frame/jpg/image0.jpg", cv2.IMREAD_COLOR)
+img2 = cv2.imread("edge_data/edge_0_1/jpg/image0.jpg", cv2.IMREAD_COLOR)
 
 sift = cv2.xfeatures2d.SIFT_create()
 surf = cv2.xfeatures2d.SURF_create()
@@ -33,16 +33,20 @@ matches = matcher.knnMatch(des1, des2, k=2)
 
 #only good matches
 good_matches = []
+ratio_thresh= 0.90
 for m,n in matches:
     if m.distance < 0.5 * n.distance:
         good_matches.append(m)
+print(ratio_thresh)
+print(len(good_matches))
 
 cv2.namedWindow("Image", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("Image", 1500, 500)
 matchingresult = cv2.drawMatches(img1, kp1, img2, kp2, good_matches, None, flags=2)
 
 # img = cv2.drawKeypoints(img1, kp1, None)
-
+cv2.namedWindow('Image', cv2.WINDOW_NORMAL)
+cv2.resizeWindow('Image', 1500, 900)
 cv2.imshow("Image", matchingresult)
 cv2.waitKey(0)
 cv2.destroyAllWindows()

@@ -6,14 +6,14 @@ import shutil
 import socket
 import sys
 
-IP = "10.194.35.37"
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-try:
-    s.bind((IP, 1234))
-except socket.error as err:
-    print("Bind failed, Error Code" + str(err.args[0]) + ", message: " + err.args[1])
-    sys.exit()
-s.listen(5)
+# IP = "10.194.35.37"
+# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# try:
+#     s.bind((IP, 1234))
+# except socket.error as err:
+#     print("Bind failed, Error Code" + str(err.args[0]) + ", message: " + err.args[1])
+#     sys.exit()
+# s.listen(5)
 
 import video_operations_3 as vo2
 import matcher as mt
@@ -37,6 +37,7 @@ class NodeEdgeRealTimeMatching:
     # possible_edges is array of dictionary of type { "node: Node", "edge: Edge", "confidence: float",
     # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended: bool"}
 
+    '''
     # ----- A bit useless feature - but added after Sushant request -----
     previous_i: int = 0
     continuously_no_matches_for_i: int = 0
@@ -45,7 +46,7 @@ class NodeEdgeRealTimeMatching:
     # although i will eventually increase for a particular possible_edge no_of_continuous_no_match reaches 3
     # note i is different moved for different possible_edge
     # ---------- @ this feature was added after Sushant request ----------
-
+    '''
 
     def __init__(self, graph_obj: Graph):
         # some_query_img_objects = (query_video_distinct_frames.get_objects(0, 2))
@@ -68,17 +69,18 @@ class NodeEdgeRealTimeMatching:
                 node_images: vo2.DistinctFrames = node.node_images
                 if node_images is not None:
                     for data_obj in node_images.get_objects():
-                        image_fraction_matched = mt.SURF_returns(img_obj.get_elements(), data_obj.get_elements(),
+                        image_fraction_matched, min_good_matches = mt.SURF_returns(img_obj.get_elements(), data_obj.get_elements(),
                                                                  2500, 0.7)
-                        if image_fraction_matched > 0.05:
-                            print("Match found btw" + str(img_obj.get_time()) + " of query video and " + str(
-                                data_obj.get_time()) + " of node data")
-                            if len(node_confidence) > 0 and node_confidence[-1][0] == node.identity:
-                                entry = node_confidence[-1]
-                                node_confidence[-1] = (node.identity, entry[1] + 1, entry[2] + image_fraction_matched)
-                                # print(str(node.identity) + " matched by " + str(image_fraction_matched))
-                            else:
-                                node_confidence.append((node.identity, 1, image_fraction_matched))
+                        if min_good_matches>100 and image_fraction_matched != -1:
+                            if image_fraction_matched > 0.05 or min_good_matches>225:
+                                print("Match found btw" + str(img_obj.get_time()) + " of query video and " + str(
+                                    data_obj.get_time()) + " of node data")
+                                if len(node_confidence) > 0 and node_confidence[-1][0] == node.identity:
+                                    entry = node_confidence[-1]
+                                    node_confidence[-1] = (node.identity, entry[1] + 1, entry[2] + image_fraction_matched)
+                                    # print(str(node.identity) + " matched by " + str(image_fraction_matched))
+                                else:
+                                    node_confidence.append((node.identity, 1, image_fraction_matched))
         node_confidence = sorted(node_confidence, key=lambda x: (x[1], x[2]), reverse=True)
         print(node_confidence)
         final_node_list = []
@@ -91,8 +93,8 @@ class NodeEdgeRealTimeMatching:
         # Match a possible edge object with query_video_ith_frame
         # possible edge here is passed as reference.
 
-
-        j = possible_edge["last_matched_j"] + 1
+        possible_edge["last_matched_j"] = possible_edge["last_matched_j"] + 1
+        j = possible_edge["last_matched_j"]
         # if last_matched_j is 3rd frame, now j will start matching from 4th frame,
         # gave better and more real time results
 
@@ -107,18 +109,20 @@ class NodeEdgeRealTimeMatching:
             # print(j)
             edge = possible_edge["edge"]
             img_obj_from_edge: vo2.ImgObj = edge.distinct_frames.get_object(j)
-            image_fraction_matched = mt.SURF_returns(img_obj_from_edge.get_elements(),
+            image_fraction_matched, min_good_matches = mt.SURF_returns(img_obj_from_edge.get_elements(),
                                                      query_video_ith_frame.get_elements(), 2500, 0.7)
             # print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" +
             # str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
-            if image_fraction_matched > 0.09:
-                # print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" +
-                #   str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
-                if image_fraction_matched > maxmatch:
-                    match, maxmatch = j, image_fraction_matched
+            if min_good_matches>100 and image_fraction_matched!= -1:
+                if image_fraction_matched > 0.09 or min_good_matches > 225:
+                    # print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" +
+                    #   str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
+                    if image_fraction_matched > maxmatch:
+                        match, maxmatch = j, image_fraction_matched
             j = j + 1
         if match is None:
-            # no match is found in the j to jmax interval
+            # no match is found in the j to 
+            jmax interval
             possible_edge["last_matched_i_with_j"] = i
             possible_edge["confidence"] = possible_edge["confidence"] - 0.5  # decreasing confidence
             possible_edge["no_of_continuous_no_match"] = possible_edge["no_of_continuous_no_match"] + 1
@@ -186,6 +190,7 @@ class NodeEdgeRealTimeMatching:
                 # changing i for a particular possible_edge
                 i = possible_edge["last_matched_i_with_j"] + 1
 
+                '''
                 # ----------------- A bit useless feature - but added after Sushant request -----------------
                 if self.previous_i == i:
                     # if last queried i was same then inc continuously_no_matches_for_i
@@ -202,6 +207,7 @@ class NodeEdgeRealTimeMatching:
                     i += 1
                     self.previous_i = i
                 # - @ this feature is same as above in the class definition was added after Sushant request --
+                '''
 
                 if i >= query_video_distinct_frames.no_of_frames():
                     # if i for a query_video_distinct_frames has reached an end
@@ -238,10 +244,10 @@ class NodeEdgeRealTimeMatching:
         print("go")
         if is_edge_found:
             # gaining the last pushed compass value
-            clientsocket, address = s.accept()
-            print(f"Connection from {address} has been extablished")
-            angle = clientsocket.recv(64)
-            print(int(angle))
+            # clientsocket, address = s.accept()
+            # print(f"Connection from {address} has been extablished")
+            # angle = clientsocket.recv(64)
+            # print(int(angle))
             '''
             if found_edge["confidence"] < 1:
                 for possible_edge in self.possible_edges:
@@ -279,7 +285,7 @@ class NodeEdgeRealTimeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-graph_obj: Graph = load_graph()
+graph_obj: Graph = load_graph("new_objects/graph.pkl")
 node_and_edge_real_time_matching = NodeEdgeRealTimeMatching(graph_obj)
 
 
@@ -332,13 +338,23 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
             if check_blurry:
                 if is_blurry_grayscale(gray):
                     check_next_frame = True
+                    print("frame " + str(i) + " skipped as blurry")
                     i = i + 1
                     continue
                 check_next_frame = False
             keypoints, descriptors = detector.detectAndCompute(gray, None)
+            if len(keypoints)<50:
+                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <50")
+                i = i+1
+                continue
             b = (len(keypoints), descriptors, vo2.serialize_keypoints(keypoints), gray.shape)
-            image_fraction_matched = mt.SURF_returns(a, b, 2500, 0.7, True)
-            if image_fraction_matched < 0.09 or (ensure_min and i - i_prev > 50):
+            image_fraction_matched, min_good_matches = mt.SURF_returns(a, b, 2500, 0.7, True)
+            if image_fraction_matched == -1:
+                check_next_frame = True
+                i=i+1
+                continue
+            check_next_frame = False
+            if 0< image_fraction_matched < 0.09 or min_good_matches<50 or (ensure_min and i - i_prev > 50):
                 img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
@@ -360,9 +376,26 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     query_video_distinct_frames.calculate_time()
     return query_video_distinct_frames
 
+def locate_new_edge_using_angle(initial_edge:Edge, graph_obj: Graph, angle_turned,allowed_angle_error:int=20):
+    located_edge= None
+    for new_edge in initial_edge.angles:
+        if angle_turned<new_edge[1]+allowed_angle_error and angle_turned> new_edge[1]-allowed_angle_error:
+            print("new edge located is "+ new_edge[0] +" as stored angle is "+ str(new_edge[1]) +" and query angle is "+str(angle_turned))
+            located_edge=new_edge[0]
+            locations= located_edge.split("_")
+            located_edge_obj= graph_obj.get_edge(locations[0], locations[1])
+            return located_edge_obj
+        else:
+            print(new_edge[0]+" is not matched as stored angle is "+ str(new_edge[1]) +" and query angle is "+str(angle_turned))
+
+    return "no edge found"
+
+
 
 if __name__ == '__main__':
-    url = "http://10.194.36.234:8080/shot.jpg"
-    save_distinct_realtime_modified_ImgObj(url,
-                                           "query_distinct_frame/night", 0,
-                                           check_blurry=True, ensure_min=True, livestream=True)
+    # url = "http://10.194.36.234:8080/shot.jpg"
+    # save_distinct_realtime_modified_ImgObj(url,
+    #                                        "query_distinct_frame/night", 0,
+    #                                        check_blurry=True, ensure_min=True, livestream=True)
+    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202826.webm","query_distinct_frame", 2,
+                                           check_blurry=True, ensure_min=True, livestream=False)

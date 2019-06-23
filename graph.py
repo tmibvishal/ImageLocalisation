@@ -7,6 +7,7 @@ import matcher as mt
 import shutil
 import time
 import numpy as np
+import math
 
 
 class Node:
@@ -24,7 +25,7 @@ class Edge:
         self.dest = dest
         self.distinct_frames = distinct_frames
         self.video_length = video_length
-
+        self.name = str(src)+"_"+ str(dest)
 
 class FloorMap:
     def __init__(self, floor_no: int = None, img=None):
@@ -129,6 +130,29 @@ class Graph:
         else:
             raise Exception("Nd does not exists in Nodes")
 
+    def _get_edge_slope(self, edge: Edge, floor:int=0):
+        src= edge.src
+        dest= edge.dest
+        src_node = None
+        dest_node = None
+        for nd in self.Nodes[floor]:
+            if nd.identity == src:
+                src_node = nd
+            if nd.identity == dest:
+                dest_node = nd
+        if (dest_node.coordinates[0]-src_node.coordinates[0])==0:
+            slope_in_degree=90
+        else:
+            slope = (-1)*(dest_node.coordinates[1]-src_node.coordinates[1])/(dest_node.coordinates[0]-src_node.coordinates[0])
+            slope_in_degree= math.degrees(math.atan(slope))
+        return slope_in_degree
+
+    def _get_angle_between_two_edges(self, edge1:Edge, edge2: Edge, floor:int=0):
+        slope1= self._get_edge_slope(edge1, floor)
+        slope2= self._get_edge_slope(edge2, floor)
+        return slope2-slope1
+
+
     def _add_edge_images(self, id1: int, id2: int, distinct_frames: vo2.DistinctFrames, z1=None, z2=None):
         if id1 > self.new_node_index or id2 > self.new_node_index:
             raise Exception("Wrong id's passed")
@@ -214,6 +238,8 @@ class Graph:
         # Implementation 2 ( directly taking impure image )
         # impure = self._get_floor_img(z, "impure")
         # img = impure
+        cv2.namedWindow('Node graph for floor ' + str(z),cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Node graph for floor ' + str(z), 1600, 1600)
         cv2.imshow('Node graph for floor ' + str(z), img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -249,10 +275,14 @@ class Graph:
                     cv2.circle(img, (x, y), 8, (66, 126, 255), -1, cv2.LINE_AA)
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     cv2.putText(img, str(identity), (x + 10, y + 10), font, 1, (66, 126, 255), 2, cv2.LINE_AA)
+                    cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow(window_text, 1600, 1600)
                     cv2.imshow(window_text, img)
 
         impure = self._get_floor_img(z, "impure")
         img = impure
+        cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(window_text, 1600, 1600)
         cv2.imshow(window_text, img)
         cv2.setMouseCallback(window_text, click_event)
         cv2.waitKey(0)
@@ -277,12 +307,16 @@ class Graph:
                     meany = (nd.coordinates[1] + ndcur.coordinates[1]) // 2
                     cv2.putText(img, str(nd.identity) + "_" + str(ndcur.identity), (meanx + 5, meany + 5), font, 0.5,
                                 (100, 126, 255), 2, cv2.LINE_AA)
+                    cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow(window_text, 1600, 1600)
                     cv2.imshow(window_text, img)
 
         impure = self._get_floor_img(z, "impure")
         img = impure
         if img is None:
             return
+        cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(window_text, 1600, 1600)
         cv2.imshow(window_text, img)
         cv2.setMouseCallback(window_text, click_event)
         cv2.waitKey(0)
@@ -297,10 +331,14 @@ class Graph:
                     nd = self._nearest_node(x, y, z)
                     self._delete_node(nd)
                     img = self.print_graph_and_return(z)
+                    cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow(window_text, 1600, 1600)
                     cv2.imshow(window_text, img)
 
         # impure = self._get_floor_img(z, "impure")
         img = self.print_graph_and_return(z)
+        cv2.namedWindow(window_text, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(window_text, 1600, 1600)
         cv2.imshow(window_text, img)
         cv2.setMouseCallback(window_text, click_event)
         cv2.waitKey(0)
@@ -323,9 +361,13 @@ class Graph:
                         if edge.dest == nd.identity:
                             ndcur.links.remove(edge)
                     img = self.print_graph_and_return(z)
+                    cv2.namedWindow('Delete connections', cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow('Delete connections', 1600, 1600)
                     cv2.imshow('Delete connections', img)
 
         img = self.print_graph_and_return(z)
+        cv2.namedWindow('Delete connections', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Delete connections', 1600, 1600)
         cv2.imshow('Delete connections', img)
         cv2.setMouseCallback('Delete connections', click_event)
         cv2.waitKey(0)
@@ -416,16 +458,18 @@ class Graph:
                                                                           src_nd.coordinates[1])))
                 img = cv2.circle(img, end_coordinates, 15, (0, 200, 0), -1, cv2.LINE_AA)
 
+        cv2.namedWindow("Current location", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("Current location", 1600, 1600)
         cv2.imshow("Current location", img)
         cv2.waitKey(1)
 
     @staticmethod
-    def load_graph():
-        return general.load_from_memory("graph.pkl")
+    def load_graph(graph_path):
+        return general.load_from_memory(graph_path)
 
 
-def load_graph():
-    return general.load_from_memory("graph.pkl")
+def load_graph(graph_path):
+    return general.load_from_memory(graph_path)
 
 
 class node_and_image_matching:
@@ -576,9 +620,9 @@ class node_and_image_matching:
 def run(code: int):
     # Create new graph
     if code == 0:
-        graph = load_graph()
-        #graph.add_floor_map(0, "graph/maps/map0.jpg")
-        #graph.mark_nodes(0)
+        graph = Graph()
+        graph.add_floor_map(0, "map0.jpg")
+        graph.mark_nodes(0)
         graph.make_connections(0)
         graph.print_graph(0)
         graph.save_graph()
@@ -597,10 +641,10 @@ def run(code: int):
 
     # Query video
     if code == 3:
-        query_video_frames1 = vo2.save_distinct_ImgObj("testData/sit-june3/VID_20190603_110640.mp4",
+        query_video_frames1 = vo2.save_distinct_ImgObj("testData/afternoon_sit0 15june/queryVideos/queryVideos/VID_20190615_180407.webm",
                                                        "query_distinct_frame", 0, True)
         # query_video_frames1 = vo2.read_images("query_distinct_frame")
-        graph = load_graph()
+        graph = load_graph("testData/afternoon_sit0 15june/graph.pkl")
         node_and_image_matching_obj = node_and_image_matching()
         node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
         node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
@@ -635,5 +679,13 @@ def run(code: int):
 #
 # cv2.waitKey()
 # run(1)
-#run(2)
-# run(2)
+# run(0)
+#
+
+# graph = load_graph("graph.pkl")
+# graph.print_graph(0)
+# print(graph.Nodes[0][0].links[0].dest)
+# print(graph.Nodes[0][1].links[0].dest)
+# print(graph._get_edge_slope(graph.Nodes[0][0].links[0]))
+# print(graph._get_edge_slope(graph.Nodes[0][1].links[0]))
+# print(graph._get_angle_between_two_edges(graph.Nodes[0][0].links[0],graph.Nodes[0][1].links[0]))

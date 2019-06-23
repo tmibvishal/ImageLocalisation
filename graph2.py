@@ -442,10 +442,10 @@ class Graph:
         else:
             raise Exception("Cannot read image path")
 
-    def save_graph(self, path="."):
+    def save_graph(self, path):
         general.ensure_path(path)
-        new_path = os.path.join(path, "graph.pkl")
-        general.save_to_memory(self, new_path)
+        # new_path = os.path.join(path)
+        general.save_to_memory(self, path)
 
     def on_node(self, identity):
         if len(self.path_traversed) > 0:
@@ -534,9 +534,9 @@ def run(code: int):
     # Add nodes and edges
     if code == 2:
         graph: Graph = load_graph("new_objects/graph.pkl")
-        graph.read_nodes("testData/night sit 0 june 18/node data", 3)
-        graph.read_edges("testData/night sit 0 june 18/edge data", 3)
-        graph.save_graph()
+        graph.read_nodes("testData/night sit 0 june 18/node data", 4)
+        # graph.read_edges("testData/night sit 0 june 18/edge data", 4)
+        graph.save_graph("new_objects/graph.pkl")
 
     # Query video
     if code == 3:
@@ -554,7 +554,7 @@ def run(code: int):
         FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
         FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
         graph1 = load_graph()
-        graph1._add_edge_images(2, 6, FRAMES1)
+        # graph1._add_edge_images(2, 6, FRAMES1)
         graph1._add_node_images(3, FRAMES2)
         graph1.save_graph()
 
@@ -577,7 +577,9 @@ def run(code: int):
 # cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
 #
 # cv2.waitKey()
-# run(1
+# run(1)pass
+# run(2)
+# run(1)
 
 # graph = load_graph("graph.pkl")
 # graph.print_graph(0)
