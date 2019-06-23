@@ -112,12 +112,12 @@ def is_blurry_colorful(image):
     """
     b, _, _ = cv2.split(image)
     a = variance_of_laplacian(b)
-    return (variance_of_laplacian(b) < 80)
+    return (variance_of_laplacian(b) < 100)
 
 
 def is_blurry_grayscale(gray_image):
     a = variance_of_laplacian(gray_image)
-    return (variance_of_laplacian(gray_image) < 80)
+    return (variance_of_laplacian(gray_image) < 100)
 
 
 def serialize_keypoints(keypoints):
@@ -207,8 +207,8 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
 
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors, serialize_keypoints(keypoints), gray.shape)
-            if len(keypoints)<50:
-                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <50")
+            if len(keypoints)<150:
+                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <150")
                 i = i+1
                 continue
             import matcher as mt
@@ -325,7 +325,7 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
 
 
 
-FRAMES1 = save_distinct_ImgObj("testData/afternoon_sit0 15june/NodeData/7.mp4", "v2", 4, True)
+# FRAMES1 = save_distinct_ImgObj("testData/afternoon_sit0 15june/NodeData/7.mp4", "v2", 4, True)
 # FRAMES2 = save_distinct_ImgObj("testData/sushant_mc/20190518_155931.mp4", "v2", 4)
 
 # img_obj = FRAMES1.get_object(0)

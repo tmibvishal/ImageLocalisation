@@ -6,14 +6,14 @@ import shutil
 import socket
 import sys
 
-IP = "10.194.35.37"
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-try:
-    s.bind((IP, 1234))
-except socket.error as err:
-    print("Bind failed, Error Code" + str(err.args[0]) + ", message: " + err.args[1])
-    sys.exit()
-s.listen(5)
+# IP = "10.194.35.37"
+# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# try:
+#     s.bind((IP, 1234))
+# except socket.error as err:
+#     print("Bind failed, Error Code" + str(err.args[0]) + ", message: " + err.args[1])
+#     sys.exit()
+# s.listen(5)
 
 import video_operations_3 as vo2
 import matcher as mt
@@ -22,7 +22,7 @@ from video_operations_3 import ensure_path, DistinctFrames, ImgObj, save_to_memo
 
 query_video_distinct_frames = DistinctFrames()
 query_video_ended = False
-
+a = 2
 
 class NodeEdgeRealTimeMatching:
     matched_path: list = []  # This will contain the list of confirmed paths
@@ -123,15 +123,19 @@ class NodeEdgeRealTimeMatching:
             possible_edge["last_matched_i_with_j"] = i
             possible_edge["confidence"] = possible_edge["confidence"] - 0.5  # decreasing confidence
             possible_edge["no_of_continuous_no_match"] = possible_edge["no_of_continuous_no_match"] + 1
-            if possible_edge["no_of_frames_to_match"] < 5:
-                possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] + 1
-            if possible_edge["no_of_continuous_no_match"] == 3:
+            # if possible_edge["no_of_frames_to_match"] < 5:
+            possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] + 1
+            # else:
+            #     possible_edge["last_matched_j"] = possible_edge["last_matched_j"] + 1
+            #     possible_edge["no_of_frames_to_match"] = 3
+            if possible_edge["no_of_continuous_no_match"] >= 3:
                 # handling the case if the query frame is just not matching
-                possible_edge["last_matched_i_with_j"] = possible_edge["last_matched_i_with_j"] + 1
+                # possible_edge["last_matched_i_with_j"] = possible_edge["last_matched_i_with_j"] + 1
                 # restoring some confidence
                 possible_edge["confidence"] = possible_edge["confidence"] + 1
                 # also little restoration in no_of_frames_to_match
-                possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] - 1
+                # possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] - 1
+                possible_edge["no_of_continuous_no_match"] = 1
         else:
             # match is found in the j to jmax interval
             img_obj_from_edge: vo2.ImgObj = edge.distinct_frames.get_object(match)
@@ -148,6 +152,24 @@ class NodeEdgeRealTimeMatching:
             # ---- improvement required in this, for possible_edge with low no of distinct frames
             # j will end up reaching the end and without any match there will be a edge_ended ----
             possible_edge["edge_ended"] = True
+
+    @staticmethod
+    def match_edge_end_frames_with_frame(possible_edge, i: int, query_video_ith_frame: vo2.ImgObj, no_of_edge_end_frames_to_consider: int = 2):
+        edge: Edge = possible_edge["edge"]
+        j_max = possible_edge["edge"].distinct_frames.no_of_frames()
+        j = j_max - no_of_edge_end_frames_to_consider
+        match, maxmatch = None, 0
+        while j < j_max:
+            img_obj_from_edge: vo2.ImgObj = edge.distinct_frames.get_object(j)
+            image_fraction_matched = mt.SURF_returns(img_obj_from_edge.get_elements(), query_video_ith_frame.get_elements(), 2500, 0.7)
+            if image_fraction_matched > 0.09:
+                if image_fraction_matched > maxmatch:
+                    match, maxmatch = j, image_fraction_matched
+            j = j + 1
+        if match:
+            return True
+        else:
+            return False
 
     def find_edge_with_nodes(self):
         # for a nodes_matched, appending all the originating nodes in possible_edges
@@ -241,10 +263,10 @@ class NodeEdgeRealTimeMatching:
         print("go")
         if is_edge_found:
             # gaining the last pushed compass value
-            clientsocket, address = s.accept()
-            print(f"Connection from {address} has been extablished")
-            angle = clientsocket.recv(64)
-            print(int(angle))
+            # clientsocket, address = s.accept()
+            # print(f"Connection from {address} has been extablished")
+            # angle = clientsocket.recv(64)
+            # print(int(angle))
             '''
             if found_edge["confidence"] < 1:
                 for possible_edge in self.possible_edges:
@@ -282,7 +304,7 @@ class NodeEdgeRealTimeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-graph_obj: Graph = load_graph("testData/afternoon_sit0 15june/graph.pkl")
+graph_obj: Graph = load_graph("new_objects/graph.pkl")
 node_and_edge_real_time_matching = NodeEdgeRealTimeMatching(graph_obj)
 
 
@@ -335,7 +357,7 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
             if check_blurry:
                 if is_blurry_grayscale(gray):
                     check_next_frame = True
-                    print("frame " + str(i) + " skipped as blurry")
+                    # print("frame " + str(i) + " skipped as blurry")
                     i = i + 1
                     continue
                 check_next_frame = False
@@ -368,6 +390,7 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
     print("released")
     cap.release()
     cv2.destroyAllWindows()
+    global query_video_ended
     query_video_ended = True
     query_video_distinct_frames.calculate_time()
     return query_video_distinct_frames
@@ -390,6 +413,6 @@ def locate_new_edge_using_angle(initial_edge:Edge, angle_turned,allowed_angle_er
 
 if __name__ == '__main__':
     url = "http://10.194.36.234:8080/shot.jpg"
-    save_distinct_realtime_modified_ImgObj(url,
-                                           "query_distinct_frame/night", 0,
-                                           check_blurry=True, ensure_min=True, livestream=True)
+    save_distinct_realtime_modified_ImgObj("testData/nightsit-18june/query video/VID_20190618_202826.webm",
+                                           "query_distinct_frame/night", 4,
+                                           check_blurry=True, ensure_min=True, livestream=False)

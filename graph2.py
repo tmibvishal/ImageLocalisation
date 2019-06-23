@@ -220,7 +220,7 @@ class Graph:
                        frames_skipped: int = 0, check_blurry: bool = True, hessian_threshold: int = 2500,
                        z_node=None):
         distinct_frames = vo2.save_distinct_ImgObj(path_of_video, folder_to_save, frames_skipped, check_blurry,
-                                                   hessian_threshold)
+                                                   hessian_threshold, ensure_min=True)
         self._add_node_images(identity, distinct_frames, z_node)
 
     def _add_edge_data(self, id1: int, id2: int, path_of_video: str, folder_to_save: str = None,
@@ -678,8 +678,8 @@ def run(code: int):
 
     # Add nodes and edges
     if code == 2:
-        graph: Graph = load_graph()
-        #graph.read_nodes("testData/night sit 0 june 18/node data", 4)
+        graph: Graph = load_graph("new_objects/graph.pkl")
+        graph.read_nodes("testData/night sit 0 june 18/node data", 4)
         graph.read_edges("testData/night sit 0 june 18/edge data", 4)
         graph.save_graph()
 
@@ -723,7 +723,7 @@ def run(code: int):
 #
 # cv2.waitKey()
 # run(1)pass
-run(0)
+#   run(2)
 #
 
 # graph = load_graph("graph.pkl")
