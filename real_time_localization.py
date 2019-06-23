@@ -37,6 +37,7 @@ class NodeEdgeRealTimeMatching:
     # possible_edges is array of dictionary of type { "node: Node", "edge: Edge", "confidence: float",
     # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended: bool"}
 
+    '''
     # ----- A bit useless feature - but added after Sushant request -----
     previous_i: int = 0
     continuously_no_matches_for_i: int = 0
@@ -45,7 +46,7 @@ class NodeEdgeRealTimeMatching:
     # although i will eventually increase for a particular possible_edge no_of_continuous_no_match reaches 3
     # note i is different moved for different possible_edge
     # ---------- @ this feature was added after Sushant request ----------
-
+    '''
 
     def __init__(self, graph_obj: Graph):
         # some_query_img_objects = (query_video_distinct_frames.get_objects(0, 2))
@@ -120,7 +121,8 @@ class NodeEdgeRealTimeMatching:
                         match, maxmatch = j, image_fraction_matched
             j = j + 1
         if match is None:
-            # no match is found in the j to jmax interval
+            # no match is found in the j to 
+            jmax interval
             possible_edge["last_matched_i_with_j"] = i
             possible_edge["confidence"] = possible_edge["confidence"] - 0.5  # decreasing confidence
             possible_edge["no_of_continuous_no_match"] = possible_edge["no_of_continuous_no_match"] + 1
