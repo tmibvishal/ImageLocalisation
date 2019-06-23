@@ -21,7 +21,7 @@ We achieve this interface by declaring possible edge as dictionary
 ### Step 1
 1. We open the graph_obj
 ``` python
-graph_obj: Graph = load_graph()
+graph_obj: Graph = load_graph(graphPath)
 ```
 2. Then we make the empty NodeEdgeRealTimeMatching object
 ```python

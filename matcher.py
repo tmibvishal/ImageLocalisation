@@ -244,7 +244,7 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
     b1, descriptors2, kp2, shape2 = kp_des_2
 
     if a1 < 2 or b1 < 2:
-        return 0
+        return -1, None
 
     matcher = cv2.DescriptorMatcher_create(cv2.DescriptorMatcher_FLANNBASED)
     knn_matches = matcher.knnMatch(descriptors1, descriptors2, 2)
@@ -330,15 +330,15 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
             if c2 == 0 or not 0.5 <= c1 / c2 <= 2:
                 # print("******\nDiff btw c1 and c2!\n******")
                 fraction = 2*min(c1, c2)/(a1+b1)
-                return fraction
+                return fraction, min(c1,c2)
         fraction = (c1 + c2) / (a1 + b1)
-        return fraction
+        return fraction, min(c1,c2)
 
     if c1 > b1:
         print("******\nc1 greater than b1, so returning zero\n*********")
-        return None
+        return -1, c1
     fraction = (2.0 * c1) / (a1 + b1)
-    return fraction
+    return fraction, c1
 
 # img1 = cv2.imread("edge_data/edge_6_7/jpg/image0.jpg")
 # img2 = cv2.imread("query_distinct_frame/night/jpg/image160.jpg")
