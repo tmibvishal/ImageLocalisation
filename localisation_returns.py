@@ -6,7 +6,7 @@ import video_operations_3 as vo
 from graph2 import Graph, Edge, Node, FloorMap
 import matcher as mt
 
-graph1: Graph = Graph.load_graph("new_objects/graph (1).pkl")
+graph1: Graph = Graph.load_graph("new_objects/graph.pkl")
 print(graph1)
 video_path = "Query video path"
 
@@ -26,7 +26,7 @@ class FoundMatch:
 
 
 class PossibleEdge:
-    def __init__(self, edge: Edge, confidence=0, ):
+    def __init__(self, edge: Edge, confidence=0 ):
         self.name = edge.name
         self.edge = edge
         self.no_of_frames = edge.distinct_frames.no_of_frames()
@@ -77,8 +77,8 @@ class RealTimeMatching:
 
             if i == self.max_confidence_edges - 1 and match is not None:
                 print("---Max match for " + str(query_index) + ": ", end="")
-                print((match, possible_edge.name))
-                self.last_5_matches.append((match, possible_edge.name))
+                print((match, maxedge))
+                self.last_5_matches.append((match, maxedge))
                 if len(self.last_5_matches) > 5:
                     self.last_5_matches.remove(self.last_5_matches[0])
                 return progress, match
@@ -150,12 +150,32 @@ class RealTimeMatching:
         #
         # self.probable_path = self.possible_edges[0]
         # self.possible_edges[0].confidence = 1
-        if len(self.last_5_matches) < 5 or (None, None) in self.last_5_matches:
+        allow = True
+        if (None, None) in self.last_5_matches:
+            allow = False
+            for i, match_tup in enumerate(self.last_5_matches):
+                if match_tup is not (None, None):
+                    counter = 0
+                    for j in range(i+1, 5):
+                        if self.last_5_matches[j][1] is None:
+                            continue
+                        elif self.last_5_matches[j][1] == match_tup[1]:
+                            counter+=1
+                        else:
+                            counter = -1
+                            break
+                    if counter==-1: break
+                    if counter>=3:
+                        allow = True
+                        break
+
+        if len(self.last_5_matches) < 5 or not allow:
             self.next_possible_edges = self.possible_edges
             return
         last_5_edges_matched = []
         for i in range(len(self.last_5_matches)):
-            last_5_edges_matched.append(self.last_5_matches[i][1])
+            if self.last_5_matches[i][1] is not None:
+                last_5_edges_matched.append(self.last_5_matches[i][1])
         maxCount, most_occuring_edge, most_occuring_second = 0, None, None
         for edge in last_5_edges_matched:
             coun = last_5_edges_matched.count(edge)
@@ -185,16 +205,30 @@ class RealTimeMatching:
             if coun > maxCount or (coun==maxCount and index>cur_edge_index)  :
                 cur_edge_index = index
 
+        if query_index == 296:
+            print("Debugg")
         self.next_possible_edges = [self.probable_path]
         nd = self.graph_obj.get_node(self.probable_path.edge.dest)
-        # if cur_edge_index>= self.probable_path.no_of_frames - 2:
-        #     for tup in self.probable_path.edge.angles:
-        #         if abs(tup[1]) < 20:
-        #             src, dest = tup[0].split('_')
-        #             edg = self.graph_obj.get_edge(int(src), int(dest))
-        #             possible_edge = PossibleEdge(edg)
-        #             self.next_possible_edges.append(possible_edge)
-        #             self.max_confidence_edges +=1
+        if cur_edge_index> self.probable_path.no_of_frames - 2:
+            count_of_straight_edges, straightPossibleEdge = 0, None
+            for tup in self.probable_path.edge.angles:
+                if abs(tup[1]) < 20:
+                    count_of_straight_edges+=1
+                    src, dest = tup[0].split('_')
+                    edg = self.graph_obj.get_edge(int(src), int(dest))
+                    possible_edge = PossibleEdge(edg)
+                    straightPossibleEdge = possible_edge
+                    self.next_possible_edges.append(possible_edge)
+                    self.max_confidence_edges +=1
+            if count_of_straight_edges == 1:
+                fraction_matched, features_matched = mt.SURF_returns(straightPossibleEdge.get_frame_params(0),
+                                                                     self.get_query_params(query_index))
+                if fraction_matched >= 0.1: #0.7 * self.probable_path.matches_found[-1].fraction_matched:
+                    self.probable_path = straightPossibleEdge
+                    cur_edge_index = 0
+                    self.next_possible_edges = [self.probable_path]
+                    nd = self.graph_obj.get_node(self.probable_path.edge.dest)
+
         for edge in nd.links:
             present = False
             for possible_edg in self.next_possible_edges:

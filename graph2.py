@@ -163,11 +163,11 @@ class Graph:
         elif (-1)*(dest2- src2)<0 and (dest1-src1)<0:
             slope = (-1)*(dest_node.coordinates[1]-src_node.coordinates[1])/(dest_node.coordinates[0]-src_node.coordinates[0])
             slope_in_degree= math.degrees(math.atan(slope))
-            slope_in_degree=180+slope_in_degree
+            slope_in_degree=180+slope_in_degree-360
         elif (-1)*(dest2- src2)<0 and (dest1-src1)>0:
             slope = (-1)*(dest_node.coordinates[1]-src_node.coordinates[1])/(dest_node.coordinates[0]-src_node.coordinates[0])
             slope_in_degree= math.degrees(math.atan(slope))
-            slope_in_degree=360+slope_in_degree
+            slope_in_degree=360+slope_in_degree-360
         else:
             print("no such cased exists")
 
@@ -178,7 +178,13 @@ class Graph:
         print(edge1.name +str(slope1))
         slope2= self._get_edge_slope(edge2, floor)
         print(edge2.name+ str(slope2))
-        return slope2-slope1
+        slope_diff=slope2-slope1
+        if slope_diff>180:
+            slope_diff=slope_diff-360
+        if slope_diff < (-180):
+            slope_diff = slope_diff+360
+
+        return slope_diff
 
     def _set_specific_edge_angles(self, cur_edge:Edge):
         cur_edge.angles = []
@@ -585,10 +591,12 @@ def run(code: int):
 # run(1)pass
 # run(2)
 
-# graph = load_graph("graph.pkl")
+# graph:Graph = load_graph("new_objects/graph (1).pkl")
+# graph.make_connections(0)
 # graph.print_graph(0)
 # print(graph.Nodes[0][0].links[0].dest)
 # print(graph.Nodes[0][1].links[0].dest)
 # print(graph._get_edge_slope(graph.Nodes[0][0].links[0]))
 # print(graph._get_edge_slope(graph.Nodes[0][1].links[0]))
+# graph.save_graph("new_objects", "graph.pkl")
 # print(graph._get_angle_between_two_edges(graph.Nodes[0][0].links[0],graph.Nodes[0][1].links[0]))
