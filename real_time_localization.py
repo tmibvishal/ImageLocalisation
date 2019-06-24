@@ -36,6 +36,7 @@ class NodeEdgeRealTimeMatching:
     # possible_edges contains all the possible edges that originate from nodes in nodes_matched
     # possible_edges is array of dictionary of type { "node: Node", "edge: Edge", "confidence: float",
     # "last_matched_i_with_j: int", "last_matched_j: int", "no_of_frames_to_match: int", "edge_ended_probability: int"}
+    max_confidence = 0
 
     '''
     # ----- A bit useless feature - but added after Sushant request -----
@@ -181,19 +182,22 @@ class NodeEdgeRealTimeMatching:
 
     def find_edge_with_nodes(self):
         # for a nodes_matched, appending all the originating nodes in possible_edges
-        for node in self.nodes_matched:
-            for edge in node.links:
-                if edge.distinct_frames is not None:
-                    self.possible_edges.append({
-                        "node": node,
-                        "edge": edge,
-                        "confidence": 0,
-                        "last_matched_i_with_j": self.i_at_matched_node - 1,
-                        "last_matched_j": 0,
-                        "no_of_frames_to_match": 3,
-                        "no_of_continuous_no_match": 0,
-                        "edge_ended_probability": 0
-                    })
+        if len(self.possible_edges) == 0:
+            # only appending the nodes if the possible_edges is empty, otherwise
+            # our also calls this function in between also even when possible_edges is already filed
+            for node in self.nodes_matched:
+                for edge in node.links:
+                    if edge.distinct_frames is not None:
+                        self.possible_edges.append({
+                            "node": node,
+                            "edge": edge,
+                            "confidence": 0,
+                            "last_matched_i_with_j": self.i_at_matched_node - 1,
+                            "last_matched_j": 0,
+                            "no_of_frames_to_match": 3,
+                            "no_of_continuous_no_match": 0,
+                            "edge_ended_probability": 0
+                        })
 
         is_edge_found = False  # in the beginning is_edge_found is False
         is_edge_partially_found = False  # in the beginning is_edge_partially_found is False
@@ -202,8 +206,7 @@ class NodeEdgeRealTimeMatching:
         # i_at_matched_node is 0 in the beginning in case of multiple nodes in nodes_matched
         # after one edge match it is i_at_matched_node as the name suggest
 
-        max_confidence = 0
-        # max_confidence keeps the track of the max_confidence of the current possible_edges
+        # self.max_confidence keeps the track of the self.max_confidence of the current possible_edges
         j = 0
         while True and j < 100:
             if is_edge_found or is_edge_partially_found:
@@ -211,8 +214,8 @@ class NodeEdgeRealTimeMatching:
                 break
             for possible_edge in self.possible_edges:
                 # if running for each possible_edge in possible_edges
-                if possible_edge["confidence"] < max_confidence:
-                    # breaking the loop if possible_edge["confidence"] is less than the max_confidence
+                if possible_edge["confidence"] < self.max_confidence:
+                    # breaking the loop if possible_edge["confidence"] is less than the self.max_confidence
                     continue
                 # changing i for a particular possible_edge
                 i = possible_edge["last_matched_i_with_j"] + 1
@@ -270,7 +273,7 @@ class NodeEdgeRealTimeMatching:
 
                 query_video_ith_frame = query_video_distinct_frames.get_object(i)
                 self.match_edge_with_frame(possible_edge, i, query_video_ith_frame)
-                max_confidence = possible_edge["confidence"]
+                self.max_confidence = possible_edge["confidence"]
             j = j + 1
         print("go")
         if is_edge_found:
@@ -299,6 +302,7 @@ class NodeEdgeRealTimeMatching:
             print("confirmed: you crossed edge" + str(found_edge["edge"].src) + "_" + str(found_edge["edge"].dest))
             # next_matched_nodes will only contain one node which is the the nest node
             self.possible_edges = []  # setting self.possible_edges to empty list for next possible_edges query
+            self.max_confidence = 0  # resetting self.max_confidence
             self.i_at_matched_node = i  # setting self.i_at_matched_node to i
             self.find_edge_with_nodes()  # recursively calling the function
             # i = found_edge["last_matched_i_with_j"] + 1
