@@ -7,6 +7,7 @@ import numpy as np
 import os
 import time
 import pickle
+import matcher as mt
 from general import *
 
 
@@ -336,8 +337,8 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
 # compare_videos_and_print(FRAMES1, FRAMES2)
 # compare_videos(FRAMES2, FRAMES1)
 
-# FRAMES1 = cv2.imread("query_distinct_frame/jpg/image0.jpg", 0)
-# FRAMES2 = cv2.imread("edge_data/edge_0_5/jpg/image0.jpg", 0)
+# FRAMES1 = cv2.imread("query_distinct_frame/case1/jpg/image244.jpg", 0)
+# FRAMES2 = cv2.imread("edge_data/edge_0_1/jpg/image285.jpg", 0)
 # image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
 # print(image_fraction_matched)
 

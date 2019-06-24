@@ -316,7 +316,7 @@ class NodeEdgeRealTimeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-graph_obj: Graph = load_graph("graph.pkl")
+graph_obj: Graph = load_graph("new_objects/graph.pkl")
 node_and_edge_real_time_matching = NodeEdgeRealTimeMatching(graph_obj)
 
 
