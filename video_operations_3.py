@@ -7,6 +7,7 @@ import numpy as np
 import os
 import time
 import pickle
+import matcher as mt
 from general import *
 
 
@@ -112,7 +113,7 @@ def is_blurry_colorful(image):
     """
     b, _, _ = cv2.split(image)
     a = variance_of_laplacian(b)
-    return (variance_of_laplacian(b) < 80)
+    return (variance_of_laplacian(b) < 100)
 
 
 def is_blurry_grayscale(gray_image):
@@ -207,8 +208,8 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
 
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors, serialize_keypoints(keypoints), gray.shape)
-            if len(keypoints)<50:
-                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <50")
+            if len(keypoints)<150:
+                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <150")
                 i = i+1
                 continue
             import matcher as mt
@@ -336,8 +337,8 @@ def read_images_jpg(folder, hessian_threshold: int = 2500):
 # compare_videos_and_print(FRAMES1, FRAMES2)
 # compare_videos(FRAMES2, FRAMES1)
 
-# FRAMES1 = cv2.imread("query_distinct_frame/jpg/image0.jpg", 0)
-# FRAMES2 = cv2.imread("edge_data/edge_0_5/jpg/image0.jpg", 0)
+# FRAMES1 = cv2.imread("query_distinct_frame/case1/jpg/image244.jpg", 0)
+# FRAMES2 = cv2.imread("edge_data/edge_0_1/jpg/image285.jpg", 0)
 # image_fraction_matched = mt.SURF_match(FRAMES1, FRAMES2, 2500, 0.7)
 # print(image_fraction_matched)
 

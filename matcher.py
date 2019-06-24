@@ -331,7 +331,7 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
 
         if check_c1_c2:
             if c2 == 0 or not 0.5 <= c1 / c2 <= 2:
-                print("******\nDiff btw c1 and c2!\n******")
+                # print("******\nDiff btw c1 and c2!\n******")
                 fraction = 2*min(c1, c2)/(a1+b1)
                 return fraction, min(c1,c2)
         fraction = (c1 + c2) / (a1 + b1)
