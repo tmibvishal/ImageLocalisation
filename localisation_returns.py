@@ -3,10 +3,10 @@ import shutil
 import general
 import cv2
 import video_operations_3 as vo
-from graph2 import Graph, Edge, Node
+from graph2 import Graph, Edge, Node, FloorMap
 import matcher as mt
 
-graph1:Graph = Graph.load_graph("new_objects/graph (1).pkl")
+graph1: Graph = Graph.load_graph("new_objects/graph (1).pkl")
 print(graph1)
 video_path = "Query video path"
 
@@ -29,14 +29,17 @@ class PossibleEdge:
     def __init__(self, edge: Edge, confidence=0, ):
         self.name = edge.name
         self.edge = edge
-        self.no_of_frames = len(edge.distinct_frames)
+        self.no_of_frames = edge.distinct_frames.no_of_frames()
         self.matches_found = []  # list of FoundMatch objects
         self.indexes_matched = []
         self.confidence = confidence
-        self.to_match_params = (0, min(self.no_of_frames, 3))
+        self.to_match_params = (0, self.no_of_frames)
 
-        def get_frame_params(self, frame_index):
-            return edge.distinct_frames.get_object(frame_index).get_elements()
+    def __str__(self):
+        return self.name
+
+    def get_frame_params(self, frame_index):
+        return self.edge.distinct_frames.get_object(frame_index).get_elements()
 
 
 class RealTimeMatching:
@@ -47,6 +50,8 @@ class RealTimeMatching:
         self.next_possible_edges = []
         self.graph_obj = graph_obj
         self.query_objects = vo.DistinctFrames()
+        self.last_5_matches = []
+        self.max_confidence_edges = 0
 
     def get_query_params(self, frame_index):
         return self.query_objects.get_object(frame_index).get_elements()
@@ -54,41 +59,49 @@ class RealTimeMatching:
     def match_edges(self, query_index):
         # Assume all possible edge objects are there in possible_edges
         progress = False
-        for possible_edge in self.possible_edges:
+        match, maxmatch, maxedge = None, 0, None
+        for i, possible_edge in enumerate(self.possible_edges):
             for j in range(possible_edge.to_match_params[0], possible_edge.to_match_params[1]):
-                fraction_matched = mt.SURF_returns(possible_edge.get_frame_params(j),
-                    self.get_query_params(query_index))
-                if fraction_matched>0.09:
-                    foundMatch = FoundMatch(query_index,j, possible_edge.name, fraction_matched)
+                fraction_matched, features_matched = mt.SURF_returns(possible_edge.get_frame_params(j),
+                                                                     self.get_query_params(query_index))
+                if fraction_matched > 0.09 or features_matched > 200:
+                    # print((query_index, j, possible_edge.name, fraction_matched))
+                    foundMatch = FoundMatch(query_index, j, possible_edge.name, fraction_matched)
                     possible_edge.matches_found.append(foundMatch)
                     if j not in possible_edge.indexes_matched:
                         possible_edge.indexes_matched.append(j)
                     progress = True
 
-                    if j+3>=possible_edge.no_of_frames:
-                        nd = self.graph_obj.get_node(possible_edge.edge.dest)
-                        for edge in nd.links:
-                            possibleEdge = PossibleEdge(edge)
-                            if possibleEdge not in self.next_possible_edges:
-                                self.next_possible_edges.append(possibleEdge)
+                    if fraction_matched > maxmatch:
+                        match, maxmatch, maxedge = j, fraction_matched, possible_edge.name
 
-                    if possible_edge.confidence == 1:
-                        return progress
-        return progress
+            if i == self.max_confidence_edges - 1 and match is not None:
+                print("---Max match for " + str(query_index) + ": ", end="")
+                print((match, possible_edge.name))
+                self.last_5_matches.append((match, possible_edge.name))
+                if len(self.last_5_matches) > 5:
+                    self.last_5_matches.remove(self.last_5_matches[0])
+                return progress, match
+        print("---Max match for " + str(query_index) + ": ", end="")
+        print((match, maxedge))
+        self.last_5_matches.append((match, maxedge))
+        if len(self.last_5_matches) > 5:
+            self.last_5_matches.remove(self.last_5_matches[0])
+        return progress, match
 
     def handle_edges(self):
-        if len(self.next_possible_edges) != 0 :
+        if len(self.next_possible_edges) != 0:
             self.possible_edges = self.next_possible_edges
 
         elif len(self.possible_edges) == 0:
-            if type(self.confirmed_path[-1])==int:
+            if type(self.confirmed_path[-1]) == int:
                 identity = self.confirmed_path[-1]
                 nd = self.graph_obj.get_node(identity)
                 if nd is not None:
                     for edge in nd.links:
                         possible_edge = PossibleEdge(edge)
                         self.possible_edges.append(possible_edge)
-            elif type(self.confirmed_path[-1])==tuple:
+            elif type(self.confirmed_path[-1]) == tuple:
                 src, dest = self.confirmed_path[-1][0], self.confirmed_path[-1][1]
                 edge = self.graph_obj.get_edge(src, dest)
                 possible_edge = PossibleEdge(edge)
@@ -100,36 +113,116 @@ class RealTimeMatching:
                         self.possible_edges.append(possible_edge)
 
         query_index = self.query_objects.no_of_frames() - 1
-        progress = self.match_edges(query_index)
-        while not progress and len(self.possible_edges)>0:
-            for possible_edge in self.possible_edges:
-                if possible_edge.to_match_params[1] == possible_edge.no_of_frames:
-                    self.possible_edges.remove(possible_edge)
-                    continue
-                possible_edge.to_match_params[0] += 3
-                possible_edge.to_match_params[1] +=3
-                if possible_edge.to_match_params[1] > possible_edge.no_of_frames:
-                    possible_edge.to_match_params[1] = possible_edge.no_of_frames
-                if possible_edge.to_match_params[0]>=possible_edge.no_of_frames:
-                    raise Exception("Wrong params for checking")
-                progress = self.match_edges(query_index)
+        progress, match = self.match_edges(query_index)
+        # while not progress and len(self.possible_edges)>0:
+        #     for possible_edge in self.possible_edges:
+        #         if possible_edge.to_match_params[1] == possible_edge.no_of_frames:
+        #             self.possible_edges.remove(possible_edge)
+        #             continue
+        #         possible_edge.to_match_params = (possible_edge.to_match_params[0] + 3, possible_edge.to_match_params[1] + 3)
+        #         if possible_edge.to_match_params[1] > possible_edge.no_of_frames:
+        #             possible_edge.to_match_params = (possible_edge.to_match_params[0], possible_edge.no_of_frames)
+        #         if possible_edge.to_match_params[0]>=possible_edge.no_of_frames:
+        #             raise Exception("Wrong params for checking")
+        #         progress = self.match_edges(query_index)
         if not progress:
             return
         # if progress found!!
-        self.possible_edges.sort(key=lambda x: (len(x.indexes_matched), len(x.matches_found)), reverse=True)
-        self.probable_path = self.possible_edges[0]
-        self.possible_edges[0].confidence = 1
-        last_jth_matched_img_obj = self.possible_edges[0].edge.distinct_frames.get_object(max(self.possible_edges[0].indexes_matched))
+        # self.possible_edges.sort(key=lambda x: (len(x.indexes_matched), len(x.matches_found)), reverse=True)
+        # if (len(self.possible_edges)==1 and len(self.possible_edges[0].indexes_matched)>=2) or (
+        #         len(self.possible_edges)>0 and
+        #         len(self.possible_edges[0].indexes_matched) - len(self.possible_edges[1].indexes_matched) >= 2):
+        #     for i in range(1, len(self.possible_edges)):
+        #         if self.possible_edges[i].edge.src != self.possible_edges[0].edge.dest:
+        #             self.possible_edges.remove(self.possible_edges[i])
+        #
+        #     self.next_possible_edges = self.possible_edges
+        #     nd = self.graph_obj.get_node(self.possible_edges[0].edge.dest)
+        #     for edge in nd.links:
+        #         possibleEdge = PossibleEdge(edge)
+        #         present=False
+        #         for existing_edge in self.next_possible_edges:
+        #             if possibleEdge.name == existing_edge.name:
+        #                 present=True
+        #                 break
+        #         if not present:
+        #             self.next_possible_edges.append(possibleEdge)
+        #
+        # self.probable_path = self.possible_edges[0]
+        # self.possible_edges[0].confidence = 1
+        if len(self.last_5_matches) < 5 or (None, None) in self.last_5_matches:
+            self.next_possible_edges = self.possible_edges
+            return
+        last_5_edges_matched = []
+        for i in range(len(self.last_5_matches)):
+            last_5_edges_matched.append(self.last_5_matches[i][1])
+        maxCount, most_occuring_edge, most_occuring_second = 0, None, None
+        for edge in last_5_edges_matched:
+            coun = last_5_edges_matched.count(edge)
+            if coun > maxCount:
+                most_occuring_edge = edge
+                most_occuring_second = None
+            elif coun == maxCount and edge != most_occuring_edge:
+                most_occuring_second = edge
+
+
+        if most_occuring_edge is None or most_occuring_second is not None:
+            return
+        for possible_edge in self.possible_edges:
+            if possible_edge.name == most_occuring_edge:
+                self.probable_path = possible_edge
+                self.max_confidence_edges = 1
+
+        edge_indexes=[]
+        for matches in self.last_5_matches:
+            if matches[1] == most_occuring_edge:
+                edge_indexes.append(matches[0])
+
+        cur_edge_index = -1
+        maxCount = 0
+        for index in edge_indexes:
+            coun = edge_indexes.count(index)
+            if coun > maxCount or (coun==maxCount and index>cur_edge_index)  :
+                cur_edge_index = index
+
+        self.next_possible_edges = [self.probable_path]
+        nd = self.graph_obj.get_node(self.probable_path.edge.dest)
+        # if cur_edge_index>= self.probable_path.no_of_frames - 2:
+        #     for tup in self.probable_path.edge.angles:
+        #         if abs(tup[1]) < 20:
+        #             src, dest = tup[0].split('_')
+        #             edg = self.graph_obj.get_edge(int(src), int(dest))
+        #             possible_edge = PossibleEdge(edg)
+        #             self.next_possible_edges.append(possible_edge)
+        #             self.max_confidence_edges +=1
+        for edge in nd.links:
+            present = False
+            for possible_edg in self.next_possible_edges:
+                if possible_edg.name == edge.name:
+                    present = True
+                    break
+            if present: continue
+            possibleEdge = PossibleEdge(edge)
+            self.next_possible_edges.append(possibleEdge)
+        nd = self.graph_obj.get_node(self.probable_path.edge.src)
+        for edge in nd.links:
+            if edge.dest == self.probable_path.edge.dest:
+                continue
+            possibleEdge = PossibleEdge(edge)
+            self.next_possible_edges.append(possibleEdge)
+
+        last_jth_matched_img_obj = self.probable_path.edge.distinct_frames.get_object(cur_edge_index)
         time_stamp = last_jth_matched_img_obj.get_time()
-        total_time = self.possible_edges[0].edge.distinct_frames.get_time()
+        total_time = self.probable_path.edge.distinct_frames.get_time()
         fraction = time_stamp / total_time if total_time != 0 else 0
-        self.graph_obj.on_edge(self.possible_edges[0].edge.src, self.possible_edges[0].edge.dest, fraction)
+        self.graph_obj.on_edge(self.probable_path.edge.src, self.probable_path.edge.dest, fraction)
         self.graph_obj.display_path(0)
         return
 
+    def save_query_objects(self, video_path, folder="query_distinct_frame", livestream=False, write_to_disk=False,
+                           frames_skipped = 0):
 
-    def save_query_objects(self, video_path, folder="query_distinct_frame", livestream=False, write_to_disk=False):
-
+        frames_skipped+=1
         hessian_threshold = 2500
 
         if os.path.exists(folder):
@@ -147,8 +240,12 @@ class RealTimeMatching:
                 cap = cv2.VideoCapture(video_path)
             ret, frame = cap.read()
 
-            if not ret or frame is None:
+            if i % frames_skipped != 0 :
+                i=i+1
                 continue
+
+            if not ret:
+                break
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -157,6 +254,10 @@ class RealTimeMatching:
 
             cv2.imshow('Query Video!!', gray)
             keypoints, descriptors = detector.detectAndCompute(gray, None)
+            if len(keypoints)<50:
+                print("frame skipped as keypoints", len(keypoints), " less than 50")
+                i=i+1
+                continue
 
             a = (len(keypoints), descriptors, vo.serialize_keypoints(keypoints), gray.shape)
             img_obj = vo.ImgObj(a[0], a[1], i, a[2], a[3])
@@ -167,11 +268,16 @@ class RealTimeMatching:
                 general.save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
 
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
             self.handle_edges()
 
             i = i + 1
 
+        cap.release()
+        cv2.destroyAllWindows()
+
 
 realTimeMatching = RealTimeMatching(graph1)
-realTimeMatching.confirmed_path=[0]
-realTimeMatching.save_query_objects("testData/night sit 0 june 18/query video/VID_20190618_202826.webm")
+realTimeMatching.confirmed_path = [3]
+realTimeMatching.save_query_objects("testData/night sit 0 june 18/query video/VID_20190618_202957.webm", frames_skipped=1)

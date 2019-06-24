@@ -18,6 +18,8 @@ class Node:
         self.links = []
         self.node_images = None
 
+    def __str__(self):
+        return str(self.identity)
 
 class Edge:
     def __init__(self, is_connected: bool, src: int, dest: int, distinct_frames=None, video_length: int = None, angles = None):
@@ -27,6 +29,9 @@ class Edge:
         self.video_length = video_length
         self.name = str(src)+"_"+ str(dest)
         self.angles = angles # list of form (edge_name, angle)
+
+    def __str__(self):
+        return self.name
 
 class FloorMap:
     def __init__(self, floor_no: int = None, img=None):
@@ -502,8 +507,8 @@ class Graph:
                                                                           src_nd.coordinates[1])))
                 img = cv2.circle(img, end_coordinates, 15, (0, 200, 0), -1, cv2.LINE_AA)
 
-        cv2.namedWindow("Current location", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("Current location", 1600, 1600)
+        # cv2.namedWindow("Current location", cv2.WINDOW_NORMAL)
+        # cv2.resizeWindow("Current location", 1600, 1600)
         cv2.imshow("Current location", img)
         cv2.waitKey(1)
 
@@ -528,7 +533,7 @@ def run(code: int):
 
     # Print graph
     if code == 1:
-        graph = load_graph("new_objects/graph.pkl")
+        graph = load_graph("new_objects/graph (1).pkl")
         graph.print_graph(0)
 
     # Add nodes and edges
@@ -578,7 +583,6 @@ def run(code: int):
 #
 # cv2.waitKey()
 # run(1)pass
-# run(2)
 # run(2)
 
 # graph = load_graph("graph.pkl")
