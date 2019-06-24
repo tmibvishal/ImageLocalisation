@@ -343,23 +343,22 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
     fraction = (2.0 * c1) / (a1 + b1)
     return fraction, c1
 
-# img1 = cv2.imread("edge_data/edge_0_5/jpg/image0.jpg")
 # img2 = cv2.imread("edge_data/edge_1_2/jpg/image104.jpg")
 # b = SURF_match(img1, img2)
 # a = SURF_returns(img1, img2)
 # print(a)
 # print(b)
-imgobj1 = general.load_from_memory("node_data/node_0/image52.pkl")
-imgobj2 = general.load_from_memory("edge_data/edge_0_1/image52.pkl")
-param1 = imgobj1.get_elements()
-param2 = imgobj2.get_elements()
-start = time.time()
-i=0
-while True:
-    fraction = SURF_returns(param1, param2)
-    elapsed = time.time() - start
-    i = i+1
-    if elapsed >= 1:
-        break
-print("Matched: "+str(i))
-print(elapsed)
+# imgobj1 = general.load_from_memory("node_data/node_0/image52.pkl")
+# imgobj2 = general.load_from_memory("edge_data/edge_0_1/image52.pkl")
+# param1 = imgobj1.get_elements()
+# param2 = imgobj2.get_elements()
+# start = time.time()
+# i=0
+# while True:
+#     fraction = SURF_returns(param1, param2)
+#     elapsed = time.time() - start
+#     i = i+1
+#     if elapsed >= 1:
+#         break
+# print("Matched: "+str(i))
+# print(elapsed)

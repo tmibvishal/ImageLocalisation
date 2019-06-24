@@ -117,7 +117,7 @@ def is_blurry_colorful(image):
 
 def is_blurry_grayscale(gray_image):
     a = variance_of_laplacian(gray_image)
-    return (variance_of_laplacian(gray_image) < 80)
+    return (variance_of_laplacian(gray_image) < 100)
 
 
 def serialize_keypoints(keypoints):
@@ -358,3 +358,5 @@ print(is_blurry_grayscale(frame))
 '''
 
 # frames1 = save_distinct_ImgObj("testData/sit_morning_14_june/edges/0_1.webm", "query_distinct_frame/case7", 14, True, ensure_min=True)
+#save_distinct_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202826.webm",
+ #                    "query_distinct_frame/night", 3)

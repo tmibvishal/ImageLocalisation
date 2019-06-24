@@ -6,6 +6,8 @@ import video_operations_3 as vo
 from graph2 import Graph, Edge, Node
 import matcher as mt
 
+graph1:Graph = Graph.load_graph("new_objects/graph (1).pkl")
+print(graph1)
 video_path = "Query video path"
 
 folder = "folder path to save distinct frames"
@@ -42,6 +44,7 @@ class RealTimeMatching:
         self.confirmed_path = []
         self.probable_path = None
         self.possible_edges = []
+        self.next_possible_edges = []
         self.graph_obj = graph_obj
         self.query_objects = vo.DistinctFrames()
 
@@ -55,16 +58,29 @@ class RealTimeMatching:
             for j in range(possible_edge.to_match_params[0], possible_edge.to_match_params[1]):
                 fraction_matched = mt.SURF_returns(possible_edge.get_frame_params(j),
                     self.get_query_params(query_index))
-                if fraction_matched>0.1:
+                if fraction_matched>0.09:
                     foundMatch = FoundMatch(query_index,j, possible_edge.name, fraction_matched)
                     possible_edge.matches_found.append(foundMatch)
                     if j not in possible_edge.indexes_matched:
                         possible_edge.indexes_matched.append(j)
                     progress = True
+
+                    if j+3>=possible_edge.no_of_frames:
+                        nd = self.graph_obj.get_node(possible_edge.edge.dest)
+                        for edge in nd.links:
+                            possibleEdge = PossibleEdge(edge)
+                            if possibleEdge not in self.next_possible_edges:
+                                self.next_possible_edges.append(possibleEdge)
+
+                    if possible_edge.confidence == 1:
+                        return progress
         return progress
 
     def handle_edges(self):
-        if len(self.possible_edges) == 0:
+        if len(self.next_possible_edges) != 0 :
+            self.possible_edges = self.next_possible_edges
+
+        elif len(self.possible_edges) == 0:
             if type(self.confirmed_path[-1])==int:
                 identity = self.confirmed_path[-1]
                 nd = self.graph_obj.get_node(identity)
@@ -82,6 +98,7 @@ class RealTimeMatching:
                     for edge in nd.links:
                         possible_edge = PossibleEdge(edge)
                         self.possible_edges.append(possible_edge)
+
         query_index = self.query_objects.no_of_frames() - 1
         progress = self.match_edges(query_index)
         while not progress and len(self.possible_edges)>0:
@@ -100,9 +117,15 @@ class RealTimeMatching:
             return
         # if progress found!!
         self.possible_edges.sort(key=lambda x: (len(x.indexes_matched), len(x.matches_found)), reverse=True)
-        if self.probable_path != self.possible_edges.e
-            self.[-1]
-
+        self.probable_path = self.possible_edges[0]
+        self.possible_edges[0].confidence = 1
+        last_jth_matched_img_obj = self.possible_edges[0].edge.distinct_frames.get_object(max(self.possible_edges[0].indexes_matched))
+        time_stamp = last_jth_matched_img_obj.get_time()
+        total_time = self.possible_edges[0].edge.distinct_frames.get_time()
+        fraction = time_stamp / total_time if total_time != 0 else 0
+        self.graph_obj.on_edge(self.possible_edges[0].edge.src, self.possible_edges[0].edge.dest, fraction)
+        self.graph_obj.display_path(0)
+        return
 
 
     def save_query_objects(self, video_path, folder="query_distinct_frame", livestream=False, write_to_disk=False):
@@ -144,9 +167,11 @@ class RealTimeMatching:
                 general.save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
 
-            realTimeMatching.handle_edges()
+            self.handle_edges()
 
             i = i + 1
 
 
-realTimeMatching = RealTimeMatching()
+realTimeMatching = RealTimeMatching(graph1)
+realTimeMatching.confirmed_path=[0]
+realTimeMatching.save_query_objects("testData/night sit 0 june 18/query video/VID_20190618_202826.webm")

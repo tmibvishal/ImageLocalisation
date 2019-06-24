@@ -121,8 +121,7 @@ class NodeEdgeRealTimeMatching:
                         match, maxmatch = j, image_fraction_matched
             j = j + 1
         if match is None:
-            # no match is found in the j to 
-            jmax interval
+            # no match is found in the j to jmax interval
             possible_edge["last_matched_i_with_j"] = i
             possible_edge["confidence"] = possible_edge["confidence"] - 0.5  # decreasing confidence
             possible_edge["no_of_continuous_no_match"] = possible_edge["no_of_continuous_no_match"] + 1
