@@ -17,8 +17,6 @@ except socket.error as err:
 print("Socket server build successfully")
 s.listen(5) # listen to maximum of 5 people after adding them to queue
 
-
-
 while True:
     clientsocket, address = s.accept()
     print(f"Connection from {address} has been extablished")
@@ -26,5 +24,4 @@ while True:
     # clientsocket.close()
     burf = clientsocket.recv(64)
     print(burf)
-
 s.close()
