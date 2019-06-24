@@ -26,7 +26,7 @@ class BOVHelpers:
 		self.kmeans_ret = None
 		self.descriptor_vstack = None
 		self.mega_histogram = None
-		self.clf  = SVC()	
+		self.clf = SVC()
 
 	def cluster(self):
 		"""	
