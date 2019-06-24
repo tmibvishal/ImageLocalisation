@@ -114,8 +114,8 @@ class NodeEdgeRealTimeMatching:
                                                      query_video_ith_frame.get_elements(), 2500, 0.7)
             # print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" +
             # str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
-            if min_good_matches>100 and image_fraction_matched!= -1:
-                if image_fraction_matched > 0.09 or min_good_matches > 225:
+            if image_fraction_matched!= -1:
+                if image_fraction_matched > 0.09:
                     # print("query i: ", i, ", jth frame of " + str(possible_edge["edge"].src) + "to" +
                     #   str(possible_edge["edge"].dest) + " :", j, image_fraction_matched)
                     if image_fraction_matched > maxmatch:
@@ -255,15 +255,15 @@ class NodeEdgeRealTimeMatching:
                                                       no_of_edge_end_frames_to_consider=2)
 
 
-                if possible_edge["edge_ended_probability"] >= 0.4:
+                if possible_edge["edge_ended_probability"] >= 0.5:
                     # if possible_edge["confidence"] > 0:
                     # edge is found
                     is_edge_found = True
                     found_edge = possible_edge
                     break
-                print("yo are travelling on" + str(possible_edge["edge"].src) + "to" + str(possible_edge["edge"].dest))
+                # print("yo are travelling on" + str(possible_edge["edge"].src) + "to" + str(possible_edge["edge"].dest))
                 j = possible_edge["last_matched_j"]
-                print("i:", i, "j:", j)
+                # print("i:", i, "j:", j)
                 last_jth_matched_img_obj = possible_edge["edge"].distinct_frames.get_object(j)
                 time_stamp = last_jth_matched_img_obj.get_time()
                 total_time = possible_edge["edge"].distinct_frames.get_time()
@@ -437,5 +437,5 @@ if __name__ == '__main__':
     # save_distinct_realtime_modified_ImgObj(url,
     #                                        "query_distinct_frame/night", 0,
     #                                        check_blurry=True, ensure_min=True, livestream=True)
-    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202826.webm","query_distinct_frame", 2,
+    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_203044.webm","query_distinct_frame", 2,
                                            check_blurry=True, ensure_min=True, livestream=False)
