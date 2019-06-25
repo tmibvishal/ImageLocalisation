@@ -8,6 +8,7 @@ import shutil
 import time
 import numpy as np
 import math
+import image_in_one_frame as one_frame
 
 
 class Node:
@@ -485,7 +486,7 @@ class Graph:
             self.path_traversed.append(src)
         self.path_traversed.append((src, dest, fraction_traversed))
 
-    def display_path(self, z):
+    def display_path(self, z,current_location_str=""):
         img = self.print_graph_and_return(0)
         for item in self.path_traversed:
             if type(item) == int:
@@ -517,8 +518,10 @@ class Graph:
 
         # cv2.namedWindow("Current location", cv2.WINDOW_NORMAL)
         # cv2.resizeWindow("Current location", 1600, 1600)
-        cv2.imshow("Current location", img)
-        cv2.waitKey(1)
+        cv2.putText(img, current_location_str,(20,32),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,0),2)
+        one_frame.run_graph_frame(img)
+        # cv2.imshow("Current location", img)
+        # cv2.waitKey(1)
 
     @staticmethod
     def load_graph(graph_path):
@@ -537,19 +540,19 @@ def run(code: int):
         graph.mark_nodes(0)
         graph.make_connections(0)
         graph.print_graph(0)
-        graph.save_graph("new_objects", "graph.pkl")
+        graph.save_graph("testData/afternoon_sit0 15june", "graph.pkl")
 
     # Print graph
     if code == 1:
-        graph = load_graph("new_objects/graph (1).pkl")
+        graph = load_graph("testData/afternoon_sit0 15june/graph.pkl")
         graph.print_graph(0)
 
     # Add nodes and edges
     if code == 2:
-        graph: Graph = load_graph("new_objects/graph.pkl")
-        graph.read_nodes("testData/night sit 0 june 18/node data", 4)
-        graph.read_edges("testData/night sit 0 june 18/edge data", 4)
-        graph.save_graph("new_objects", "graph.pkl")
+        graph: Graph = load_graph("testData/afternoon_sit0 15june/graph.pkl")
+        graph.read_nodes("testData/afternoon_sit0 15june/NodeData", 4)
+        graph.read_edges("testData/afternoon_sit0 15june/edgeData", 4)
+        graph.save_graph("testData/afternoon_sit0 15june", "graph.pkl")
 
     # Query video
     if code == 3:

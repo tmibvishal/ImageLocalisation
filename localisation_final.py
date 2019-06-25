@@ -5,6 +5,7 @@ import cv2
 import video_operations_3 as vo
 from graph2 import Graph, Edge, Node, FloorMap
 import matcher as mt
+import image_in_one_frame as one_frame
 
 
 class PossibleEdge:
@@ -38,6 +39,7 @@ class RealTimeMatching:
         # the end of current edge is near
         # Also self.possible_edges is arranged in such a way that the edges corresponding to max confidence are appended
         # first in the list
+        self.current_location_str = ""
 
     def get_query_params(self, frame_index):
         # return ( no_of_keypoints, descriptors, serialized_keypoints, shape ) of imgObj at query_index
@@ -69,7 +71,13 @@ class RealTimeMatching:
             if i == self.max_confidence_edges - 1 and match is not None:
                 print("---Max match for " + str(query_index) + ": ", end="")
                 print((match, maxedge))
-
+                if match is None:
+                    self.current_location_str = "---Max match for " + str(query_index) + ": (None, None)"
+                else:
+                    self.current_location_str = "---Max match for " + str(query_index) + ": (" + str(
+                        match) + " ," + str(
+                        maxedge) + " )"
+                self.graph_obj.display_path(0, self.current_location_str)
                 # Update last_5_matches
                 self.last_5_matches.append((match, maxedge))
                 if len(self.last_5_matches) > 5:
@@ -78,7 +86,12 @@ class RealTimeMatching:
 
         print("---Max match for " + str(query_index) + ": ", end="")
         print((match, maxedge))
-
+        if match is None:
+            self.current_location_str = "---Max match for " + str(query_index) + ": (None, None)"
+        else:
+            self.current_location_str = "---Max match for " + str(query_index) + ": (" + str(match) + " ," + str(
+                maxedge) + " )"
+        self.graph_obj.display_path(0, self.current_location_str)
         # Update last_5_matches
         self.last_5_matches.append((match, maxedge))
         if len(self.last_5_matches) > 5:
@@ -297,7 +310,8 @@ class RealTimeMatching:
         total_time = self.probable_path.edge.distinct_frames.get_time()
         fraction = time_stamp / total_time if total_time != 0 else 0
         self.graph_obj.on_edge(self.probable_path.edge.src, self.probable_path.edge.dest, fraction)
-        self.graph_obj.display_path(0)
+        print("graph called")
+        self.graph_obj.display_path(0,self.current_location_str)
         return
 
     def save_query_objects(self, video_path, folder="query_distinct_frame", livestream=False, write_to_disk=False,
@@ -334,7 +348,10 @@ class RealTimeMatching:
             if vo.is_blurry_grayscale(gray):
                 continue
 
-            cv2.imshow('Query Video!!', gray)
+            # cv2.imshow('Query Video!!', gray)
+            break_video= one_frame.run_query_frame(gray)
+
+
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             if len(keypoints) < 50:
                 print("frame skipped as keypoints", len(keypoints), " less than 50")
@@ -350,7 +367,7 @@ class RealTimeMatching:
                 general.save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if (cv2.waitKey(1) & 0xFF == ord('q')) or break_video:
                 break
 
             # Calling the localisation fuunctions, yeah!!
@@ -362,7 +379,7 @@ class RealTimeMatching:
         cv2.destroyAllWindows()
 
 
-graph1: Graph = Graph.load_graph("new_objects/graph.pkl")
+graph1: Graph = Graph.load_graph("testData/afternoon_sit0 15june/graph.pkl")
 realTimeMatching = RealTimeMatching(graph1)
-realTimeMatching.save_query_objects("testData/night sit 0 june 18/query video/VID_20190618_202826.webm",
+realTimeMatching.save_query_objects("testData/afternoon_sit0 15june/queryVideos/queryVideos/VID_20190615_180507.webm",
                                     frames_skipped=1)

@@ -1,6 +1,6 @@
 """matcher.py
 
-Functions in this file allows the user to match 2 images 
+Functions in this file allows the user to match 2 images
 and get the fraction match between 2 images
 
 Accepts only Mat (The Basic Image Container) format images
@@ -128,6 +128,8 @@ def SURF_match(img1, img2, hessianThreshold: int = 400, ratio_thresh: float = 0.
     cv2.drawMatches(
         img1, keypoints1, img2, keypoints2, good_matches, outImg=img3, matchColor=None, flags=2)
     if img3 is not None:
+        cv2.namedWindow("matches", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("matches", 1600, 1600)
         cv2.imshow("matches", img3)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -144,17 +146,22 @@ def SURF_match(img1, img2, hessianThreshold: int = 400, ratio_thresh: float = 0.
         cv2.drawMatches(
             img2, keypoints2, img1, keypoints1, good_matches, outImg=img3, matchColor=None, flags=2)
         if img3 is not None:
+            cv2.namedWindow("matches", cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("matches", 1600, 1600)
             cv2.imshow("matches", img3)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
+        print(a1,"a1", b1,"b1", c1, "c1", c2, "c2")
         fraction = (c1 + c2) / (a1 + b1)
+        print(fraction, "fraction between images matched")
         return fraction
 
     fraction = (2.0 * c1) / (a1 + b1)
     if fraction > 1:
         fraction = 1
     # fraction can be greater than one in blur images because we are multiplying fraction with 2
+    print(fraction, "fraction between images matched")
     return fraction
 
 
@@ -348,6 +355,23 @@ def SURF_returns(kp_des_1, kp_des_2, hessianThreshold: int = 400, ratio_thresh: 
 # a = SURF_returns(img1, img2)
 # print(a)
 # print(b)
+# img1 = cv2.imread("testData/night sit 0 june 18/graph obj vishal/edge_data/edge_0_1/jpg/image106.jpg")
+# gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+# # img2= cv2.imread("edge_data/edge_0_1/jpg/image55.jpg", 0)
+# # SURF_match(img1, img2, 2500)
+# detector = cv2.xfeatures2d_SURF.create(2500)
+# keypoints1, descriptors1 = detector.detectAndCompute(gray, None)
+# print(len(keypoints1))
+# img = cv2.drawKeypoints(gray, keypoints1, None)
+#
+# cv2.imshow("Image", img)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+#
+# b, _, _ = cv2.split(img1)
+# a =cv2.Laplacian(b, cv2.CV_64F).var()
+# print(a)
+
 # imgobj1 = general.load_from_memory("node_data/node_0/image52.pkl")
 # imgobj2 = general.load_from_memory("edge_data/edge_0_1/image52.pkl")
 # param1 = imgobj1.get_elements()
