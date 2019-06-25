@@ -51,7 +51,7 @@ class RealTimeMatching:
         self.query_objects = vo.DistinctFrames()
         self.last_5_matches = []
         self.max_confidence_edges = 0
-        self.current_location_str= "hello bindal machaxx"
+        self.current_location_str= ""
 
     def get_query_params(self, frame_index):
         return self.query_objects.get_object(frame_index).get_elements()
