@@ -472,6 +472,8 @@ class Graph:
             prev = self.path_traversed[-1]
             if type(prev) == tuple:
                 if prev[0] == src:
+                    if prev[1] == dest and prev[2]> fraction_traversed:
+                        return
                     self.path_traversed[-1] = (src, dest, fraction_traversed)
                     return
                 else:
