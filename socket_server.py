@@ -8,7 +8,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # vishal lappy ip IP = "10.194.35.37"
 # bindal lappy ip
-IP = "10.194.55.238"
+IP = "192.168.43.33"
 
 try:
     s.bind((IP, 1234))
@@ -17,7 +17,7 @@ except socket.error as err:
     sys.exit()
 
 print("Socket server build successfully")
-s.listen(5) # listen to maximum of 5 people after adding them to queue
+s.listen(5)  # listen to maximum of 5 people after adding them to queue
 
 while True:
     clientsocket, address = s.accept()
