@@ -153,9 +153,9 @@ if __name__ == '__main__':
     bov = BOV(no_clusters=100)
 
     # set training paths
-    bov.train_path = "../new_objects/images/train/"
+    bov.train_path = "../new_objects/train/"
     # set testing paths
-    bov.test_path = "../new_objects/images/test/"
+    bov.test_path = "../new_objects/test/"
     # train the model
     bov.trainModel()
     # test model

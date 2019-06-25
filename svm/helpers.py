@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 class ImageHelpers:
 	def __init__(self):
-		self.sift_object = cv2.xfeatures2d.SIFT_create()
+		self.sift_object = cv2.xfeatures2d.SURF_create()
 
 	def gray(self, image):
 		gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -137,7 +137,7 @@ class FileHelpers:
 		imlist = {}
 		count = 0
 		for each in glob(path + "*"):
-			word = each.split("\\")[-1]
+			word = each.split("/")[-1]
 			# new_word = word.split("")
 			print (" #### Reading image category ", word, " ##### ")
 			imlist[word] = []
