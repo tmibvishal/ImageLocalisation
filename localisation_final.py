@@ -5,6 +5,7 @@ import cv2
 import video_operations_3 as vo
 from graph2 import Graph, Edge, Node, FloorMap
 import matcher as mt
+import image_in_one_frame as one_frame
 
 
 class PossibleEdge:
@@ -275,6 +276,9 @@ class RealTimeMatching:
                 continue
 
             cv2.imshow('Query Video!!', gray)
+            one_frame.query_video_frame(gray)
+
+
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             if len(keypoints) < 50:
                 print("frame skipped as keypoints", len(keypoints), " less than 50")

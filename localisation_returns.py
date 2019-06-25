@@ -5,6 +5,7 @@ import cv2
 import video_operations_3 as vo
 from graph2 import Graph, Edge, Node, FloorMap
 import matcher as mt
+import image_in_one_frame as one_frame
 
 graph1: Graph = Graph.load_graph("testData/afternoon_sit0 15june/graph.pkl")
 print(graph1)
@@ -324,6 +325,8 @@ class RealTimeMatching:
                 break
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            one_frame.run_query_frame(gray)
 
             if vo.is_blurry_grayscale(gray):
                 continue
