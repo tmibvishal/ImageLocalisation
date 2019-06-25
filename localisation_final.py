@@ -190,32 +190,34 @@ class RealTimeMatching:
         progress = self.match_edges(query_index)
 
         if not progress:
+            print("err 0")
             return
 
         # If None is showing up in last_5_matches, if 2 (or more) entries are not None AND THE EXACT SAME,
         # then consider it good enough for setting the current location
-        allow = True
-        if (None, None) in self.last_5_matches:
-            allow = False
-            for i, match_tup in enumerate(self.last_5_matches):
-                if match_tup is not (None, None):
-                    counter = 0
-                    for j in range(i + 1, 5):
-                        if self.last_5_matches[j][1] is None:
-                            continue
-                        elif self.last_5_matches[j][1] == match_tup[1]:
-                            counter += 1
-                        else:
-                            counter = -1
-                            break
-                    if counter == -1: break
-                    if counter >= 2: # <- Change this to allow more(or less) matches among Nones for it to be conidered
-                                     # good
-                        allow = True
-                        break
+        # allow = True
+        # if (None, None) in self.last_5_matches:
+        #     allow = False
+        #     for i, match_tup in enumerate(self.last_5_matches):
+        #         if match_tup is not (None, None):
+        #             counter = 0
+        #             for j in range(i + 1, 5):
+        #                 if self.last_5_matches[j][1] is None:
+        #                     continue
+        #                 elif self.last_5_matches[j][1] == match_tup[1]:
+        #                     counter += 1
+        #                 else:
+        #                     counter = -1
+        #                     break
+        #             if counter == -1: break
+        #             if counter >= 2: # <- Change this to allow more(or less) matches among Nones for it to be conidered
+        #                              # good
+        #                 allow = True
+        #                 break
 
-        if len(self.last_5_matches) < 5 or not allow:
+        if len(self.last_5_matches) < 5:
             self.next_possible_edges = self.possible_edges
+            print("err 1")
             return
 
         # To find the most occuring edge in last_5_matches
@@ -229,11 +231,17 @@ class RealTimeMatching:
             if coun > maxCount:
                 most_occuring_edge = edge
                 most_occuring_second = None
+                maxCount = coun
             elif coun == maxCount and edge != most_occuring_edge:
                 most_occuring_second = edge
 
         # If most_occuring_second is not None it implies 2 edges are having max count
         if most_occuring_edge is None or most_occuring_second is not None:
+            print("err 2")
+            return
+
+        if (None,None) in self.last_5_matches and maxCount<3:
+            print("err 3")
             return
 
         # At this point we have the most occuring edge
@@ -254,6 +262,7 @@ class RealTimeMatching:
             coun = edge_indexes.count(index)
             if coun > maxCount or (coun == maxCount and index > cur_edge_index):
                 cur_edge_index = index
+                maxCount = coun
 
         # cur_edge_index holds the most occuring edge index (in the last 5 matches) on the current edge
 
@@ -305,11 +314,20 @@ class RealTimeMatching:
             self.next_possible_edges.append(possibleEdge)
 
         # Displaying current location on graph
-        last_jth_matched_img_obj = self.probable_path.edge.distinct_frames.get_object(cur_edge_index)
+        print(str(most_occuring_edge)+", "+str(cur_edge_index))
+        edgeObj, allow = None, True
+        for nd in self.graph_obj.Nodes[0]:
+            if not allow: break
+            for edge in nd.links:
+                if edge.name == most_occuring_edge:
+                    edgeObj = edge
+                    allow = False
+                    break
+        last_jth_matched_img_obj = edgeObj.distinct_frames.get_object(cur_edge_index)
         time_stamp = last_jth_matched_img_obj.get_time()
-        total_time = self.probable_path.edge.distinct_frames.get_time()
+        total_time = edgeObj.distinct_frames.get_time()
         fraction = time_stamp / total_time if total_time != 0 else 0
-        self.graph_obj.on_edge(self.probable_path.edge.src, self.probable_path.edge.dest, fraction)
+        self.graph_obj.on_edge(edgeObj.src, edgeObj.dest, fraction)
         print("graph called")
         self.graph_obj.display_path(0,self.current_location_str)
         return
@@ -379,7 +397,8 @@ class RealTimeMatching:
         cv2.destroyAllWindows()
 
 
-graph1: Graph = Graph.load_graph("testData/afternoon_sit0 15june/graph.pkl")
+graph1: Graph = Graph.load_graph("new_objects/graph.pkl")
 realTimeMatching = RealTimeMatching(graph1)
-realTimeMatching.save_query_objects("testData/afternoon_sit0 15june/queryVideos/queryVideos/VID_20190615_180507.webm",
-                                    frames_skipped=1)
+url = "http://10.194.36.234:8080/shot.jpg"
+realTimeMatching.save_query_objects(url, livestream=True,
+                                    frames_skipped=0)

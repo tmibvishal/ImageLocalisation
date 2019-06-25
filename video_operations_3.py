@@ -208,8 +208,8 @@ def save_distinct_ImgObj(video_str, folder, frames_skipped: int = 0, check_blurr
 
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             b = (len(keypoints), descriptors, serialize_keypoints(keypoints), gray.shape)
-            if len(keypoints)<150:
-                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <150")
+            if len(keypoints)<100:
+                print("frame "+str(i)+ " skipped as "+str(len(keypoints))+" <100")
                 i = i+1
                 continue
             import matcher as mt
