@@ -12,7 +12,7 @@ video_path = "Query video path"
 
 folder = "folder path to save distinct frames"
 if os.path.exists(folder):
-    print('---INPUT REQD----" ' + folder + " \"alongwith its contents will be deleted. Continue? (y/n)")
+    print('---INPUT READ----" ' + folder + " \"along with its contents will be deleted. Continue? (y/n)")
     if input() == "y":
         shutil.rmtree(folder)
 

@@ -589,7 +589,7 @@ def run(code: int):
 #
 # cv2.waitKey()
 # run(1)pass
-# run(2)
+# run(0)
 
 # graph:Graph = load_graph("new_objects/graph (1).pkl")
 # graph.make_connections(0)

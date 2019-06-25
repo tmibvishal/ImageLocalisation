@@ -156,6 +156,7 @@ class NodeEdgeRealTimeMatching:
             # j will end up reaching the end and without any match there will be a inc in edge_ended_probability ----
             possible_edge["edge_ended_probability"] = possible_edge["edge_ended_probability"] + 0.4
 
+
     @staticmethod
     def match_edge_end_frames_with_frame(possible_edge, i: int, query_video_ith_frame: vo2.ImgObj,
                                          no_of_edge_end_frames_to_consider: int = 2):
@@ -169,12 +170,13 @@ class NodeEdgeRealTimeMatching:
             img_obj_from_edge: vo2.ImgObj = edge.distinct_frames.get_object(j)
             image_fraction_matched, min_good_matches = mt.SURF_returns(img_obj_from_edge.get_elements(),
                                                                        query_video_ith_frame.get_elements(), 2500, 0.7)
-            if min_good_matches > 100 and image_fraction_matched != -1:
-                if image_fraction_matched > 0.09 or min_good_matches > 225:
+            if image_fraction_matched != -1:
+                if image_fraction_matched > 0.09:
                     if image_fraction_matched > maxmatch:
                         match, maxmatch = j, image_fraction_matched
             j = j + 1
         if match:
+            print("edge end has matched")
             possible_edge["edge_ended_probability"] = possible_edge["edge_ended_probability"] + 0.5
             return True
         else:
@@ -320,7 +322,7 @@ class NodeEdgeRealTimeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-graph_obj: Graph = load_graph("new_objects/graph.pkl")
+graph_obj: Graph = load_graph("new_objects/graph night.pkl")
 node_and_edge_real_time_matching = NodeEdgeRealTimeMatching(graph_obj)
 
 
