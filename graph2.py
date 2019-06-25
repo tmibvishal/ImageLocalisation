@@ -549,10 +549,10 @@ def run(code: int):
 
     # Add nodes and edges
     if code == 2:
-        graph: Graph = load_graph("testData/afternoon_sit0 15june/graph.pkl")
-        graph.read_nodes("testData/afternoon_sit0 15june/NodeData", 4)
-        graph.read_edges("testData/afternoon_sit0 15june/edgeData", 4)
-        graph.save_graph("testData/afternoon_sit0 15june", "graph.pkl")
+        graph: Graph = load_graph("new_objects/graph.pkl")
+        # graph.read_nodes("testData/afternoon_sit0 15june/NodeData", 4)
+        graph.read_edges("testData/night sit 0 june 18/Transfer returns", 4)
+        graph.save_graph("new_objects","graph.pkl")
 
     # Query video
     if code == 3:
@@ -595,7 +595,7 @@ def run(code: int):
 # cv2.waitKey()
 # run(1)pass
 # run(0)
-
+# run(2)
 # graph:Graph = load_graph("new_objects/graph (1).pkl")
 # graph.make_connections(0)
 # graph.print_graph(0)
