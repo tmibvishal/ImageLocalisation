@@ -6,7 +6,7 @@ import video_operations_3 as vo
 from graph2 import Graph, Edge, Node, FloorMap
 import matcher as mt
 
-graph1: Graph = Graph.load_graph("new_objects/graph.pkl")
+graph1: Graph = Graph.load_graph("testData/afternoon_sit0 15june/graph.pkl")
 print(graph1)
 video_path = "Query video path"
 
@@ -23,8 +23,6 @@ class FoundMatch:
         self.edge_index = edge_index
         self.edge_name = edge_name
         self.fraction_matched = fraction_matched
-
-
 class PossibleEdge:
     def __init__(self, edge: Edge, confidence=0 ):
         self.name = edge.name
@@ -52,6 +50,7 @@ class RealTimeMatching:
         self.query_objects = vo.DistinctFrames()
         self.last_5_matches = []
         self.max_confidence_edges = 0
+        self.current_location_str= "hello bindal machaxx"
 
     def get_query_params(self, frame_index):
         return self.query_objects.get_object(frame_index).get_elements()
@@ -78,12 +77,14 @@ class RealTimeMatching:
             if i == self.max_confidence_edges - 1 and match is not None:
                 print("---Max match for " + str(query_index) + ": ", end="")
                 print((match, maxedge))
+                self.current_location_str="---Max match for " + str(query_index) + ": ("+str(match)+" ," +str(maxedge)+" )"
                 self.last_5_matches.append((match, maxedge))
                 if len(self.last_5_matches) > 5:
                     self.last_5_matches.remove(self.last_5_matches[0])
                 return progress, match
         print("---Max match for " + str(query_index) + ": ", end="")
         print((match, maxedge))
+        self.current_location_str="---Max match for " + str(query_index) + ": ("+str(match)+" ," +str(maxedge)+" )"
         self.last_5_matches.append((match, maxedge))
         if len(self.last_5_matches) > 5:
             self.last_5_matches.remove(self.last_5_matches[0])
@@ -250,7 +251,7 @@ class RealTimeMatching:
         total_time = self.probable_path.edge.distinct_frames.get_time()
         fraction = time_stamp / total_time if total_time != 0 else 0
         self.graph_obj.on_edge(self.probable_path.edge.src, self.probable_path.edge.dest, fraction)
-        self.graph_obj.display_path(0)
+        self.graph_obj.display_path(0,self.current_location_str)
         return
 
     def save_query_objects(self, video_path, folder="query_distinct_frame", livestream=False, write_to_disk=False,
@@ -273,7 +274,6 @@ class RealTimeMatching:
             if livestream:
                 cap = cv2.VideoCapture(video_path)
             ret, frame = cap.read()
-
             if i % frames_skipped != 0 :
                 i=i+1
                 continue
@@ -313,5 +313,5 @@ class RealTimeMatching:
 
 
 realTimeMatching = RealTimeMatching(graph1)
-realTimeMatching.confirmed_path = [3]
-realTimeMatching.save_query_objects("testData/night sit 0 june 18/query video/VID_20190618_202957.webm", frames_skipped=1)
+realTimeMatching.confirmed_path = [0]
+realTimeMatching.save_query_objects("testData/afternoon_sit0 15june/queryVideos/queryVideos/VID_20190615_180507.webm", frames_skipped=2)
