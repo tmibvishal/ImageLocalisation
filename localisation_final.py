@@ -55,16 +55,23 @@ class RealTimeMatching:
             if i == self.max_confidence_edges - 1 and match is not None:
                 print("---Max match for " + str(query_index) + ": ", end="")
                 print((match, maxedge))
-                self.current_location_str = "---Max match for " + str(query_index) + ": (" + str(match) + " ," + str(
-                    maxedge) + " )"
+                if match is None:
+                    self.current_location_str = "---Max match for " + str(query_index) + ": (None, None)"
+                else:
+                    self.current_location_str = "---Max match for " + str(query_index) + ": (" + str(
+                        match) + " ," + str(
+                        maxedge) + " )"
                 self.last_5_matches.append((match, maxedge))
                 if len(self.last_5_matches) > 5:
                     self.last_5_matches.remove(self.last_5_matches[0])
                 return progress, match
         print("---Max match for " + str(query_index) + ": ", end="")
         print((match, maxedge))
-        self.current_location_str = "---Max match for " + str(query_index) + ": (" + str(match) + " ," + str(
-            maxedge) + " )"
+        if match is None:
+            self.current_location_str = "---Max match for " + str(query_index) + ": (None, None)"
+        else:
+            self.current_location_str = "---Max match for " + str(query_index) + ": (" + str(match) + " ," + str(
+                maxedge) + " )"
         self.last_5_matches.append((match, maxedge))
         if len(self.last_5_matches) > 5:
             self.last_5_matches.remove(self.last_5_matches[0])
@@ -238,6 +245,7 @@ class RealTimeMatching:
         total_time = self.probable_path.edge.distinct_frames.get_time()
         fraction = time_stamp / total_time if total_time != 0 else 0
         self.graph_obj.on_edge(self.probable_path.edge.src, self.probable_path.edge.dest, fraction)
+        print("graph called")
         self.graph_obj.display_path(0,self.current_location_str)
         return
 
@@ -276,7 +284,7 @@ class RealTimeMatching:
                 continue
 
             cv2.imshow('Query Video!!', gray)
-            one_frame.query_video_frame(gray)
+            one_frame.run_query_frame(gray)
 
 
             keypoints, descriptors = detector.detectAndCompute(gray, None)
@@ -304,7 +312,7 @@ class RealTimeMatching:
         cv2.destroyAllWindows()
 
 
-graph1: Graph = Graph.load_graph("new_objects/graph.pkl")
+graph1: Graph = Graph.load_graph("testData/afternoon_sit0 15june/graph.pkl")
 realTimeMatching = RealTimeMatching(graph1)
-realTimeMatching.save_query_objects("testData/night sit 0 june 18/query video/VID_20190618_202826.webm",
+realTimeMatching.save_query_objects("testData/afternoon_sit0 15june/queryVideos/queryVideos/VID_20190615_180507.webm",
                                     frames_skipped=1)

@@ -79,14 +79,21 @@ class RealTimeMatching:
             if i == self.max_confidence_edges - 1 and match is not None:
                 print("---Max match for " + str(query_index) + ": ", end="")
                 print((match, maxedge))
-                self.current_location_str="---Max match for " + str(query_index) + ": ("+str(match)+" ," +str(maxedge)+" )"
+                if match is None:
+                    self.current_location_str = "---Max match for " + str(query_index) + ": (None, None)"
+                else:
+                    self.current_location_str="---Max match for " + str(query_index) + ": ("+str(match)+" ," +str(maxedge)+" )"
                 self.last_5_matches.append((match, maxedge))
                 if len(self.last_5_matches) > 5:
                     self.last_5_matches.remove(self.last_5_matches[0])
                 return progress, match
         print("---Max match for " + str(query_index) + ": ", end="")
         print((match, maxedge))
-        self.current_location_str="---Max match for " + str(query_index) + ": ("+str(match)+" ," +str(maxedge)+" )"
+        if match is None:
+            self.current_location_str = "---Max match for " + str(query_index) + ": (None, None)"
+        else:
+            self.current_location_str = "---Max match for " + str(query_index) + ": (" + str(match) + " ," + str(
+                maxedge) + " )"
         self.last_5_matches.append((match, maxedge))
         if len(self.last_5_matches) > 5:
             self.last_5_matches.remove(self.last_5_matches[0])

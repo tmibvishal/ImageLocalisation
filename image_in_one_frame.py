@@ -24,6 +24,7 @@ def show_frames ():
         grey_3_channel1 = cv2.resize(grey_3_channel, (800, 550), interpolation=cv2.INTER_AREA)
         numpy_horizontal_concat = np.concatenate((graph_frame1, grey_3_channel1), axis=1)
         cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
-        cv2.waitKey(1)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
 
 
