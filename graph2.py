@@ -520,8 +520,8 @@ class Graph:
         # cv2.resizeWindow("Current location", 1600, 1600)
         cv2.putText(img, current_location_str,(20,32),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,0),2)
         one_frame.run_graph_frame(img)
-        cv2.imshow("Current location", img)
-        cv2.waitKey(1)
+        # cv2.imshow("Current location", img)
+        # cv2.waitKey(1)
 
     @staticmethod
     def load_graph(graph_path):

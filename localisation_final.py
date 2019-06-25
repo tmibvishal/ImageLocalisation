@@ -77,6 +77,7 @@ class RealTimeMatching:
                     self.current_location_str = "---Max match for " + str(query_index) + ": (" + str(
                         match) + " ," + str(
                         maxedge) + " )"
+                self.graph_obj.display_path(0, self.current_location_str)
                 # Update last_5_matches
                 self.last_5_matches.append((match, maxedge))
                 if len(self.last_5_matches) > 5:
@@ -90,6 +91,7 @@ class RealTimeMatching:
         else:
             self.current_location_str = "---Max match for " + str(query_index) + ": (" + str(match) + " ," + str(
                 maxedge) + " )"
+        self.graph_obj.display_path(0, self.current_location_str)
         # Update last_5_matches
         self.last_5_matches.append((match, maxedge))
         if len(self.last_5_matches) > 5:
@@ -346,8 +348,8 @@ class RealTimeMatching:
             if vo.is_blurry_grayscale(gray):
                 continue
 
-            cv2.imshow('Query Video!!', gray)
-            one_frame.run_query_frame(gray)
+            # cv2.imshow('Query Video!!', gray)
+            break_video= one_frame.run_query_frame(gray)
 
 
             keypoints, descriptors = detector.detectAndCompute(gray, None)
@@ -365,7 +367,7 @@ class RealTimeMatching:
                 general.save_to_memory(img_obj, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if (cv2.waitKey(1) & 0xFF == ord('q')) or break_video:
                 break
 
             # Calling the localisation fuunctions, yeah!!

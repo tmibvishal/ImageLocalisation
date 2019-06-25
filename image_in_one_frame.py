@@ -7,7 +7,7 @@ query_video_frame= None
 def run_query_frame(img):
     global query_video_frame
     query_video_frame=img
-    show_frames()
+    return show_frames()
 
 def run_graph_frame(img):
     global graph_frame
@@ -26,5 +26,8 @@ def show_frames ():
         cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
+            return True
+        else:
+            return False
 
 
