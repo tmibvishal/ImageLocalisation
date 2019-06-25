@@ -6,38 +6,19 @@ import video_operations_3 as vo
 from graph2 import Graph, Edge, Node, FloorMap
 import matcher as mt
 
-graph1: Graph = Graph.load_graph("testData/afternoon_sit0 15june/graph.pkl")
-print(graph1)
-video_path = "Query video path"
-
-folder = "folder path to save distinct frames"
-if os.path.exists(folder):
-    print('---INPUT REQD----" ' + folder + " \"alongwith its contents will be deleted. Continue? (y/n)")
-    if input() == "y":
-        shutil.rmtree(folder)
-
-
-# class FoundMatch:
-#     def __init__(self, query_index, edge_index, edge_name, fraction_matched):
-#         self.query_index = query_index
-#         self.edge_index = edge_index
-#         self.edge_name = edge_name
-#         self.fraction_matched = fraction_matched
-#
 
 class PossibleEdge:
     def __init__(self, edge: Edge):
         self.name = edge.name
         self.edge = edge
         self.no_of_frames = edge.distinct_frames.no_of_frames()
-        # self.matches_found = []  # list of FoundMatch objects
-        # self.indexes_matched = []
         self.to_match_params = (0, self.no_of_frames)
 
     def __str__(self):
         return self.name
 
     def get_frame_params(self, frame_index):
+        # return ( no_of_keypoints, descriptors, serialized_keypoints, shape ) of imgObj at frame_index
         return self.edge.distinct_frames.get_object(frame_index).get_elements()
 
 
@@ -51,7 +32,6 @@ class RealTimeMatching:
         self.query_objects = vo.DistinctFrames()
         self.last_5_matches = []
         self.max_confidence_edges = 0
-        self.current_location_str= "hello bindal machaxx"
 
     def get_query_params(self, frame_index):
         return self.query_objects.get_object(frame_index).get_elements()
@@ -65,11 +45,6 @@ class RealTimeMatching:
                 fraction_matched, features_matched = mt.SURF_returns(possible_edge.get_frame_params(j),
                                                                      self.get_query_params(query_index))
                 if fraction_matched > 0.09 or features_matched > 200:
-                    # print((query_index, j, possible_edge.name, fraction_matched))
-                    # foundMatch = FoundMatch(query_index, j, possible_edge.name, fraction_matched)
-                    # possible_edge.matches_found.append(foundMatch)
-                    # if j not in possible_edge.indexes_matched:
-                    #     possible_edge.indexes_matched.append(j)
                     progress = True
 
                     if fraction_matched > maxmatch:
@@ -78,14 +53,12 @@ class RealTimeMatching:
             if i == self.max_confidence_edges - 1 and match is not None:
                 print("---Max match for " + str(query_index) + ": ", end="")
                 print((match, maxedge))
-                self.current_location_str="---Max match for " + str(query_index) + ": ("+str(match)+" ," +str(maxedge)+" )"
                 self.last_5_matches.append((match, maxedge))
                 if len(self.last_5_matches) > 5:
                     self.last_5_matches.remove(self.last_5_matches[0])
                 return progress, match
         print("---Max match for " + str(query_index) + ": ", end="")
         print((match, maxedge))
-        self.current_location_str="---Max match for " + str(query_index) + ": ("+str(match)+" ," +str(maxedge)+" )"
         self.last_5_matches.append((match, maxedge))
         if len(self.last_5_matches) > 5:
             self.last_5_matches.remove(self.last_5_matches[0])
@@ -96,11 +69,11 @@ class RealTimeMatching:
             for nd in self.graph_obj.Nodes[0]:
                 for edge in nd.links:
                     possible_edge_node = PossibleEdge(edge)
-                    possible_edge_node.to_match_params= (0, 1)
+                    possible_edge_node.to_match_params = (0, 1)
                     self.possible_edges.append(possible_edge_node)
             query_index = self.query_objects.no_of_frames() - 1
             progress, match = self.match_edges(query_index)
-            if not progress or len(self.last_5_matches)<2:
+            if not progress or len(self.last_5_matches) < 2:
                 return
             last_5_edges_matched = []
             for i in range(len(self.last_5_matches)):
@@ -144,7 +117,6 @@ class RealTimeMatching:
                 possibleEdge = PossibleEdge(edge)
                 self.next_possible_edges.append(possibleEdge)
 
-
         if len(self.next_possible_edges) != 0:
             self.possible_edges = self.next_possible_edges
 
@@ -159,58 +131,26 @@ class RealTimeMatching:
 
         query_index = self.query_objects.no_of_frames() - 1
         progress, match = self.match_edges(query_index)
-        # while not progress and len(self.possible_edges)>0:
-        #     for possible_edge in self.possible_edges:
-        #         if possible_edge.to_match_params[1] == possible_edge.no_of_frames:
-        #             self.possible_edges.remove(possible_edge)
-        #             continue
-        #         possible_edge.to_match_params = (possible_edge.to_match_params[0] + 3, possible_edge.to_match_params[1] + 3)
-        #         if possible_edge.to_match_params[1] > possible_edge.no_of_frames:
-        #             possible_edge.to_match_params = (possible_edge.to_match_params[0], possible_edge.no_of_frames)
-        #         if possible_edge.to_match_params[0]>=possible_edge.no_of_frames:
-        #             raise Exception("Wrong params for checking")
-        #         progress = self.match_edges(query_index)
+
         if not progress:
             return
-        # if progress found!!
-        # self.possible_edges.sort(key=lambda x: (len(x.indexes_matched), len(x.matches_found)), reverse=True)
-        # if (len(self.possible_edges)==1 and len(self.possible_edges[0].indexes_matched)>=2) or (
-        #         len(self.possible_edges)>0 and
-        #         len(self.possible_edges[0].indexes_matched) - len(self.possible_edges[1].indexes_matched) >= 2):
-        #     for i in range(1, len(self.possible_edges)):
-        #         if self.possible_edges[i].edge.src != self.possible_edges[0].edge.dest:
-        #             self.possible_edges.remove(self.possible_edges[i])
-        #
-        #     self.next_possible_edges = self.possible_edges
-        #     nd = self.graph_obj.get_node(self.possible_edges[0].edge.dest)
-        #     for edge in nd.links:
-        #         possibleEdge = PossibleEdge(edge)
-        #         present=False
-        #         for existing_edge in self.next_possible_edges:
-        #             if possibleEdge.name == existing_edge.name:
-        #                 present=True
-        #                 break
-        #         if not present:
-        #             self.next_possible_edges.append(possibleEdge)
-        #
-        # self.probable_path = self.possible_edges[0]
-        # self.possible_edges[0].confidence = 1
+
         allow = True
         if (None, None) in self.last_5_matches:
             allow = False
             for i, match_tup in enumerate(self.last_5_matches):
                 if match_tup is not (None, None):
                     counter = 0
-                    for j in range(i+1, 5):
+                    for j in range(i + 1, 5):
                         if self.last_5_matches[j][1] is None:
                             continue
                         elif self.last_5_matches[j][1] == match_tup[1]:
-                            counter+=1
+                            counter += 1
                         else:
                             counter = -1
                             break
-                    if counter==-1: break
-                    if counter>=2:
+                    if counter == -1: break
+                    if counter >= 2:
                         allow = True
                         break
 
@@ -230,7 +170,6 @@ class RealTimeMatching:
             elif coun == maxCount and edge != most_occuring_edge:
                 most_occuring_second = edge
 
-
         if most_occuring_edge is None or most_occuring_second is not None:
             return
         for possible_edge in self.possible_edges:
@@ -238,7 +177,7 @@ class RealTimeMatching:
                 self.probable_path = possible_edge
                 self.max_confidence_edges = 1
 
-        edge_indexes=[]
+        edge_indexes = []
         for matches in self.last_5_matches:
             if matches[1] == most_occuring_edge:
                 edge_indexes.append(matches[0])
@@ -247,26 +186,26 @@ class RealTimeMatching:
         maxCount = 0
         for index in edge_indexes:
             coun = edge_indexes.count(index)
-            if coun > maxCount or (coun==maxCount and index>cur_edge_index)  :
+            if coun > maxCount or (coun == maxCount and index > cur_edge_index):
                 cur_edge_index = index
 
         self.next_possible_edges = [self.probable_path]
         nd = self.graph_obj.get_node(self.probable_path.edge.dest)
-        if cur_edge_index> self.probable_path.no_of_frames - 2:
+        if cur_edge_index > self.probable_path.no_of_frames - 2:
             count_of_straight_edges, straightPossibleEdge = 0, None
             for tup in self.probable_path.edge.angles:
                 if abs(tup[1]) < 20:
-                    count_of_straight_edges+=1
+                    count_of_straight_edges += 1
                     src, dest = tup[0].split('_')
                     edg = self.graph_obj.get_edge(int(src), int(dest))
                     possible_edge = PossibleEdge(edg)
                     straightPossibleEdge = possible_edge
                     self.next_possible_edges.append(possible_edge)
-                    self.max_confidence_edges +=1
+                    self.max_confidence_edges += 1
             if count_of_straight_edges == 1:
                 fraction_matched, features_matched = mt.SURF_returns(straightPossibleEdge.get_frame_params(0),
                                                                      self.get_query_params(query_index))
-                if fraction_matched >= 0.1: #0.7 * self.probable_path.matches_found[-1].fraction_matched:
+                if fraction_matched >= 0.1:  # 0.7 * self.probable_path.matches_found[-1].fraction_matched:
                     self.probable_path = straightPossibleEdge
                     cur_edge_index = 0
                     self.next_possible_edges = [self.probable_path]
@@ -293,19 +232,20 @@ class RealTimeMatching:
         total_time = self.probable_path.edge.distinct_frames.get_time()
         fraction = time_stamp / total_time if total_time != 0 else 0
         self.graph_obj.on_edge(self.probable_path.edge.src, self.probable_path.edge.dest, fraction)
-        self.graph_obj.display_path(0,self.current_location_str)
+        self.graph_obj.display_path(0)
         return
 
     def save_query_objects(self, video_path, folder="query_distinct_frame", livestream=False, write_to_disk=False,
-                           frames_skipped = 0):
+                           frames_skipped=0):
 
-        frames_skipped+=1
+        frames_skipped += 1
         hessian_threshold = 2500
 
-        if os.path.exists(folder):
-            print('---INPUT REQD----" ' + folder + " \"alongwith its contents will be deleted. Continue? (y/n)")
-            if input() == "y":
-                shutil.rmtree(folder)
+        if write_to_disk:
+            if os.path.exists(folder):
+                print('---INPUT REQD----" ' + folder + " \"alongwith its contents will be deleted. Continue? (y/n)")
+                if input() == "y":
+                    shutil.rmtree(folder)
         general.ensure_path(folder + '/jpg')
 
         detector = cv2.xfeatures2d_SURF.create(hessian_threshold)
@@ -316,8 +256,9 @@ class RealTimeMatching:
             if livestream:
                 cap = cv2.VideoCapture(video_path)
             ret, frame = cap.read()
-            if i % frames_skipped != 0 :
-                i=i+1
+
+            if i % frames_skipped != 0:
+                i = i + 1
                 continue
 
             if not ret:
@@ -330,9 +271,9 @@ class RealTimeMatching:
 
             cv2.imshow('Query Video!!', gray)
             keypoints, descriptors = detector.detectAndCompute(gray, None)
-            if len(keypoints)<50:
+            if len(keypoints) < 50:
                 print("frame skipped as keypoints", len(keypoints), " less than 50")
-                i=i+1
+                i = i + 1
                 continue
 
             a = (len(keypoints), descriptors, vo.serialize_keypoints(keypoints), gray.shape)
@@ -354,5 +295,7 @@ class RealTimeMatching:
         cv2.destroyAllWindows()
 
 
+graph1: Graph = Graph.load_graph("new_objects/graph.pkl")
 realTimeMatching = RealTimeMatching(graph1)
-realTimeMatching.save_query_objects("testData/night sit 0 june 18/query video/VID_20190618_202826.webm", frames_skipped=1)
+realTimeMatching.save_query_objects("testData/night sit 0 june 18/query video/VID_20190618_202826.webm",
+                                    frames_skipped=1)

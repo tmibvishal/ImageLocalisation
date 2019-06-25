@@ -71,7 +71,7 @@ class DistinctFrames:
             raise Exception("Invalid start / end indexes")
         if start_index > end_index:
             raise Exception("Start index should be less than or equal to end index")
-        return self.imSURF_retg_objects[start_index:end_index]
+        return self.img_objects[start_index:end_index]
 
     def get_object(self, index):
         if index not in range(0, self.no_of_frames()):
