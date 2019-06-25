@@ -473,6 +473,8 @@ class Graph:
             prev = self.path_traversed[-1]
             if type(prev) == tuple:
                 if prev[0] == src:
+                    if prev[1] == dest and prev[2]> fraction_traversed:
+                        return
                     self.path_traversed[-1] = (src, dest, fraction_traversed)
                     return
                 else:
@@ -592,7 +594,7 @@ def run(code: int):
 #
 # cv2.waitKey()
 # run(1)pass
-# run(2)
+# run(0)
 
 # graph:Graph = load_graph("new_objects/graph (1).pkl")
 # graph.make_connections(0)
