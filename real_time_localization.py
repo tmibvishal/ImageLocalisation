@@ -95,7 +95,7 @@ class NodeEdgeRealTimeMatching:
         # possible edge here is passed as reference.
 
 
-        j = possible_edge["last_matched_j"] + 1
+        j = possible_edge["last_matched_j"]
         # if last_matched_j is 3rd frame, now j will start matching from 4th frame,
         # gave better and more real time results
 
@@ -146,7 +146,7 @@ class NodeEdgeRealTimeMatching:
             possible_edge["last_matched_j"] = match
             possible_edge["last_matched_i_with_j"] = i
             possible_edge["confidence"] = possible_edge["confidence"] + 1
-            if possible_edge["no_of_frames_to_match"] > 2:
+            if possible_edge["no_of_frames_to_match"] > 3:
                 possible_edge["no_of_frames_to_match"] = possible_edge["no_of_frames_to_match"] - 1
             possible_edge["no_of_continuous_no_match"] = 0
 
@@ -169,7 +169,7 @@ class NodeEdgeRealTimeMatching:
             img_obj_from_edge: vo2.ImgObj = edge.distinct_frames.get_object(j)
             image_fraction_matched, min_good_matches = mt.SURF_returns(img_obj_from_edge.get_elements(),
                                                                        query_video_ith_frame.get_elements(), 2500, 0.7)
-            if min_good_matches > 100 and image_fraction_matched != -1:
+            if min_good_matches > 50 and image_fraction_matched != -1:
                 if image_fraction_matched > 0.09 or min_good_matches > 225:
                     if image_fraction_matched > maxmatch:
                         match, maxmatch = j, image_fraction_matched
@@ -254,8 +254,11 @@ class NodeEdgeRealTimeMatching:
                 self.match_edge_end_frames_with_frame(possible_edge, i, query_video_distinct_frames.get_object(i),
                                                       no_of_edge_end_frames_to_consider=2)
 
-
-                if possible_edge["edge_ended_probability"] >= 0.5:
+                j_max = possible_edge["edge"].distinct_frames.no_of_frames()
+                j_min_for_probability = j_max - 3
+                while j_min_for_probability < 0:
+                    j_min_for_probability += 1
+                if possible_edge["edge_ended_probability"] >= 0.5 and possible_edge["last_matched_j"]>j_min_for_probability:
                     # if possible_edge["confidence"] > 0:
                     # edge is found
                     is_edge_found = True
@@ -320,7 +323,7 @@ class NodeEdgeRealTimeMatching:
             print("edge" + str(edge.src) + "_" + str(edge.dest))
 
 
-graph_obj: Graph = load_graph("new_objects/graph.pkl")
+graph_obj: Graph = load_graph("testData/night sit 0 june 18/graph obj vishal/new_objects/graph.pkl")
 node_and_edge_real_time_matching = NodeEdgeRealTimeMatching(graph_obj)
 
 
@@ -389,7 +392,7 @@ def save_distinct_realtime_modified_ImgObj(video_str: str, folder: str, frames_s
                 i=i+1
                 continue
             check_next_frame = False
-            if 0< image_fraction_matched < 0.09 or min_good_matches<50 or (ensure_min and i - i_prev > 50):
+            if 0< image_fraction_matched < 0.10 or min_good_matches<50 or (ensure_min and i - i_prev > 50):
                 img_obj2 = ImgObj(b[0], b[1], i, b[2], b[3])
                 save_to_memory(img_obj2, 'image' + str(i) + '.pkl', folder)
                 cv2.imwrite(folder + '/jpg/image' + str(i) + '.jpg', gray)
@@ -437,5 +440,5 @@ if __name__ == '__main__':
     # save_distinct_realtime_modified_ImgObj(url,
     #                                        "query_distinct_frame/night", 0,
     #                                        check_blurry=True, ensure_min=True, livestream=True)
-    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_203044.webm","query_distinct_frame", 2,
+    save_distinct_realtime_modified_ImgObj("testData/night sit 0 june 18/query video/VID_20190618_202826.webm","query_distinct_frame", 2,
                                            check_blurry=True, ensure_min=True, livestream=False)
