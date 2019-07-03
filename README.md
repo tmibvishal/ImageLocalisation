@@ -1,5 +1,19 @@
 # ImageLocalisation
 
+## Using Matcher (matcher.py)
+### For comparing two images directly and getting fraction match
+Read the two images using cv2.imread() and call the function 
+```python
+SURF_match (img1, img2, hessianThreshold: int = 400, ratio_thresh: float = 0.7, symmetry_match: bool = True)
+```
+### For comparing two images using the extracted descriptors and keypoints of images
+```python
+SURF_match (key_des_1, key_des_2, hessianThreshold: int = 400, ratio_thresh: float = 0.7, symmetry_match: bool = True)
+where
+key_des_1 : (length of keypoints, description) pair of image 1,
+key_des_2 : (length of keypoints, description) pair of image 2,
+```
+
 ## Real Time Image  based Path Tracking Algorithm
 
 ### User Interface
