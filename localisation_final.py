@@ -19,7 +19,12 @@ class PossibleEdge:
         return self.name
 
     def get_frame_params(self, frame_index):
-        # return ( no_of_keypoints, descriptors, serialized_keypoints, shape ) of imgObj at frame_index
+        """
+        Returns params of particular imgObj of edge for SURF matching
+        :param frame_index: Index of imgObj in the edge , int in range(0, no_of_frames)
+        :return: tuple of the form
+        ( no_of_keypoints, descriptors, serialized_keypoints, shape ) of imgObj at frame_index
+        """
         return self.edge.distinct_frames.get_object(frame_index).get_elements()
 
 
@@ -42,11 +47,17 @@ class RealTimeMatching:
         self.current_location_str = ""
 
     def get_query_params(self, frame_index):
-        # return ( no_of_keypoints, descriptors, serialized_keypoints, shape ) of imgObj at query_index
+        """
+        Returns params of particular imgObj of query DistinctFrames object for SURF matching
+        :param frame_index: Index of imgObj in the query object , int in range(0, no_of_frames)
+        :return: tuple of the form
+        ( no_of_keypoints, descriptors, serialized_keypoints, shape ) of imgObj at frame_index
+        """
         return self.query_objects.get_object(frame_index).get_elements()
 
     def match_edges(self, query_index):
         """
+        Finds matches of query frame with frames in possible edges and updates last 5 matches
         :param:
         query_index: current index (to be queried) of query frames
         :return:
@@ -98,8 +109,13 @@ class RealTimeMatching:
             self.last_5_matches.remove(self.last_5_matches[0])
         return progress
 
-
     def handle_edges(self):
+        """
+        Updates possible_edges, next_possible_edges and
+        decides most_occuring_edge and cur_edge_index ( which give the current location )
+        based on last_5_matches
+        :return: None
+        """
         # if self.confirmed_path is empty then starting pt is not defined yet.
         if len(self.confirmed_path) == 0:
 
@@ -190,34 +206,12 @@ class RealTimeMatching:
         progress = self.match_edges(query_index)
 
         if not progress:
-            print("err 0")
+            # print("err 0")
             return
-
-        # If None is showing up in last_5_matches, if 2 (or more) entries are not None AND THE EXACT SAME,
-        # then consider it good enough for setting the current location
-        # allow = True
-        # if (None, None) in self.last_5_matches:
-        #     allow = False
-        #     for i, match_tup in enumerate(self.last_5_matches):
-        #         if match_tup is not (None, None):
-        #             counter = 0
-        #             for j in range(i + 1, 5):
-        #                 if self.last_5_matches[j][1] is None:
-        #                     continue
-        #                 elif self.last_5_matches[j][1] == match_tup[1]:
-        #                     counter += 1
-        #                 else:
-        #                     counter = -1
-        #                     break
-        #             if counter == -1: break
-        #             if counter >= 2: # <- Change this to allow more(or less) matches among Nones for it to be conidered
-        #                              # good
-        #                 allow = True
-        #                 break
 
         if len(self.last_5_matches) < 5:
             self.next_possible_edges = self.possible_edges
-            print("err 1")
+            # print("err 1")
             return
 
         # To find the most occuring edge in last_5_matches
@@ -237,11 +231,11 @@ class RealTimeMatching:
 
         # If most_occuring_second is not None it implies 2 edges are having max count
         if most_occuring_edge is None or most_occuring_second is not None:
-            print("err 2")
+            # print("err 2")
             return
 
         if (None,None) in self.last_5_matches and maxCount<3:
-            print("err 3")
+            # print("err 3")
             return
 
         # At this point we have the most occuring edge
@@ -314,7 +308,7 @@ class RealTimeMatching:
             self.next_possible_edges.append(possibleEdge)
 
         # Displaying current location on graph
-        print(str(most_occuring_edge)+", "+str(cur_edge_index))
+        # print(str(most_occuring_edge)+", "+str(cur_edge_index))
         edgeObj, allow = None, True
         for nd in self.graph_obj.Nodes[0]:
             if not allow: break
@@ -328,12 +322,24 @@ class RealTimeMatching:
         total_time = edgeObj.distinct_frames.get_time()
         fraction = time_stamp / total_time if total_time != 0 else 0
         self.graph_obj.on_edge(edgeObj.src, edgeObj.dest, fraction)
-        print("graph called")
+        # print("graph called")
         self.graph_obj.display_path(0,self.current_location_str)
         return
 
     def save_query_objects(self, video_path, folder="query_distinct_frame", livestream=False, write_to_disk=False,
                            frames_skipped=0):
+
+        """
+        Receives and reads query video, generates non-blurry gray image frames, creates ImgObj and
+        updates query_objects
+        :param video_path: The address of query video , can be a path or a url, str format
+        :param folder: Path of folder to save query frames, str format
+        :param livestream: bool, If True: then video_path is a url , If False: video_path is a path on disk
+        :param write_to_disk: bool, If True, then query frames will be saved
+        to specified folder in .pkl and .jpg formats
+        :param frames_skipped: int, No of frames to be skipped in query video
+        :return: None
+        """
 
         frames_skipped += 1
         hessian_threshold = 2500
@@ -369,7 +375,6 @@ class RealTimeMatching:
             # cv2.imshow('Query Video!!', gray)
             break_video= one_frame.run_query_frame(gray)
 
-
             keypoints, descriptors = detector.detectAndCompute(gray, None)
             if len(keypoints) < 50:
                 print("frame skipped as keypoints", len(keypoints), " less than 50")
@@ -388,7 +393,7 @@ class RealTimeMatching:
             if (cv2.waitKey(1) & 0xFF == ord('q')) or break_video:
                 break
 
-            # Calling the localisation fuunctions, yeah!!
+            # Calling the localisation functions
             self.handle_edges()
 
             i = i + 1
