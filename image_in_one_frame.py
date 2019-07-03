@@ -23,7 +23,7 @@ def show_frames ():
         grey_3_channel = cv2.cvtColor(query_video_frame, cv2.COLOR_GRAY2BGR)
         grey_3_channel1 = cv2.resize(grey_3_channel, (800, 550), interpolation=cv2.INTER_AREA)
         numpy_horizontal_concat = np.concatenate((graph_frame1, grey_3_channel1), axis=1)
-        cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
+        cv2.imshow('Live Stream and localization', numpy_horizontal_concat)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
             return True
