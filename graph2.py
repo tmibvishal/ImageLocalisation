@@ -22,17 +22,20 @@ class Node:
     def __str__(self):
         return str(self.identity)
 
+
 class Edge:
-    def __init__(self, is_connected: bool, src: int, dest: int, distinct_frames=None, video_length: int = None, angles = None):
+    def __init__(self, is_connected: bool, src: int, dest: int, distinct_frames=None, video_length: int = None,
+                 angles=None):
         self.src = src
         self.dest = dest
         self.distinct_frames = distinct_frames
         self.video_length = video_length
-        self.name = str(src)+"_"+ str(dest)
-        self.angles = angles # list of form (edge_name, angle)
+        self.name = str(src) + "_" + str(dest)
+        self.angles = angles  # list of form (edge_name, angle)
 
     def __str__(self):
         return self.name
+
 
 class FloorMap:
     def __init__(self, floor_no: int = None, img=None):
@@ -137,9 +140,9 @@ class Graph:
         else:
             raise Exception("Nd does not exists in Nodes")
 
-    def _get_edge_slope(self, edge: Edge, floor:int=0):
-        src= edge.src
-        dest= edge.dest
+    def _get_edge_slope(self, edge: Edge, floor: int = 0):
+        src = edge.src
+        dest = edge.dest
         src_node = None
         dest_node = None
         for nd in self.Nodes[floor]:
@@ -147,47 +150,51 @@ class Graph:
                 src_node = nd
             if nd.identity == dest:
                 dest_node = nd
-        src1= src_node.coordinates[0]
-        src2= src_node.coordinates[1]
-        dest1= dest_node.coordinates[0]
-        dest2= dest_node.coordinates[1]
-        slope_in_degree=None
-        if (dest1-src1)==0:
-            slope_in_degree=90
-        elif (-1)*(dest2- src2)>0 and (dest1-src1)>0:
-            slope = (-1)*(dest_node.coordinates[1]-src_node.coordinates[1])/(dest_node.coordinates[0]-src_node.coordinates[0])
-            slope_in_degree= math.degrees(math.atan(slope))
-        elif (-1)*(dest2- src2)>0 and (dest1-src1)<0:
-            slope = (-1)*(dest_node.coordinates[1]-src_node.coordinates[1])/(dest_node.coordinates[0]-src_node.coordinates[0])
-            slope_in_degree= math.degrees(math.atan(slope))
-            slope_in_degree=180+slope_in_degree
-        elif (-1)*(dest2- src2)<0 and (dest1-src1)<0:
-            slope = (-1)*(dest_node.coordinates[1]-src_node.coordinates[1])/(dest_node.coordinates[0]-src_node.coordinates[0])
-            slope_in_degree= math.degrees(math.atan(slope))
-            slope_in_degree=180+slope_in_degree-360
-        elif (-1)*(dest2- src2)<0 and (dest1-src1)>0:
-            slope = (-1)*(dest_node.coordinates[1]-src_node.coordinates[1])/(dest_node.coordinates[0]-src_node.coordinates[0])
-            slope_in_degree= math.degrees(math.atan(slope))
-            slope_in_degree=360+slope_in_degree-360
+        src1 = src_node.coordinates[0]
+        src2 = src_node.coordinates[1]
+        dest1 = dest_node.coordinates[0]
+        dest2 = dest_node.coordinates[1]
+        slope_in_degree = None
+        if (dest1 - src1) == 0:
+            slope_in_degree = 90
+        elif (-1) * (dest2 - src2) > 0 and (dest1 - src1) > 0:
+            slope = (-1) * (dest_node.coordinates[1] - src_node.coordinates[1]) / (
+                        dest_node.coordinates[0] - src_node.coordinates[0])
+            slope_in_degree = math.degrees(math.atan(slope))
+        elif (-1) * (dest2 - src2) > 0 and (dest1 - src1) < 0:
+            slope = (-1) * (dest_node.coordinates[1] - src_node.coordinates[1]) / (
+                        dest_node.coordinates[0] - src_node.coordinates[0])
+            slope_in_degree = math.degrees(math.atan(slope))
+            slope_in_degree = 180 + slope_in_degree
+        elif (-1) * (dest2 - src2) < 0 and (dest1 - src1) < 0:
+            slope = (-1) * (dest_node.coordinates[1] - src_node.coordinates[1]) / (
+                        dest_node.coordinates[0] - src_node.coordinates[0])
+            slope_in_degree = math.degrees(math.atan(slope))
+            slope_in_degree = 180 + slope_in_degree - 360
+        elif (-1) * (dest2 - src2) < 0 and (dest1 - src1) > 0:
+            slope = (-1) * (dest_node.coordinates[1] - src_node.coordinates[1]) / (
+                        dest_node.coordinates[0] - src_node.coordinates[0])
+            slope_in_degree = math.degrees(math.atan(slope))
+            slope_in_degree = 360 + slope_in_degree - 360
         else:
             print("no such cased exists")
 
         return slope_in_degree
 
-    def _get_angle_between_two_edges(self, edge1:Edge, edge2: Edge, floor:int=0):
-        slope1= self._get_edge_slope(edge1, floor)
-        print(edge1.name +str(slope1))
-        slope2= self._get_edge_slope(edge2, floor)
-        print(edge2.name+ str(slope2))
-        slope_diff=slope2-slope1
-        if slope_diff>180:
-            slope_diff=slope_diff-360
+    def _get_angle_between_two_edges(self, edge1: Edge, edge2: Edge, floor: int = 0):
+        slope1 = self._get_edge_slope(edge1, floor)
+        print(edge1.name + str(slope1))
+        slope2 = self._get_edge_slope(edge2, floor)
+        print(edge2.name + str(slope2))
+        slope_diff = slope2 - slope1
+        if slope_diff > 180:
+            slope_diff = slope_diff - 360
         if slope_diff < (-180):
-            slope_diff = slope_diff+360
+            slope_diff = slope_diff + 360
 
         return slope_diff
 
-    def _set_specific_edge_angles(self, cur_edge:Edge):
+    def _set_specific_edge_angles(self, cur_edge: Edge):
         cur_edge.angles = []
         nd = self.get_node(cur_edge.dest)
         for next_edge in nd.links:
@@ -200,11 +207,10 @@ class Graph:
         print(cur_edge.angles)
         print()
 
-    def _set_all_angles(self, floor_no = 0):
+    def _set_all_angles(self, floor_no=0):
         for nd in self.Nodes[floor_no]:
             for edge in nd.links:
                 self._set_specific_edge_angles(edge)
-
 
     def _add_edge_images(self, id1: int, id2: int, distinct_frames: vo2.DistinctFrames, z1=None, z2=None):
         if id1 > self.new_node_index or id2 > self.new_node_index:
@@ -291,7 +297,7 @@ class Graph:
         # Implementation 2 ( directly taking impure image )
         # impure = self._get_floor_img(z, "impure")
         # img = impure
-        cv2.namedWindow('Node graph for floor ' + str(z),cv2.WINDOW_NORMAL)
+        cv2.namedWindow('Node graph for floor ' + str(z), cv2.WINDOW_NORMAL)
         cv2.resizeWindow('Node graph for floor ' + str(z), 1600, 1600)
         cv2.imshow('Node graph for floor ' + str(z), img)
         cv2.waitKey(0)
@@ -473,7 +479,7 @@ class Graph:
             prev = self.path_traversed[-1]
             if type(prev) == tuple:
                 if prev[0] == src:
-                    if prev[1] == dest and prev[2]> fraction_traversed:
+                    if prev[1] == dest and prev[2] > fraction_traversed:
                         return
                     self.path_traversed[-1] = (src, dest, fraction_traversed)
                     return
@@ -486,7 +492,7 @@ class Graph:
             self.path_traversed.append(src)
         self.path_traversed.append((src, dest, fraction_traversed))
 
-    def display_path(self, z,current_location_str=""):
+    def display_path(self, z, current_location_str=""):
         img = self.print_graph_and_return(0)
         for item in self.path_traversed:
             if type(item) == int:
@@ -518,7 +524,7 @@ class Graph:
 
         # cv2.namedWindow("Current location", cv2.WINDOW_NORMAL)
         # cv2.resizeWindow("Current location", 1600, 1600)
-        cv2.putText(img, current_location_str,(20,32),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,0),2)
+        cv2.putText(img, current_location_str, (20, 32), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 2)
         one_frame.run_graph_frame(img)
         # cv2.imshow("Current location", img)
         # cv2.waitKey(1)
@@ -550,58 +556,16 @@ def run(code: int):
     # Add nodes and edges
     if code == 2:
         graph: Graph = load_graph("new_objects/graph.pkl")
-        # graph.read_nodes("testData/afternoon_sit0 15june/NodeData", 4)
+        graph.read_nodes("testData/afternoon_sit0 15june/NodeData", 4)
         graph.read_edges("testData/night sit 0 june 18/Transfer returns", 4)
-        graph.save_graph("new_objects","graph.pkl")
-
-    # Query video
-    if code == 3:
-        query_video_frames1 = vo2.save_distinct_ImgObj("testData/afternoon_sit0 15june/queryVideos/queryVideos/VID_20190615_180407.webm",
-                                                       "query_distinct_frame", 0, True)
-        # query_video_frames1 = vo2.read_images("query_distinct_frame")
-        graph = load_graph("testData/afternoon_sit0 15june/graph.pkl")
-        node_and_image_matching_obj = node_and_image_matching()
-        node_and_image_matching_obj.locate_node(graph.Nodes, query_video_frames1)
-        node_and_image_matching_obj.locate_edge(graph.Nodes, query_video_frames1)
-        node_and_image_matching_obj.print_final_path()
-
-    # Add specific node/edge data manually
-    if code == 4:
-        FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
-        FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
-        graph1 = load_graph()
-        graph1._add_edge_images(2, 6, FRAMES1)
-        graph1._add_node_images(3, FRAMES2)
         graph.save_graph("new_objects", "graph.pkl")
 
-    # Add node images
-    if code == 5:
-        graph = load_graph()
-        graph.read_nodes_directly("testData/Node-direct-images")
-        graph.save_graph("new_objects", "graph.pkl")
+    # # Add specific node/edge data manually
+    # if code == 3:
+    #     FRAMES1 = vo2.read_images_jpg("testData/node 2 - 6")
+    #     FRAMES2 = vo2.read_images_jpg("testData/Photo frames sit 0/3")
+    #     graph1 = load_graph()
+    #     graph1._add_edge_images(2, 6, FRAMES1)
+    #     graph1._add_node_images(3, FRAMES2)
+    #     graph1.save_graph("new_objects", "graph.pkl")
 
-# image = cv2.imread('graph/maps/map0.jpg')
-# image = cv2.resize(image, (0, 0), None, .5, 0.5)
-#
-# grey = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-# grey_3_channel = cv2.cvtColor(grey, cv2.COLOR_GRAY2BGR)
-#
-# numpy_horizontal = np.hstack((image, grey_3_channel))
-# numpy_horizontal_concat = np.concatenate((image, grey_3_channel), axis=1)
-#
-# cv2.imshow('Numpy Horizontal', numpy_horizontal)
-# cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
-#
-# cv2.waitKey()
-# run(1)pass
-# run(0)
-# run(2)
-# graph:Graph = load_graph("new_objects/graph (1).pkl")
-# graph.make_connections(0)
-# graph.print_graph(0)
-# print(graph.Nodes[0][0].links[0].dest)
-# print(graph.Nodes[0][1].links[0].dest)
-# print(graph._get_edge_slope(graph.Nodes[0][0].links[0]))
-# print(graph._get_edge_slope(graph.Nodes[0][1].links[0]))
-# graph.save_graph("new_objects", "graph.pkl")
-# print(graph._get_angle_between_two_edges(graph.Nodes[0][0].links[0],graph.Nodes[0][1].links[0]))
