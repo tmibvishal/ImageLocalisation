@@ -1,5 +1,10 @@
 # ImageLocalisation
 
+## Setup
+```bash
+pip3 install opencv-python==3.4.2.16
+```
+
 ## How to use
 1. Create database using 'graph2.py' ( Refer 'Creating database' section below)
 2. Query video and track location using 'localisation_final.py' ( Refer 'Real Time Image based Path Tracking Algorithm' section below)
