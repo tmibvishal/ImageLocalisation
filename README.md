@@ -1,8 +1,22 @@
 # ImageLocalisation
 
 ## Setup
-Make sure you have python 3.6 installed
-If on MAC, you can use pyenv to manage multiple python versions
+The project uses Python3.6 and opencv-contrib-python==3.4.2.16
+
+### If using Ubuntu
+1. Set up a conda environment running python3.6
+```bash
+conda create --name newenv python=3.6
+conda activate newenv
+```
+
+2. Install opencv-contrib-python==3.4.2.16 using pip
+```bash
+pip3 install opencv-python==3.4.2.16
+```
+
+### If using MAC
+You can use pyenv to manage multiple python versions
 ```
 $ brew install pyenv
 $ pyenv install 3.6.0
@@ -13,7 +27,7 @@ $ pip3.6 --version
 ```
 Installing packages
 ```bash
-$ pip3.6 install opencv-python==3.4.2.16
+$ pip3.6 install opencv-contrib-python==3.4.2.16
 ```
 and install latest versions of other packages required
 
