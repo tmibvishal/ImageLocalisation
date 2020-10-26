@@ -3,7 +3,7 @@
 ## Setup
 The project uses Python3.6 and opencv-contrib-python==3.4.2.16
 
-### If using Ubuntu
+### If using Linux
 1. Set up a conda environment running python3.6
 ```bash
 conda create --name newenv python=3.6
@@ -12,7 +12,7 @@ conda activate newenv
 
 2. Install opencv-contrib-python==3.4.2.16 using pip
 ```bash
-pip3 install opencv-python==3.4.2.16
+pip install opencv-contrib-python==3.4.2.16
 ```
 
 ### If using MAC
@@ -30,11 +30,6 @@ Installing packages
 $ pip3.6 install opencv-contrib-python==3.4.2.16
 ```
 and install latest versions of other packages required
-
-Or you can just use this command to install all the required packages
-```bash
-$ pip3.6 -r install requirements.txt
-```
 
 ## How to use
 1. Create database using 'graph2.py' ( Refer 'Creating database' section below)
