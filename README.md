@@ -1,8 +1,25 @@
 # ImageLocalisation
 
 ## Setup
+Make sure you have python 3.6 installed
+If on MAC, you can use pyenv to manage multiple python versions
+```
+$ brew install pyenv
+$ pyenv install 3.6.0
+$ pyenv versions  <- will show you 2 version system (installed by default on system), 3.6.0 (recently installed)
+$ pyenv local 3.6.0
+$ python3.6 --version <- now you will see python version python 3.6.0 and can use python3.6 and pip3.6 respectively
+$ pip3.6 --version 
+```
+Installing packages
 ```bash
-pip3 install opencv-python==3.4.2.16
+$ pip3.6 install opencv-python==3.4.2.16
+```
+and install latest versions of other packages required
+
+Or you can just use this command to install all the required packages
+```bash
+$ pip3.6 -r install requirements.txt
 ```
 
 ## How to use
