@@ -3,7 +3,7 @@
 ## Setup
 The project uses Python3.6 and opencv-contrib-python==3.4.2.16
 
-### If using Linux
+### Using Conda/Miniconda (to install python 3.6)
 1. Set up a conda environment running python3.6
 ```bash
 conda create --name newenv python=3.6
@@ -15,7 +15,7 @@ conda activate newenv
 pip install opencv-contrib-python==3.4.2.16
 ```
 
-### If using MAC
+### Using pyenv (to install python 3.6)
 You can use pyenv to manage multiple python versions
 ```
 $ brew install pyenv
